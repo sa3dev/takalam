@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-calm-border;
+  }
+
+  html {
+    @apply h-full;
+  }
+
+  body {
+    @apply h-full bg-calm-bg text-calm-text antialiased;
+  }
+
+  /* Arabic text styling */
+  .arabic {
+    font-family: 'Arial', sans-serif;
+    direction: rtl;
+    text-align: right;
+  }
+}
+
+@layer components {
+  /* Calm, minimal button */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-calm-surface text-calm-text border border-calm-border hover:bg-calm-bg focus:ring-primary-500;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+  }
+
+  /* Card component */
+  .card {
+    @apply bg-calm-surface rounded-xl shadow-sm border border-calm-border p-6;
+  }
+
+  /* Recording pulse animation */
+  .recording-pulse {
+    @apply animate-pulse-slow;
+  }
+
+  /* Audio visualizer bar */
+  .audio-bar {
+    @apply bg-primary-400 rounded-full transition-all duration-100;
+  }
+}
+
+@layer utilities {
+  /* Custom scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-calm-bg;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-calm-border rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-calm-muted;
+  }
+}
