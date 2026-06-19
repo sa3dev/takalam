@@ -17,9 +17,9 @@ L'application doit être entièrement dockerisée pour un setup ⁠ docker-com
     * Gestion des WebSockets pour le streaming audio temps réel.
     * Orchestration asynchrone (BackgroundTasks) pour l'analyse des sessions.
 •⁠  ⁠*Pipeline IA (Low Latency):*
-    * *STT :* Whisper (via Groq pour la vitesse ou OpenAI). Focus sur la précision en langue arabe.
-    * *LLM :* GPT-4o (Configuré en tant que mentor bienveillant).
-    * *TTS :* ElevenLabs ou OpenAI (Voix arabe naturelle).
+    * *STT :* Whisper Large v3 via Groq (faible latence, précision arabe). Focus sur la précision en langue arabe.
+    * *LLM :* Llama 3.3 70B via Groq (mentor bienveillant, même compte que le STT).
+    * *TTS :* ElevenLabs (voix arabe naturelle) ou OpenAI TTS en fallback.
 •⁠  ⁠*Data & Cache:*
     * *PostgreSQL :* Stockage des utilisateurs, des transcriptions et des métriques de progression.
     * *Redis :* Gestion du contexte de session et mise en cache.

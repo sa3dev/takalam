@@ -4,7 +4,11 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'frontend:3000']
+      allowedOrigins: [
+        'localhost:3000',
+        'frontend:3000',
+        ...(process.env.NEXT_PUBLIC_DOMAIN ? [process.env.NEXT_PUBLIC_DOMAIN] : [])
+      ]
     }
   },
   env: {
