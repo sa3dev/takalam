@@ -17,21 +17,18 @@ export function useAudioRecorder({ onAudioData, onError }: UseAudioRecorderOptio
 
   const startRecording = useCallback(async () => {
     try {
-      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000
-        }
+          sampleRate: 16000,
+        },
       })
 
       streamRef.current = stream
 
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      })
+      const mimeType = getSupportedMimeType()
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
 
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
@@ -120,6 +117,16 @@ export function useAudioRecorder({ onAudioData, onError }: UseAudioRecorderOptio
     pauseRecording,
     resumeRecording
   }
+}
+
+function getSupportedMimeType(): string {
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+  ]
+  return candidates.find(t => MediaRecorder.isTypeSupported(t)) ?? ''
 }
 
 // Utility function to convert Blob to Base64

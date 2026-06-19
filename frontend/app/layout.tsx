@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/AppLayout'
 
 export const metadata: Metadata = {
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="ar">
       <body>
-        <LanguageProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
-        </LanguageProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </LanguageProvider>
+        </AuthProvider>
       </body>
     </html>
   )

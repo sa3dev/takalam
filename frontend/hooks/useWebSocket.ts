@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 
 export interface WebSocketMessage {
   type: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface TranscriptionMessage {
@@ -20,137 +20,123 @@ export interface AudioResponseMessage {
 
 export interface UseWebSocketOptions {
   sessionId: string
+  token: string | null
   onMessage?: (message: WebSocketMessage) => void
   onTranscription?: (message: TranscriptionMessage) => void
   onAudioResponse?: (message: AudioResponseMessage) => void
   onError?: (error: Error) => void
 }
 
+const MAX_RECONNECT_DELAY_MS = 30_000
+
 export function useWebSocket({
   sessionId,
+  token,
   onMessage,
   onTranscription,
   onAudioResponse,
-  onError
+  onError,
 }: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+
+  // Keep callbacks in refs so connect() doesn't need them as deps — prevents infinite reconnect loop
+  const onMessageRef = useRef(onMessage)
+  const onTranscriptionRef = useRef(onTranscription)
+  const onAudioResponseRef = useRef(onAudioResponse)
+  const onErrorRef = useRef(onError)
+  useEffect(() => {
+    onMessageRef.current = onMessage
+    onTranscriptionRef.current = onTranscription
+    onAudioResponseRef.current = onAudioResponse
+    onErrorRef.current = onError
+  })
 
   const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'
 
   const connect = useCallback(() => {
+    if (!token) return
+
     try {
-      const ws = new WebSocket(`${WS_URL}/ws/${sessionId}`)
+      const ws = new WebSocket(`${WS_URL}/ws/${sessionId}?token=${token}`)
 
       ws.onopen = () => {
-        console.log('WebSocket connected')
         setIsConnected(true)
         setConnectionError(null)
+        reconnectAttemptsRef.current = 0
       }
 
       ws.onmessage = (event) => {
         try {
-          const message: WebSocketMessage = JSON.parse(event.data)
-
-          // Call generic message handler
-          onMessage?.(message)
-
-          // Call specific handlers
+          const message: WebSocketMessage = JSON.parse(event.data as string)
+          onMessageRef.current?.(message)
           if (message.type === 'transcription') {
-            onTranscription?.(message as TranscriptionMessage)
+            onTranscriptionRef.current?.(message as TranscriptionMessage)
           } else if (message.type === 'audio_response') {
-            onAudioResponse?.(message as AudioResponseMessage)
+            onAudioResponseRef.current?.(message as AudioResponseMessage)
           } else if (message.type === 'error') {
-            setConnectionError(message.message)
-            onError?.(new Error(message.message))
+            setConnectionError(message.message as string)
+            onErrorRef.current?.(new Error(message.message as string))
           }
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error)
+        } catch {
+          // ignore malformed messages
         }
       }
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+      ws.onerror = () => {
         setConnectionError('Connection error')
-        onError?.(new Error('WebSocket connection error'))
+        onErrorRef.current?.(new Error('WebSocket connection error'))
       }
 
       ws.onclose = () => {
-        console.log('WebSocket disconnected')
         setIsConnected(false)
-
-        // Attempt reconnection after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect...')
-          connect()
-        }, 3000)
+        // Exponential backoff: 1s, 2s, 4s, … capped at 30s
+        const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, MAX_RECONNECT_DELAY_MS)
+        reconnectAttemptsRef.current++
+        reconnectTimeoutRef.current = setTimeout(connect, delay)
       }
 
       wsRef.current = ws
-    } catch (error) {
-      console.error('Error creating WebSocket:', error)
+    } catch {
       setConnectionError('Failed to create connection')
     }
-  }, [sessionId, WS_URL, onMessage, onTranscription, onAudioResponse, onError])
+  }, [sessionId, token, WS_URL])
 
   const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-    }
-
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    wsRef.current?.close()
+    wsRef.current = null
     setIsConnected(false)
   }, [])
 
   const sendMessage = useCallback((message: WebSocketMessage) => {
-    if (wsRef.current && isConnected) {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message))
-    } else {
-      console.warn('WebSocket is not connected')
     }
-  }, [isConnected])
+  }, [])
 
   const sendAudioChunk = useCallback((audioData: string) => {
-    sendMessage({
-      type: 'audio_chunk',
-      audio_data: audioData
-    })
+    sendMessage({ type: 'audio_chunk', audio_data: audioData })
   }, [sendMessage])
 
-  const startSession = useCallback((userId: number = 1) => {
-    sendMessage({
-      type: 'start_session',
-      user_id: userId
-    })
+  const startSession = useCallback(() => {
+    sendMessage({ type: 'start_session' })
   }, [sendMessage])
 
   const endSession = useCallback(() => {
-    sendMessage({
-      type: 'end_session'
-    })
+    sendMessage({ type: 'end_session' })
   }, [sendMessage])
 
   useEffect(() => {
     connect()
-
     return () => {
-      disconnect()
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      wsRef.current?.close()
     }
-  }, [connect, disconnect])
+  }, [connect])
 
-  return {
-    isConnected,
-    connectionError,
-    sendMessage,
-    sendAudioChunk,
-    startSession,
-    endSession,
-    disconnect
-  }
+  return { isConnected, connectionError, sendMessage, sendAudioChunk, startSession, endSession, disconnect }
 }
