@@ -317,8 +317,8 @@ export type Language = keyof typeof translations
 export type TranslationKeys = typeof translations.fr
 
 export const languages: { code: Language; name: string; flag: string }[] = [
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },

@@ -5,7 +5,7 @@ python-multipart==0.0.6
 websockets==12.0
 
 # Pydantic for data validation
-pydantic==2.5.3
+pydantic[email]==2.5.3
 pydantic-settings==2.1.0
 
 # Database
@@ -22,9 +22,12 @@ hiredis==2.3.2
 httpx==0.26.0
 aiohttp==3.9.1
 
+# TTS gratuit (Microsoft Edge TTS, aucune clé API requise)
+edge-tts
+
 # AI/ML APIs
 openai==1.10.0
-groq==0.4.1
+groq>=0.9.0
 elevenlabs==0.2.27
 
 # Audio Processing
@@ -36,5 +39,5 @@ python-dotenv==1.0.0
 
 # Utilities
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-dateutil==2.8.2

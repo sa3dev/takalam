@@ -12,9 +12,12 @@ class Settings(BaseSettings):
 
     # Groq — required (LLM + STT)
     GROQ_API_KEY: str
-    # OpenAI — optional (TTS only)
+    # OpenAI — optionnel (non utilisé par défaut, Edge TTS est gratuit)
     OPENAI_API_KEY: Optional[str] = None
     ELEVENLABS_API_KEY: Optional[str] = None
+
+    # Voix Edge TTS — voir liste : edge-tts --list-voices | grep ar
+    EDGE_TTS_VOICE: str = "ar-SA-HamedNeural"  # voix arabe féminine (naturelle)
 
     # No defaults — must be set via env vars
     SECRET_KEY: str

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 import io
-from openai import AsyncOpenAI
+import edge_tts
 from groq import AsyncGroq
 from app.config.settings import settings
 
@@ -55,34 +55,17 @@ class GroqLLM(LLMProvider):
         return response.choices[0].message.content
 
 
-class OpenAISTT(STTProvider):
-    def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+class EdgeTTS(TTSProvider):
+    """Microsoft Edge TTS — gratuit, aucune clé API requise, voix arabes naturelles."""
 
-    async def transcribe(self, audio_data: bytes, language: str = "ar") -> str:
-        audio_file = io.BytesIO(audio_data)
-        audio_file.name = "audio.webm"
-        response = await self.client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file,
-            language=language,
-            response_format="text",
-        )
-        return response
-
-
-class OpenAITTS(TTSProvider):
-    def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-    async def synthesize(self, text: str, voice: Optional[str] = "nova") -> bytes:
-        response = await self.client.audio.speech.create(
-            model="tts-1",
-            voice=voice,
-            input=text,
-            response_format="mp3",
-        )
-        return response.content
+    async def synthesize(self, text: str, voice: Optional[str] = None) -> bytes:
+        selected_voice = voice or settings.EDGE_TTS_VOICE
+        communicate = edge_tts.Communicate(text, selected_voice)
+        chunks = []
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                chunks.append(chunk["data"])
+        return b"".join(chunks)
 
 
 class SpeechManager:
@@ -96,11 +79,7 @@ class SpeechManager:
     def __init__(self):
         self.stt = GroqSTT()
         self.llm = GroqLLM()
-        # TTS: OpenAI fallback (ElevenLabs can be wired here later)
-        if settings.OPENAI_API_KEY:
-            self.tts: TTSProvider = OpenAITTS()
-        else:
-            raise RuntimeError("No TTS provider configured — set OPENAI_API_KEY or enable ElevenLabs")
+        self.tts: TTSProvider = EdgeTTS()
 
     async def transcribe_audio(self, audio_data: bytes, language: str = "ar") -> str:
         return await self.stt.transcribe(audio_data, language)
