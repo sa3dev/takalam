@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Card } from '@/components/Card'
@@ -45,11 +46,29 @@ export default function LoginPage() {
   if (isLoading) return null
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: 'var(--cream)' }}>
       <div className="w-full max-w-md">
+        {/* Back to landing */}
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm no-underline transition-colors"
+            style={{ color: 'var(--muted)', fontFamily: 'var(--sans)' }}
+          >
+            <span>←</span>
+            <span style={{ fontFamily: 'var(--disp)', fontWeight: 600, color: 'var(--terra-deep)' }}>Takalam</span>
+            <span style={{ fontFamily: '"Reem Kufi", serif', color: 'var(--terra)', fontSize: '12px' }}>تكلّم</span>
+          </Link>
+        </div>
+
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-600 mb-2">تكلم</h1>
-          <p className="text-calm-muted">
+          <h1
+            className="mb-2"
+            style={{ fontFamily: '"Reem Kufi", serif', fontSize: '48px', color: 'var(--terra-deep)', lineHeight: 1 }}
+          >
+            تكلم
+          </h1>
+          <p style={{ color: 'var(--muted)', fontFamily: 'var(--sans)', fontSize: '15px' }}>
             {mode === 'login' ? 'Connexion à votre compte' : 'Créer un compte'}
           </p>
         </div>

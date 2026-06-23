@@ -8,33 +8,52 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        // Terracotta palette — maps to CSS vars defined in globals.css
+        terra: {
+          DEFAULT: 'var(--terra)',
+          deep:    'var(--terra-deep)',
+          soft:    'var(--terra-soft)',
         },
+        clay: {
+          DEFAULT: 'var(--clay)',
+          d:       'var(--clay-d)',
+        },
+        cream: {
+          DEFAULT: 'var(--cream)',
+          '2':     'var(--cream-2)',
+        },
+        card:  'var(--card)',
+        ink:   'var(--ink)',
+        muted: 'var(--muted)',
+        faint: 'var(--faint)',
+        line:  'var(--line)',
+
+        // Legacy class names — auto-updated to terracotta palette
         calm: {
-          bg: '#f8f9fa',
-          surface: '#ffffff',
-          border: '#e9ecef',
-          text: '#495057',
-          muted: '#6c757d'
-        }
+          bg:      'var(--cream)',
+          surface: 'var(--card)',
+          border:  'var(--line)',
+          text:    'var(--ink)',
+          muted:   'var(--muted)',
+        },
+        primary: {
+          50:  'var(--terra-soft)',
+          100: 'var(--terra-soft)',
+          400: 'var(--terra)',
+          500: 'var(--terra)',
+          600: 'var(--terra-deep)',
+          700: 'var(--clay)',
+          900: 'var(--clay-d)',
+        },
       },
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
-        arabic: ['Arial', 'sans-serif']
+        sans:    ['"Hanken Grotesk"', 'system-ui', 'sans-serif'],
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        arabic:  ['"Reem Kufi"', 'Arial', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      }
+      },
     },
   },
   plugins: [],

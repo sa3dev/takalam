@@ -3,75 +3,85 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-calm-border;
+  :root {
+    --cream:      oklch(0.965 0.015 76);
+    --cream-2:    oklch(0.945 0.018 74);
+    --card:       oklch(0.99  0.007 84);
+    --ink:        oklch(0.28  0.02  50);
+    --muted:      oklch(0.52  0.024 54);
+    --faint:      oklch(0.64  0.022 58);
+    --terra:      oklch(0.6   0.14  41);
+    --terra-deep: oklch(0.46  0.115 39);
+    --clay:       oklch(0.36  0.075 41);
+    --clay-d:     oklch(0.3   0.06  40);
+    --terra-soft: oklch(0.89  0.05  56);
+    --line:       oklch(0.87  0.018 70);
+    --disp: "Space Grotesk", system-ui, sans-serif;
+    --sans: "Hanken Grotesk", system-ui, sans-serif;
   }
 
-  html {
-    @apply h-full;
+  * {
+    box-sizing: border-box;
+    border-color: var(--line);
   }
+
+  html { @apply h-full; }
 
   body {
-    @apply h-full bg-calm-bg text-calm-text antialiased;
+    @apply h-full antialiased;
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.6;
   }
 
-  /* Arabic text styling */
   .arabic {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Reem Kufi', Arial, sans-serif;
     direction: rtl;
     text-align: right;
   }
 }
 
 @layer components {
-  /* Calm, minimal button */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-full font-semibold
+           transition-all duration-200 focus:outline-none cursor-pointer;
+    font-family: var(--sans);
   }
 
   .btn-primary {
-    @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500;
+    @apply text-white;
+    background: var(--terra-deep);
   }
+  .btn-primary:hover { background: var(--clay); }
 
   .btn-secondary {
-    @apply bg-calm-surface text-calm-text border border-calm-border hover:bg-calm-bg focus:ring-primary-500;
+    color: var(--ink);
+    background: transparent;
+    border: 1.5px solid var(--line);
   }
+  .btn-secondary:hover { background: var(--cream-2); }
 
   .btn-danger {
-    @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+    @apply bg-red-600 text-white;
   }
+  .btn-danger:hover { @apply bg-red-700; }
 
-  /* Card component */
   .card {
-    @apply bg-calm-surface rounded-xl shadow-sm border border-calm-border p-6;
+    @apply rounded-xl shadow-sm p-6;
+    background: var(--card);
+    border: 1px solid var(--line);
   }
 
-  /* Recording pulse animation */
-  .recording-pulse {
-    @apply animate-pulse-slow;
-  }
-
-  /* Audio visualizer bar */
-  .audio-bar {
-    @apply bg-primary-400 rounded-full transition-all duration-100;
-  }
+  .recording-pulse { @apply animate-pulse; }
 }
 
 @layer utilities {
-  /* Custom scrollbar */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-calm-bg;
-  }
-
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: var(--cream); }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-calm-border rounded-full;
+    background: var(--line);
+    border-radius: 9999px;
   }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-calm-muted;
-  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: var(--faint); }
 }

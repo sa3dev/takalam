@@ -3,7 +3,8 @@ export const translations = {
     // Navigation
     nav: {
       home: "Accueil",
-      dashboard: "Tableau de bord"
+      dashboard: "Tableau de bord",
+      logout: "Déconnexion"
     },
     // Home page
     home: {
@@ -50,7 +51,8 @@ export const translations = {
   en: {
     nav: {
       home: "Home",
-      dashboard: "Dashboard"
+      dashboard: "Dashboard",
+      logout: "Sign out"
     },
     home: {
       title: "New Conversation",
@@ -94,7 +96,8 @@ export const translations = {
   es: {
     nav: {
       home: "Inicio",
-      dashboard: "Panel"
+      dashboard: "Panel",
+      logout: "Salir"
     },
     home: {
       title: "Nueva Conversación",
@@ -138,7 +141,8 @@ export const translations = {
   it: {
     nav: {
       home: "Home",
-      dashboard: "Cruscotto"
+      dashboard: "Cruscotto",
+      logout: "Esci"
     },
     home: {
       title: "Nuova Conversazione",
@@ -182,7 +186,8 @@ export const translations = {
   ru: {
     nav: {
       home: "Главная",
-      dashboard: "Панель"
+      dashboard: "Панель",
+      logout: "Выйти"
     },
     home: {
       title: "Новый разговор",
@@ -226,7 +231,8 @@ export const translations = {
   zh: {
     nav: {
       home: "首页",
-      dashboard: "仪表板"
+      dashboard: "仪表板",
+      logout: "退出"
     },
     home: {
       title: "新对话",
@@ -270,7 +276,8 @@ export const translations = {
   ar: {
     nav: {
       home: "الرئيسية",
-      dashboard: "لوحة التحكم"
+      dashboard: "لوحة التحكم",
+      logout: "خروج"
     },
     home: {
       title: "محادثة جديدة",
