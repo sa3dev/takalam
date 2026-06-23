@@ -18,7 +18,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </h1>
             <div className="flex items-center gap-4">
               <nav className="flex gap-4">
-                <a href="/" className="text-calm-text hover:text-primary-600 transition-colors">
+                <a href="/app" className="text-calm-text hover:text-primary-600 transition-colors">
                   {t.nav.home}
                 </a>
                 <a href="/dashboard" className="text-calm-text hover:text-primary-600 transition-colors">

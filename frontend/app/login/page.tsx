@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.push('/')
+      router.push('/app')
     }
   }, [user, isLoading, router])
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
       } else {
         await register(email, username, password)
       }
-      router.push('/')
+      router.push('/app')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {

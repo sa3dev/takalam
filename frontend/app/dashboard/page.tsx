@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { AppLayout } from '@/components/AppLayout'
 import { Card } from '@/components/Card'
 import type { TranslationKeys } from '@/lib/i18n/translations'
 
@@ -103,15 +104,18 @@ export default function DashboardPage() {
 
   if (isFetching) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-calm-muted">{t.dashboard.analyzing}</p>
+      <AppLayout>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-calm-muted">{t.dashboard.analyzing}</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   return (
+    <AppLayout>
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-calm-text mb-2">{t.dashboard.title}</h1>
@@ -122,7 +126,7 @@ export default function DashboardPage() {
         <Card>
           <div className="text-center py-12">
             <p className="text-calm-muted mb-4">{t.dashboard.noSessions}</p>
-            <button onClick={() => router.push('/')} className="btn btn-primary">
+            <button onClick={() => router.push('/app')} className="btn btn-primary">
               {t.dashboard.startNewConversation}
             </button>
           </div>
@@ -210,6 +214,7 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+    </AppLayout>
   )
 }
 
