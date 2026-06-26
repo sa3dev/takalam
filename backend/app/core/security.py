@@ -1,9 +1,11 @@
 import bcrypt
 import uuid
+import redis
 from jose import jwt
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Tuple
 from app.config.settings import settings
+
+_redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
@@ -24,23 +26,15 @@ def decode_access_token(token: str) -> dict:
     return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
 
 
-# In-memory ticket store for WebSocket auth — ticket → (user_id, expires_at)
-# One-time use, TTL 60 seconds. Not shared across workers (single-worker constraint in prod).
-_ws_tickets: Dict[str, Tuple[int, datetime]] = {}
-
-
 def create_ws_ticket(user_id: int) -> str:
     ticket = str(uuid.uuid4())
-    _ws_tickets[ticket] = (user_id, datetime.now(timezone.utc) + timedelta(seconds=60))
+    _redis.setex(f"ws_ticket:{ticket}", 60, str(user_id))
     return ticket
 
 
 def consume_ws_ticket(ticket: str) -> int:
-    """Pop-and-validate — each ticket can only be used once."""
-    entry = _ws_tickets.pop(ticket, None)
-    if entry is None:
-        raise ValueError("Invalid ticket")
-    user_id, expires_at = entry
-    if datetime.now(timezone.utc) > expires_at:
-        raise ValueError("Ticket expired")
-    return user_id
+    """Atomic get-and-delete — guarantees one-time use even under concurrent requests."""
+    user_id = _redis.getdel(f"ws_ticket:{ticket}")
+    if user_id is None:
+        raise ValueError("Invalid or expired ticket")
+    return int(user_id)
