@@ -19,7 +19,7 @@ async def websocket_endpoint(
 ):
     """
     WebSocket endpoint for real-time audio streaming.
-    Requires ?token=<jwt> query parameter.
+    Requires ?ticket=<one-time-ticket> query parameter (obtained from POST /api/ws-ticket).
 
     Flow: connect → start_session → audio_chunk* → end_session → disconnect
     """

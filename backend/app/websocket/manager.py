@@ -9,6 +9,11 @@ from app.models.database import SessionLocal, Session, Transcription
 
 logger = logging.getLogger(__name__)
 
+# ~10 MB decoded → ~13.3 MB base64
+_MAX_AUDIO_B64_LEN = 14_000_000
+# Keep last 20 user+assistant pairs to cap memory and LLM token cost
+_MAX_HISTORY_MESSAGES = 40
+
 
 class ConnectionManager:
     """Manages WebSocket connections for real-time audio streaming."""
@@ -47,6 +52,10 @@ class ConnectionManager:
             await self.send_message(session_id, {"type": "error", "message": "Session not found"})
             return
 
+        if not audio_data or len(audio_data) > _MAX_AUDIO_B64_LEN:
+            await self.send_message(session_id, {"type": "error", "message": "Audio chunk too large"})
+            return
+
         try:
             audio_bytes = base64.b64decode(audio_data)
             session = self.session_data[session_id]
@@ -64,6 +73,10 @@ class ConnectionManager:
                 {"speaker": "user", "text": user_text},
                 {"speaker": "assistant", "text": ai_response},
             ])
+
+            # Trim history to avoid unbounded memory and LLM token growth
+            if len(conversation_history) > _MAX_HISTORY_MESSAGES:
+                conversation_history[:] = conversation_history[-_MAX_HISTORY_MESSAGES:]
 
             await self.send_message(session_id, {
                 "type": "transcription",

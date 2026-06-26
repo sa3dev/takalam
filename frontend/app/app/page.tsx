@@ -21,7 +21,7 @@ interface Transcript {
 export default function ConversationPage() {
   const router = useRouter()
   const { t } = useLanguage()
-  const { user, token, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
   const [sessionId] = useState(() => `session-${Date.now()}`)
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -61,7 +61,7 @@ export default function ConversationPage() {
 
   const { isConnected, connectionError, sendAudioChunk, startSession, endSession } = useWebSocket({
     sessionId,
-    token,
+    isAuthenticated: !!user,
     onTranscription: handleTranscription,
     onAudioResponse: handleAudioResponse,
   })

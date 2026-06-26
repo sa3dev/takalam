@@ -27,31 +27,25 @@ interface Analytics {
 export default function DashboardPage() {
   const router = useRouter()
   const { t } = useLanguage()
-  const { user, token, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
 
   const [sessions, setSessions] = useState<Session[]>([])
   const [selectedSession, setSelectedSession] = useState<number | null>(null)
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [isFetching, setIsFetching] = useState(true)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
   useEffect(() => {
     if (!isLoading && !user) router.push('/login')
   }, [user, isLoading, router])
 
   useEffect(() => {
-    if (user && token) fetchSessions()
-  }, [user, token])
-
-  function authHeaders(): HeadersInit {
-    return { Authorization: `Bearer ${token}` }
-  }
+    if (user) fetchSessions()
+  }, [user])
 
   async function fetchSessions() {
     try {
       setIsFetching(true)
-      const response = await fetch(`${API_URL}/api/users/me/sessions`, { headers: authHeaders() })
+      const response = await fetch('/api/users/me/sessions', { credentials: 'include' })
       if (!response.ok) return
       const data: Session[] = await response.json()
       setSessions(data)
@@ -66,9 +60,7 @@ export default function DashboardPage() {
 
   async function fetchAnalytics(sessionId: number) {
     setAnalytics(null)
-    const response = await fetch(`${API_URL}/api/sessions/${sessionId}/analytics`, {
-      headers: authHeaders(),
-    })
+    const response = await fetch(`/api/sessions/${sessionId}/analytics`, { credentials: 'include' })
     if (response.ok) {
       setAnalytics(await response.json())
     } else if (response.status === 404) {
@@ -77,15 +69,13 @@ export default function DashboardPage() {
   }
 
   async function triggerAnalysis(sessionId: number) {
-    await fetch(`${API_URL}/api/sessions/${sessionId}/analyze`, {
+    await fetch(`/api/sessions/${sessionId}/analyze`, {
       method: 'POST',
-      headers: authHeaders(),
+      credentials: 'include',
     })
     // Poll once after 5s, then again after 10s if still not ready
     const poll = async (attempt: number) => {
-      const res = await fetch(`${API_URL}/api/sessions/${sessionId}/analytics`, {
-        headers: authHeaders(),
-      })
+      const res = await fetch(`/api/sessions/${sessionId}/analytics`, { credentials: 'include' })
       if (res.ok) {
         setAnalytics(await res.json())
       } else if (attempt < 3) {

@@ -20,7 +20,7 @@ export interface AudioResponseMessage {
 
 export interface UseWebSocketOptions {
   sessionId: string
-  token: string | null
+  isAuthenticated: boolean
   onMessage?: (message: WebSocketMessage) => void
   onTranscription?: (message: TranscriptionMessage) => void
   onAudioResponse?: (message: AudioResponseMessage) => void
@@ -31,7 +31,7 @@ const MAX_RECONNECT_DELAY_MS = 30_000
 
 export function useWebSocket({
   sessionId,
-  token,
+  isAuthenticated,
   onMessage,
   onTranscription,
   onAudioResponse,
@@ -43,25 +43,38 @@ export function useWebSocket({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reconnectAttemptsRef = useRef(0)
 
-  // Keep callbacks in refs so connect() doesn't need them as deps — prevents infinite reconnect loop
+  // Keep callbacks and auth state in refs so connect() doesn't need them as deps
   const onMessageRef = useRef(onMessage)
   const onTranscriptionRef = useRef(onTranscription)
   const onAudioResponseRef = useRef(onAudioResponse)
   const onErrorRef = useRef(onError)
+  const isAuthenticatedRef = useRef(isAuthenticated)
   useEffect(() => {
     onMessageRef.current = onMessage
     onTranscriptionRef.current = onTranscription
     onAudioResponseRef.current = onAudioResponse
     onErrorRef.current = onError
+    isAuthenticatedRef.current = isAuthenticated
   })
 
   const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'
 
-  const connect = useCallback(() => {
-    if (!token) return
+  const connect = useCallback(async () => {
+    if (!isAuthenticatedRef.current) return
 
     try {
-      const ws = new WebSocket(`${WS_URL}/ws/${sessionId}?token=${token}`)
+      // Exchange auth cookie for a short-lived one-time WS ticket
+      const ticketRes = await fetch('/api/ws-ticket', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!ticketRes.ok) {
+        setConnectionError('Authentication failed')
+        return
+      }
+      const { ticket } = await ticketRes.json()
+
+      const ws = new WebSocket(`${WS_URL}/ws/${sessionId}?ticket=${ticket}`)
 
       ws.onopen = () => {
         setIsConnected(true)
@@ -93,6 +106,7 @@ export function useWebSocket({
 
       ws.onclose = () => {
         setIsConnected(false)
+        if (!isAuthenticatedRef.current) return
         // Exponential backoff: 1s, 2s, 4s, … capped at 30s
         const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, MAX_RECONNECT_DELAY_MS)
         reconnectAttemptsRef.current++
@@ -103,7 +117,7 @@ export function useWebSocket({
     } catch {
       setConnectionError('Failed to create connection')
     }
-  }, [sessionId, token, WS_URL])
+  }, [sessionId, WS_URL])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)

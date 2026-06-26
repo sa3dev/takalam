@@ -182,6 +182,13 @@ async def analyze_session_background(session_id: int):
         db.close()
 
 
+@router.post("/ws-ticket")
+def issue_ws_ticket(current_user: User = Depends(get_current_user)):
+    """Exchange a valid auth session for a short-lived (60s) one-time WebSocket ticket."""
+    from app.core.security import create_ws_ticket
+    return {"ticket": create_ws_ticket(current_user.id)}
+
+
 @router.get("/health")
 def health_check():
     return {"status": "healthy", "service": "Takalam API"}

@@ -14,7 +14,18 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'
-  }
+  },
+  async rewrites() {
+    // INTERNAL_API_URL for server-side proxy (Docker network between containers).
+    // Falls back to NEXT_PUBLIC_API_URL for local dev without Docker.
+    const backend = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backend}/api/:path*`,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
