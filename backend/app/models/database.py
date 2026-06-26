@@ -92,7 +92,9 @@ class SessionAnalytics(Base):
     session = relationship("Session", back_populates="analytics")
 
 
-# Create tables
 def init_db():
-    """Initialize database tables."""
-    Base.metadata.create_all(bind=engine)
+    """Run pending Alembic migrations on startup."""
+    from alembic.config import Config
+    from alembic import command
+    alembic_cfg = Config("/app/alembic.ini")
+    command.upgrade(alembic_cfg, "head")
