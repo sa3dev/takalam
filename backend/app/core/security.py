@@ -1,11 +1,9 @@
 import bcrypt
 import uuid
-import redis
 from jose import jwt
 from datetime import datetime, timedelta, timezone
 from app.config.settings import settings
-
-_redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
+from app.core.redis_client import client as _redis
 
 
 def verify_password(plain: str, hashed: str) -> bool:

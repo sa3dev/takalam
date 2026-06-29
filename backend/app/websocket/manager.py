@@ -1,3 +1,4 @@
+import json
 import logging
 import base64
 from typing import Dict
@@ -6,13 +7,16 @@ from fastapi.concurrency import run_in_threadpool
 from datetime import datetime
 from app.services.speech_manager import speech_manager
 from app.models.database import SessionLocal, Session, Transcription
+from app.core.redis_client import client as _redis
 
 logger = logging.getLogger(__name__)
 
 # ~10 MB decoded → ~13.3 MB base64
 _MAX_AUDIO_B64_LEN = 14_000_000
-# Keep last 20 user+assistant pairs to cap memory and LLM token cost
+# Keep last 20 user+assistant pairs to cap LLM token cost
 _MAX_HISTORY_MESSAGES = 40
+# Conversation history TTL in Redis: 1h of inactivity, refreshed on reconnect
+_HISTORY_TTL = 3600
 
 
 class ConnectionManager:
@@ -20,18 +24,19 @@ class ConnectionManager:
 
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
-        # Conversation history and metadata per session — stored in memory.
-        # For horizontal scaling, move this to Redis.
+        # Only local session metadata (transcriptions + timer).
+        # Conversation history lives in Redis for persistence across restarts.
         self.session_data: Dict[str, dict] = {}
 
     async def connect(self, websocket: WebSocket, session_id: str):
         await websocket.accept()
         self.active_connections[session_id] = websocket
         self.session_data[session_id] = {
-            "conversation_history": [],
             "transcriptions": [],
             "started_at": datetime.utcnow(),
         }
+        # Refresh TTL on reconnect so in-progress history is preserved
+        _redis.expire(f"conv_history:{session_id}", _HISTORY_TTL)
         await self.send_message(session_id, {
             "type": "connected",
             "message": "WebSocket connection established",
@@ -41,11 +46,19 @@ class ConnectionManager:
     def disconnect(self, session_id: str):
         self.active_connections.pop(session_id, None)
         self.session_data.pop(session_id, None)
+        # History stays in Redis until TTL expires — allows clean reconnect
 
     async def send_message(self, session_id: str, message: dict):
         ws = self.active_connections.get(session_id)
         if ws:
             await ws.send_json(message)
+
+    def _get_history(self, session_id: str) -> list:
+        raw = _redis.get(f"conv_history:{session_id}")
+        return json.loads(raw) if raw else []
+
+    def _save_history(self, session_id: str, history: list) -> None:
+        _redis.setex(f"conv_history:{session_id}", _HISTORY_TTL, json.dumps(history))
 
     async def handle_audio_chunk(self, session_id: str, audio_data: str):
         if session_id not in self.session_data:
@@ -59,7 +72,8 @@ class ConnectionManager:
         try:
             audio_bytes = base64.b64decode(audio_data)
             session = self.session_data[session_id]
-            conversation_history = session["conversation_history"]
+
+            conversation_history = self._get_history(session_id)
 
             await self.send_message(session_id, {"type": "processing", "message": "Processing your audio..."})
 
@@ -74,9 +88,10 @@ class ConnectionManager:
                 {"speaker": "assistant", "text": ai_response},
             ])
 
-            # Trim history to avoid unbounded memory and LLM token growth
+            # Trim then persist to Redis
             if len(conversation_history) > _MAX_HISTORY_MESSAGES:
                 conversation_history[:] = conversation_history[-_MAX_HISTORY_MESSAGES:]
+            self._save_history(session_id, conversation_history)
 
             await self.send_message(session_id, {
                 "type": "transcription",
@@ -109,7 +124,6 @@ class ConnectionManager:
         duration = int((ended_at - session["started_at"]).total_seconds())
         transcriptions = session["transcriptions"]
 
-        # Run sync SQLAlchemy operations in a thread so we don't block the event loop
         await run_in_threadpool(
             self._persist_session,
             db_session_id,
@@ -117,6 +131,9 @@ class ConnectionManager:
             duration,
             transcriptions,
         )
+
+        # Conversation is over — clean up Redis
+        _redis.delete(f"conv_history:{session_id}")
 
         await self.send_message(session_id, {
             "type": "session_ended",
