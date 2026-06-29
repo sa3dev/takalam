@@ -1,9 +1,12 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 import io
 import edge_tts
 from groq import AsyncGroq
 from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 class STTProvider(ABC):
@@ -98,11 +101,24 @@ class SpeechManager:
         conversation_history: list,
         language: str = "ar",
     ) -> tuple[str, str, bytes]:
+        import time
+        t0 = time.perf_counter()
+
         user_text = await self.transcribe_audio(audio_data, language)
+        t1 = time.perf_counter()
+
         conversation_history.append({"role": "user", "content": user_text})
         ai_response = await self.generate_response(conversation_history)
+        t2 = time.perf_counter()
+
         conversation_history.append({"role": "assistant", "content": ai_response})
         ai_audio = await self.synthesize_speech(ai_response)
+        t3 = time.perf_counter()
+
+        logger.info(
+            "latency — STT: %.2fs | LLM: %.2fs | TTS: %.2fs | total: %.2fs",
+            t1 - t0, t2 - t1, t3 - t2, t3 - t0,
+        )
         return user_text, ai_response, ai_audio
 
 
