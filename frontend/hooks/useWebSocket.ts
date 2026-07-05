@@ -132,8 +132,8 @@ export function useWebSocket({
     }
   }, [])
 
-  const sendAudioChunk = useCallback((audioData: string) => {
-    sendMessage({ type: 'audio_chunk', audio_data: audioData })
+  const sendAudioChunk = useCallback((audioData: string, mimeType: string) => {
+    sendMessage({ type: 'audio_chunk', audio_data: audioData, mime_type: mimeType })
   }, [sendMessage])
 
   const startSession = useCallback(() => {

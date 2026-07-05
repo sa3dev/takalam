@@ -34,6 +34,7 @@ class ConnectionManager:
         self.session_data[session_id] = {
             "transcriptions": [],
             "started_at": datetime.utcnow(),
+            "is_processing": False,
         }
         # Refresh TTL on reconnect so in-progress history is preserved
         _redis.expire(f"conv_history:{session_id}", _HISTORY_TTL)
@@ -60,8 +61,9 @@ class ConnectionManager:
     def _save_history(self, session_id: str, history: list) -> None:
         _redis.setex(f"conv_history:{session_id}", _HISTORY_TTL, json.dumps(history))
 
-    async def handle_audio_chunk(self, session_id: str, audio_data: str):
-        if session_id not in self.session_data:
+    async def handle_audio_chunk(self, session_id: str, audio_data: str, mime_type: str = "audio/webm"):
+        session = self.session_data.get(session_id)
+        if not session:
             await self.send_message(session_id, {"type": "error", "message": "Session not found"})
             return
 
@@ -69,9 +71,13 @@ class ConnectionManager:
             await self.send_message(session_id, {"type": "error", "message": "Audio chunk too large"})
             return
 
+        if session["is_processing"]:
+            await self.send_message(session_id, {"type": "busy", "message": "Still processing previous audio"})
+            return
+
+        session["is_processing"] = True
         try:
             audio_bytes = base64.b64decode(audio_data)
-            session = self.session_data[session_id]
 
             conversation_history = self._get_history(session_id)
 
@@ -81,6 +87,7 @@ class ConnectionManager:
                 audio_data=audio_bytes,
                 conversation_history=conversation_history,
                 language="ar",
+                mime_type=mime_type,
             )
 
             session["transcriptions"].extend([
@@ -114,6 +121,9 @@ class ConnectionManager:
         except Exception as e:
             logger.error("Error processing audio for session %s: %s", session_id, e)
             await self.send_message(session_id, {"type": "error", "message": "Error processing audio"})
+        finally:
+            if session_id in self.session_data:
+                self.session_data[session_id]["is_processing"] = False
 
     async def end_session(self, session_id: str, db_session_id: int):
         if session_id not in self.session_data:

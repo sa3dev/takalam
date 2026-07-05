@@ -33,16 +33,16 @@ export function useAudioRecorder({ onAudioData, onError }: UseAudioRecorderOptio
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
-      // Handle data available
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
         }
       }
 
-      // Handle recording stop
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        // Use the actual recorded mime type — critical on iOS Safari which records MP4, not WebM
+        const actualMime = mediaRecorder.mimeType || mimeType || 'audio/webm'
+        const audioBlob = new Blob(audioChunksRef.current, { type: actualMime })
         onAudioData?.(audioBlob)
         audioChunksRef.current = []
       }

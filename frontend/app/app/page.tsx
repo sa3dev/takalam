@@ -70,7 +70,7 @@ export default function ConversationPage() {
     try {
       setIsProcessing(true)
       const base64Audio = await blobToBase64(audioBlob)
-      sendAudioChunk(base64Audio)
+      sendAudioChunk(base64Audio, audioBlob.type || 'audio/webm')
     } catch {
       setIsProcessing(false)
     }

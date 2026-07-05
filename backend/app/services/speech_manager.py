@@ -27,13 +27,23 @@ class TTSProvider(ABC):
         pass
 
 
+_MIME_TO_EXT = {
+    "audio/webm": "webm",
+    "audio/webm;codecs=opus": "webm",
+    "audio/mp4": "mp4",
+    "audio/ogg": "ogg",
+    "audio/ogg;codecs=opus": "ogg",
+}
+
+
 class GroqSTT(STTProvider):
     def __init__(self):
         self.client = AsyncGroq(api_key=settings.GROQ_API_KEY)
 
-    async def transcribe(self, audio_data: bytes, language: str = "ar") -> str:
+    async def transcribe(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> str:
+        ext = _MIME_TO_EXT.get(mime_type.split(";")[0].strip(), "webm")
         audio_file = io.BytesIO(audio_data)
-        audio_file.name = "audio.webm"
+        audio_file.name = f"audio.{ext}"
         response = await self.client.audio.transcriptions.create(
             model="whisper-large-v3",
             file=audio_file,
@@ -96,14 +106,29 @@ class SpeechManager:
         self.llm = GroqLLM()
         self.tts: TTSProvider = EdgeTTS()
 
-    async def transcribe_audio(self, audio_data: bytes, language: str = "ar") -> str:
-        return await self.stt.transcribe(audio_data, language)
+    async def transcribe_audio(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> str:
+        return await self.stt.transcribe(audio_data, language, mime_type)
 
     async def generate_response(self, conversation_history: list) -> str:
         return await self.llm.generate_response(conversation_history, self.SYSTEM_PROMPT)
 
     async def synthesize_speech(self, text: str, voice: Optional[str] = None) -> bytes:
         return await self.tts.synthesize(text, voice)
+
+    _INJECTION_SIGNALS = [
+        "ignore tes", "oublie tes", "ignore your", "forget your", "disregard",
+        "bypass", "jailbreak", "pretend you", "act as", "roleplay",
+        "simulate", "you are now", "tu es maintenant", "override",
+        "تجاهل تعليماتك", "انسَ", "تصرف كأنك", "العب دور",
+    ]
+
+    def _sanitize_input(self, text: str) -> str:
+        """Detect prompt injection attempts in transcribed user speech."""
+        lower = text.lower()
+        if any(signal in lower for signal in self._INJECTION_SIGNALS):
+            logger.warning("Prompt injection attempt in user audio — blocking: %.80s", text)
+            return "أُرِيدُ التَّحَدُّثَ بِالْعَرَبِيَّةِ."
+        return text
 
     # Keywords that suggest the model leaked its identity or tech stack
     _LEAK_SIGNALS = [
@@ -125,14 +150,16 @@ class SpeechManager:
         audio_data: bytes,
         conversation_history: list,
         language: str = "ar",
+        mime_type: str = "audio/webm",
     ) -> tuple[str, str, bytes]:
         import time
         t0 = time.perf_counter()
 
-        user_text = await self.transcribe_audio(audio_data, language)
+        user_text = await self.transcribe_audio(audio_data, language, mime_type)
         t1 = time.perf_counter()
 
-        conversation_history.append({"role": "user", "content": user_text})
+        safe_user_text = self._sanitize_input(user_text)
+        conversation_history.append({"role": "user", "content": safe_user_text})
         ai_response = self._sanitize_response(await self.generate_response(conversation_history))
         t2 = time.perf_counter()
 

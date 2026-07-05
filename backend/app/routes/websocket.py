@@ -33,7 +33,11 @@ async def websocket_endpoint(
             message_type = data.get("type")
 
             if message_type == "audio_chunk":
-                await manager.handle_audio_chunk(session_id, data.get("audio_data"))
+                await manager.handle_audio_chunk(
+                    session_id,
+                    data.get("audio_data"),
+                    data.get("mime_type", "audio/webm"),
+                )
 
             elif message_type == "start_session":
                 db_session = DBSession(user_id=current_user.id)
