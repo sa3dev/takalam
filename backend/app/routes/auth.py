@@ -1,11 +1,15 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
-from app.models.database import get_db, User
+from app.models.database import get_db, User, Session as DBSession, Transcription, SessionAnalytics
 from app.schemas.auth import UserCreate, UserResponse, LoginRequest
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.auth_deps import get_current_user
 from app.core.rate_limit import limiter
+from app.core.redis_client import client as _redis
 from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -68,3 +72,33 @@ def logout(response: Response):
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.delete("/me")
+def delete_account(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Permanently delete account and all associated data (RGPD right to erasure)."""
+    user_id = current_user.id
+
+    # Collect session IDs before deletion for Redis cleanup
+    session_ids = [s.id for s in db.query(DBSession.id).filter(DBSession.user_id == user_id).all()]
+
+    # Delete in FK-safe order: analytics → transcriptions → sessions → user
+    if session_ids:
+        db.query(SessionAnalytics).filter(SessionAnalytics.session_id.in_(session_ids)).delete(synchronize_session=False)
+        db.query(Transcription).filter(Transcription.session_id.in_(session_ids)).delete(synchronize_session=False)
+    db.query(DBSession).filter(DBSession.user_id == user_id).delete(synchronize_session=False)
+    db.delete(current_user)
+    db.commit()
+
+    # Clean up any live conversation history in Redis
+    for sid in session_ids:
+        _redis.delete(f"conv_history:{sid}")
+
+    logger.info("Account deleted for user_id=%d", user_id)
+
+    response.delete_cookie(key=_COOKIE_NAME, path="/")
+    return {"message": "Account and all associated data deleted"}

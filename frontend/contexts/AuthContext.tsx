@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, username: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  deleteAccount: () => Promise<void>
   isLoading: boolean
 }
 
@@ -64,8 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  async function deleteAccount() {
+    const response = await fetch('/api/auth/me', { method: 'DELETE', credentials: 'include' })
+    if (!response.ok) throw new Error('Failed to delete account')
+    setUser(null)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, deleteAccount, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

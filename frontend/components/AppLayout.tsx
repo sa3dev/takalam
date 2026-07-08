@@ -101,9 +101,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
               تكلّم
             </span>
           </span>
-          <p style={{ fontSize: '13px', color: 'var(--faint)', fontFamily: 'var(--sans)' }}>
-            {t.footer.tagline}
-          </p>
+          <div className="flex items-center gap-4">
+            <p style={{ fontSize: '13px', color: 'var(--faint)', fontFamily: 'var(--sans)' }}>
+              {t.footer.tagline}
+            </p>
+            <Link
+              href="/privacy"
+              style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--sans)' }}
+              className="no-underline hover:underline"
+            >
+              Confidentialité
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

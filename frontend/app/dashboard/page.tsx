@@ -27,7 +27,7 @@ interface Analytics {
 export default function DashboardPage() {
   const router = useRouter()
   const { t } = useLanguage()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, deleteAccount } = useAuth()
 
   const [sessions, setSessions] = useState<Session[]>([])
   const [selectedSession, setSelectedSession] = useState<number | null>(null)
@@ -88,6 +88,16 @@ export default function DashboardPage() {
   function handleSessionSelect(sessionId: number) {
     setSelectedSession(sessionId)
     fetchAnalytics(sessionId)
+  }
+
+  async function handleDeleteAccount() {
+    if (!confirm('Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.')) return
+    try {
+      await deleteAccount()
+      router.push('/')
+    } catch {
+      alert('Une erreur est survenue. Réessayez.')
+    }
   }
 
   if (isLoading || !user) return null
@@ -203,6 +213,18 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      <div className="mt-12 pt-8 border-t border-calm-border">
+        <h2 className="text-lg font-semibold text-calm-text mb-2">Zone dangereuse</h2>
+        <p className="text-sm text-calm-muted mb-4">
+          La suppression de votre compte efface définitivement toutes vos données (sessions, transcriptions, progression).
+        </p>
+        <button
+          onClick={handleDeleteAccount}
+          className="px-4 py-2 text-sm font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+        >
+          Supprimer mon compte
+        </button>
+      </div>
     </div>
     </AppLayout>
   )

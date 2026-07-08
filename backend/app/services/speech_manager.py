@@ -65,6 +65,15 @@ class GroqLLM(LLMProvider):
             temperature=0.7,
             max_tokens=500,
         )
+        usage = response.usage
+        if usage:
+            logger.info(
+                "groq usage — model: %s | prompt: %d | completion: %d | total: %d tokens",
+                settings.DEFAULT_LLM_MODEL,
+                usage.prompt_tokens,
+                usage.completion_tokens,
+                usage.total_tokens,
+            )
         return response.choices[0].message.content
 
 
