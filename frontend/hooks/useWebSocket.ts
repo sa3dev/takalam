@@ -9,6 +9,7 @@ export interface TranscriptionMessage {
   type: 'transcription'
   speaker: 'user' | 'assistant'
   text: string
+  translation?: string
   is_final: boolean
 }
 
@@ -87,10 +88,10 @@ export function useWebSocket({
           const message: WebSocketMessage = JSON.parse(event.data as string)
           onMessageRef.current?.(message)
           if (message.type === 'transcription') {
-            onTranscriptionRef.current?.(message as TranscriptionMessage)
+            onTranscriptionRef.current?.(message as unknown as TranscriptionMessage)
           } else if (message.type === 'audio_response') {
-            onAudioResponseRef.current?.(message as AudioResponseMessage)
-          } else if (message.type === 'error') {
+            onAudioResponseRef.current?.(message as unknown as AudioResponseMessage)
+          } else if (message.type === 'error' || message.type === 'rate_limited') {
             setConnectionError(message.message as string)
             onErrorRef.current?.(new Error(message.message as string))
           }
@@ -132,8 +133,8 @@ export function useWebSocket({
     }
   }, [])
 
-  const sendAudioChunk = useCallback((audioData: string, mimeType: string) => {
-    sendMessage({ type: 'audio_chunk', audio_data: audioData, mime_type: mimeType })
+  const sendAudioChunk = useCallback((audioData: string, mimeType: string, targetLang?: string) => {
+    sendMessage({ type: 'audio_chunk', audio_data: audioData, mime_type: mimeType, target_lang: targetLang })
   }, [sendMessage])
 
   const startSession = useCallback(() => {

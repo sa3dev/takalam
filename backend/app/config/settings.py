@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     # Comma-separated allowed origins for CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://frontend:3000"
 
+    # Number of trusted reverse proxies that append X-Forwarded-For between the
+    # client and this backend. In this stack the Next.js proxy is always present
+    # (=1); add +1 for each extra edge proxy (nginx, load balancer, …). Used to
+    # extract the real client IP for rate limiting without trusting spoofed
+    # client-supplied X-Forwarded-For entries. Set 0 to disable XFF trust.
+    TRUSTED_PROXY_COUNT: int = 1
+
     AUDIO_SAMPLE_RATE: int = 16000
     AUDIO_CHUNK_SIZE: int = 1024
     WS_HEARTBEAT_INTERVAL: int = 30

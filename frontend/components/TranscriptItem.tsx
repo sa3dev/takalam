@@ -6,10 +6,11 @@ import { useLanguage } from '@/contexts/LanguageContext'
 interface TranscriptItemProps {
   speaker: 'user' | 'assistant'
   text: string
+  translation?: string
   timestamp?: string
 }
 
-export function TranscriptItem({ speaker, text, timestamp }: TranscriptItemProps) {
+export function TranscriptItem({ speaker, text, translation, timestamp }: TranscriptItemProps) {
   const { t } = useLanguage()
   const isUser = speaker === 'user'
 
@@ -35,6 +36,13 @@ export function TranscriptItem({ speaker, text, timestamp }: TranscriptItemProps
 
         {/* Message text */}
         <p className="text-base leading-relaxed arabic">{text}</p>
+
+        {/* Translation of the assistant's Arabic reply, in the user's UI language */}
+        {translation && (
+          <p className="text-sm opacity-70 mt-1.5 pt-1.5 border-t border-current/10 italic" dir="ltr">
+            {translation}
+          </p>
+        )}
 
         {/* Timestamp */}
         {timestamp && (

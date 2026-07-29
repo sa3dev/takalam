@@ -15,14 +15,18 @@ import { Card } from '@/components/Card'
 interface Transcript {
   speaker: 'user' | 'assistant'
   text: string
+  translation?: string
   timestamp: string
 }
 
 export default function ConversationPage() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { user, isLoading } = useAuth()
   const [sessionId] = useState(() => `session-${Date.now()}`)
+  // Keep the current UI language in a ref so the recorder callback never sends a stale value
+  const languageRef = useRef(language)
+  useEffect(() => { languageRef.current = language }, [language])
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -35,7 +39,7 @@ export default function ConversationPage() {
   const handleTranscription = useCallback((message: TranscriptionMessage) => {
     if (!message.is_final) return
     const timestamp = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
-    setTranscripts(prev => [...prev, { speaker: message.speaker, text: message.text, timestamp }])
+    setTranscripts(prev => [...prev, { speaker: message.speaker, text: message.text, translation: message.translation, timestamp }])
     if (message.speaker === 'user') setIsProcessing(true)
     else setIsProcessing(false)
   }, [])
@@ -59,18 +63,24 @@ export default function ConversationPage() {
     }
   }, [])
 
+  const handleError = useCallback(() => {
+    // Unblock the UI when the server rejects a turn (rate limit, processing error, …)
+    setIsProcessing(false)
+  }, [])
+
   const { isConnected, connectionError, sendAudioChunk, startSession, endSession } = useWebSocket({
     sessionId,
     isAuthenticated: !!user,
     onTranscription: handleTranscription,
     onAudioResponse: handleAudioResponse,
+    onError: handleError,
   })
 
   const handleAudioRecorded = useCallback(async (audioBlob: Blob) => {
     try {
       setIsProcessing(true)
       const base64Audio = await blobToBase64(audioBlob)
-      sendAudioChunk(base64Audio, audioBlob.type || 'audio/webm')
+      sendAudioChunk(base64Audio, audioBlob.type || 'audio/webm', languageRef.current)
     } catch {
       setIsProcessing(false)
     }
@@ -128,6 +138,7 @@ export default function ConversationPage() {
                   key={index}
                   speaker={transcript.speaker}
                   text={transcript.text}
+                  translation={transcript.translation}
                   timestamp={transcript.timestamp}
                 />
               ))}

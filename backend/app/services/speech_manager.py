@@ -124,6 +124,21 @@ class SpeechManager:
     async def synthesize_speech(self, text: str, voice: Optional[str] = None) -> bytes:
         return await self.tts.synthesize(text, voice)
 
+    # UI languages we translate the Arabic reply into (Arabic UI needs no translation)
+    _LANG_NAMES = {"fr": "French", "en": "English"}
+
+    async def translate(self, text: str, target_lang: str) -> str:
+        """Translate the assistant's Arabic reply into the user's UI language."""
+        lang_name = self._LANG_NAMES.get(target_lang)
+        if not lang_name:
+            return ""
+        prompt = (
+            f"You are a translator. Translate the Arabic sentence into {lang_name}. "
+            "Output only the translation, with no quotes, notes, or transliteration."
+        )
+        translation = await self.llm.generate_response([{"role": "user", "content": text}], prompt)
+        return translation.strip()
+
     _INJECTION_SIGNALS = [
         "ignore tes", "oublie tes", "ignore your", "forget your", "disregard",
         "bypass", "jailbreak", "pretend you", "act as", "roleplay",
@@ -160,7 +175,9 @@ class SpeechManager:
         conversation_history: list,
         language: str = "ar",
         mime_type: str = "audio/webm",
-    ) -> tuple[str, str, bytes]:
+        target_lang: Optional[str] = None,
+    ) -> tuple[str, str, str, bytes]:
+        import asyncio
         import time
         t0 = time.perf_counter()
 
@@ -173,14 +190,28 @@ class SpeechManager:
         t2 = time.perf_counter()
 
         conversation_history.append({"role": "assistant", "content": ai_response})
-        ai_audio = await self.synthesize_speech(ai_response)
+
+        async def _maybe_translate() -> str:
+            if not target_lang or target_lang == "ar":
+                return ""
+            try:
+                return await self.translate(ai_response, target_lang)
+            except Exception as e:
+                logger.warning("Translation failed: %s", e)
+                return ""
+
+        # Run TTS and translation concurrently — both depend only on ai_response
+        translation, ai_audio = await asyncio.gather(
+            _maybe_translate(),
+            self.synthesize_speech(ai_response),
+        )
         t3 = time.perf_counter()
 
         logger.info(
-            "latency — STT: %.2fs | LLM: %.2fs | TTS: %.2fs | total: %.2fs",
+            "latency — STT: %.2fs | LLM: %.2fs | TTS+trans: %.2fs | total: %.2fs",
             t1 - t0, t2 - t1, t3 - t2, t3 - t0,
         )
-        return user_text, ai_response, ai_audio
+        return user_text, ai_response, translation, ai_audio
 
 
 # Module-level singleton — one instance shared across all WebSocket connections

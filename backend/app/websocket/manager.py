@@ -61,7 +61,7 @@ class ConnectionManager:
     def _save_history(self, session_id: str, history: list) -> None:
         _redis.setex(f"conv_history:{session_id}", _HISTORY_TTL, json.dumps(history))
 
-    async def handle_audio_chunk(self, session_id: str, audio_data: str, mime_type: str = "audio/webm"):
+    async def handle_audio_chunk(self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None):
         session = self.session_data.get(session_id)
         if not session:
             await self.send_message(session_id, {"type": "error", "message": "Session not found"})
@@ -83,11 +83,12 @@ class ConnectionManager:
 
             await self.send_message(session_id, {"type": "processing", "message": "Processing your audio..."})
 
-            user_text, ai_response, ai_audio = await speech_manager.process_conversation_turn(
+            user_text, ai_response, translation, ai_audio = await speech_manager.process_conversation_turn(
                 audio_data=audio_bytes,
                 conversation_history=conversation_history,
                 language="ar",
                 mime_type=mime_type,
+                target_lang=target_lang,
             )
 
             session["transcriptions"].extend([
@@ -110,6 +111,7 @@ class ConnectionManager:
                 "type": "transcription",
                 "speaker": "assistant",
                 "text": ai_response,
+                "translation": translation,
                 "is_final": True,
             })
             await self.send_message(session_id, {
