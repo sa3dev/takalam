@@ -23,7 +23,7 @@ export function TranscriptItem({ speaker, text, translation, timestamp }: Transc
     >
       <div
         className={clsx(
-          'max-w-[70%] rounded-2xl px-4 py-3 shadow-sm',
+          'max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 shadow-sm',
           isUser
             ? 'bg-primary-500 text-white rounded-br-sm'
             : 'bg-calm-surface text-calm-text border border-calm-border rounded-bl-sm'

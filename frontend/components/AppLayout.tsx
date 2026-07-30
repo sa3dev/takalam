@@ -18,7 +18,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--cream)' }}>
+    // Locked to the viewport (dvh, so mobile URL bars don't cut it off) with the
+    // scrolling delegated to <main>: pages that want to fill the screen exactly,
+    // like the conversation, can now ask for h-full instead of guessing the
+    // header and footer heights.
+    <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'var(--cream)' }}>
 
       {/* ── Header ── */}
       <header style={{ background: 'var(--clay-d)', borderBottom: '1px solid var(--clay)' }}>
@@ -84,7 +88,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* ── Main content ── */}
-      <main className="flex-1">
+      {/* min-h-0 lets this shrink below its content so the overflow lands here
+          rather than on the page — one scrollbar, and the footer stays put. */}
+      <main className="flex-1 min-h-0 overflow-y-auto">
         {children}
       </main>
 

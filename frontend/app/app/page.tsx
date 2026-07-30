@@ -140,19 +140,25 @@ export default function ConversationPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 py-8 h-[calc(100vh-200px)] flex flex-col">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+      <div className="max-w-4xl mx-auto px-4 py-6 h-full flex flex-col">
+        <div className="mb-4 space-y-3">
+          <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-bold text-calm-text">{t.home.title}</h2>
             <ConnectionStatus isConnected={isConnected} error={connectionError} />
           </div>
-          <p className="text-calm-muted text-center mb-4">{t.home.subtitle}</p>
-          <div className="max-w-sm mx-auto">
+          {/* Onboarding line — retired once the conversation starts, where the
+              transcript needs the room more than the instructions do. */}
+          {transcripts.length === 0 && (
+            <p className="text-calm-muted text-center">{t.home.subtitle}</p>
+          )}
+          <div className="max-w-sm mx-auto w-full">
             <QuotaGauge quota={quota} />
           </div>
         </div>
 
-        <Card className="flex-1 overflow-y-auto scrollbar-thin mb-6">
+        {/* min-h-0 is what makes flex-1 + overflow actually scroll here: without
+            it the card grows to fit the transcript and pushes the controls off. */}
+        <Card className="flex-1 min-h-0 overflow-y-auto scrollbar-thin mb-4">
           {transcripts.length === 0 ? (
             <div className="flex items-center justify-center h-full text-calm-muted">
               <p className="text-center">
@@ -187,7 +193,7 @@ export default function ConversationPage() {
           )}
         </Card>
 
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-3 shrink-0">
           {isRecording && (
             <div className="text-2xl font-mono text-red-500 font-bold">
               {formatRecordingTime(recordingTime)}
@@ -202,7 +208,7 @@ export default function ConversationPage() {
             {isRecording ? t.home.recording : isProcessing ? t.home.processing : t.home.clickToRecord}
           </p>
           {transcripts.length > 0 && (
-            <button onClick={handleEndSession} className="btn btn-secondary mt-4">
+            <button onClick={handleEndSession} className="btn btn-secondary mt-1">
               {t.home.endSession}
             </button>
           )}
