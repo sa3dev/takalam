@@ -174,13 +174,21 @@ export function useWebSocket({
     sendMessage({ type: 'end_session' })
   }, [sendMessage])
 
+  // isAuthenticated has to be a dependency, not just a ref read inside connect():
+  // the auth cookie is verified asynchronously, so on a page load this hook mounts
+  // while the user is still null. Without a re-run when auth resolves, the single
+  // connect() call bails out early and nothing ever retries — no socket, no
+  // onclose, no backoff — leaving the UI on "connecting" forever. It only appeared
+  // to work when arriving from the login form, which sets the user before /app
+  // mounts. It also closes the socket on logout, which is the behaviour we want.
   useEffect(() => {
+    if (!isAuthenticated) return
     connect()
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       wsRef.current?.close()
     }
-  }, [connect])
+  }, [connect, isAuthenticated])
 
   return { isConnected, connectionError, sendMessage, sendAudioChunk, startSession, endSession, disconnect }
 }

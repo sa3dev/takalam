@@ -16,6 +16,11 @@
     --clay-d:     oklch(0.3   0.06  40);
     --terra-soft: oklch(0.89  0.05  56);
     --line:       oklch(0.87  0.018 70);
+    /* Warm red — same chroma register as the terracottas, so a failure reads as
+       part of this interface instead of a browser alert pasted on top of it. */
+    --danger:      oklch(0.55  0.17  27);
+    --danger-deep: oklch(0.44  0.15  27);
+    --danger-soft: oklch(0.94  0.035 32);
     --disp: "Space Grotesk", system-ui, sans-serif;
     --sans: "Hanken Grotesk", system-ui, sans-serif;
   }

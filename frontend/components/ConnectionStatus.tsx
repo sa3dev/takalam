@@ -1,6 +1,5 @@
 'use client'
 
-import { clsx } from 'clsx'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface ConnectionStatusProps {
@@ -8,39 +7,42 @@ interface ConnectionStatusProps {
   error?: string | null
 }
 
+// Palette-native rather than Tailwind's stock green/yellow/red, which sat on the
+// terracotta interface like a system dialog dropped on top of it. Connected is
+// deliberately the quietest of the three: it is the normal state and shouldn't
+// ask for attention.
+const TONES = {
+  connected:  { bg: 'var(--cream-2)',     fg: 'var(--muted)',       dot: 'var(--terra)' },
+  connecting: { bg: 'var(--terra-soft)',  fg: 'var(--clay)',        dot: 'var(--terra-deep)' },
+  error:      { bg: 'var(--danger-soft)', fg: 'var(--danger-deep)', dot: 'var(--danger)' },
+} as const
+
 export function ConnectionStatus({ isConnected, error }: ConnectionStatusProps) {
   const { t } = useLanguage()
 
+  const state = isConnected ? 'connected' : error ? 'error' : 'connecting'
+  const tone = TONES[state]
+  const label = isConnected
+    ? t.home.connected
+    : error
+    ? `${t.home.error} : ${error}`
+    : t.home.connecting
+
   return (
     <div
-      className={clsx(
-        'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-        isConnected
-          ? 'bg-green-50 text-green-700 border border-green-200'
-          : error
-          ? 'bg-red-50 text-red-700 border border-red-200'
-          : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-      )}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm max-w-[60%] shrink-0"
+      style={{ background: tone.bg, color: tone.fg, fontFamily: 'var(--sans)' }}
+      role="status"
+      aria-live="polite"
     >
-      {/* Status indicator */}
-      <div
-        className={clsx(
-          'w-2 h-2 rounded-full',
-          isConnected
-            ? 'bg-green-500 animate-pulse'
-            : error
-            ? 'bg-red-500'
-            : 'bg-yellow-500 animate-pulse'
-        )}
+      <span
+        className={`w-2 h-2 rounded-full shrink-0 ${state === 'error' ? '' : 'animate-pulse'}`}
+        style={{ background: tone.dot }}
       />
-
-      {/* Status text */}
-      <span className="font-medium">
-        {isConnected
-          ? t.home.connected
-          : error
-          ? `${t.home.error}: ${error}`
-          : t.home.connecting}
+      {/* Server messages can be long; truncate rather than let the row wrap and
+          push the gauge and the transcript down the page. */}
+      <span className="font-medium truncate" title={label}>
+        {label}
       </span>
     </div>
   )
