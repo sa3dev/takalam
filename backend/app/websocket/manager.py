@@ -12,8 +12,13 @@ from app.core.rate_limit import consume_spoken_seconds
 
 logger = logging.getLogger(__name__)
 
-# ~10 MB decoded → ~13.3 MB base64
-_MAX_AUDIO_B64_LEN = 14_000_000
+# ~1 MB decoded — roughly 3 to 6 minutes of Opus depending on bitrate, which is
+# already far more than a conversational turn. The previous 14 MB allowed close
+# to an hour of audio in a single chunk, and since the daily quota is checked
+# before the turn and billed after it, one such chunk let an exhausted free
+# account buy itself an hour of Whisper. The ceiling is what makes the "overshoot
+# by one utterance" rule mean an utterance.
+_MAX_AUDIO_B64_LEN = 1_400_000
 # Keep last 20 user+assistant pairs to cap LLM token cost
 _MAX_HISTORY_MESSAGES = 40
 # Conversation history TTL in Redis: 1h of inactivity, refreshed on reconnect

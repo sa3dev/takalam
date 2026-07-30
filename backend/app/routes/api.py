@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from typing import List
 from app.config.settings import settings
@@ -22,7 +22,7 @@ from app.schemas.billing import QuotaResponse, UpgradeInterestRequest
 from app.services.shadow_feedback import ShadowFeedbackAnalyzer
 from app.services.paywall import record_interest
 from app.core.auth_deps import get_current_user
-from app.core.rate_limit import get_spoken_seconds_today, quota_resets_at
+from app.core.rate_limit import get_spoken_seconds_today, quota_resets_at, limiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["api"])
@@ -203,7 +203,9 @@ def get_my_quota(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/users/me/upgrade-interest", status_code=201)
+@limiter.limit("10/hour")
 def register_upgrade_interest(
+    request: Request,
     payload: UpgradeInterestRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
