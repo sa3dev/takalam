@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 
 class STTProvider(ABC):
     @abstractmethod
-    async def transcribe(self, audio_data: bytes, language: str = "ar") -> str:
+    async def transcribe(self, audio_data: bytes, language: str = "ar") -> tuple[str, float]:
+        """Return (transcript, spoken_seconds) — the duration is what the free
+        plan's daily quota is metered on, so it must come from the audio itself
+        rather than from wall-clock session time."""
         pass
 
 
@@ -40,17 +43,20 @@ class GroqSTT(STTProvider):
     def __init__(self):
         self.client = AsyncGroq(api_key=settings.GROQ_API_KEY)
 
-    async def transcribe(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> str:
+    async def transcribe(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> tuple[str, float]:
         ext = _MIME_TO_EXT.get(mime_type.split(";")[0].strip(), "webm")
         audio_file = io.BytesIO(audio_data)
         audio_file.name = f"audio.{ext}"
+        # verbose_json (instead of text) so Whisper also reports the audio
+        # duration — the metric the freemium quota is billed on.
         response = await self.client.audio.transcriptions.create(
             model="whisper-large-v3",
             file=audio_file,
             language=language,
-            response_format="text",
+            response_format="verbose_json",
         )
-        return response
+        duration = getattr(response, "duration", None)
+        return response.text, float(duration or 0.0)
 
 
 class GroqLLM(LLMProvider):
@@ -115,7 +121,7 @@ class SpeechManager:
         self.llm = GroqLLM()
         self.tts: TTSProvider = EdgeTTS()
 
-    async def transcribe_audio(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> str:
+    async def transcribe_audio(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> tuple[str, float]:
         return await self.stt.transcribe(audio_data, language, mime_type)
 
     async def generate_response(self, conversation_history: list) -> str:
@@ -176,12 +182,12 @@ class SpeechManager:
         language: str = "ar",
         mime_type: str = "audio/webm",
         target_lang: Optional[str] = None,
-    ) -> tuple[str, str, str, bytes]:
+    ) -> tuple[str, str, str, bytes, float]:
         import asyncio
         import time
         t0 = time.perf_counter()
 
-        user_text = await self.transcribe_audio(audio_data, language, mime_type)
+        user_text, spoken_seconds = await self.transcribe_audio(audio_data, language, mime_type)
         t1 = time.perf_counter()
 
         safe_user_text = self._sanitize_input(user_text)
@@ -208,10 +214,10 @@ class SpeechManager:
         t3 = time.perf_counter()
 
         logger.info(
-            "latency — STT: %.2fs | LLM: %.2fs | TTS+trans: %.2fs | total: %.2fs",
-            t1 - t0, t2 - t1, t3 - t2, t3 - t0,
+            "latency — STT: %.2fs | LLM: %.2fs | TTS+trans: %.2fs | total: %.2fs | spoken: %.1fs",
+            t1 - t0, t2 - t1, t3 - t2, t3 - t0, spoken_seconds,
         )
-        return user_text, ai_response, translation, ai_audio
+        return user_text, ai_response, translation, ai_audio, spoken_seconds
 
 
 # Module-level singleton — one instance shared across all WebSocket connections

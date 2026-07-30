@@ -8,6 +8,7 @@ from datetime import datetime
 from app.services.speech_manager import speech_manager
 from app.models.database import SessionLocal, Session, Transcription
 from app.core.redis_client import client as _redis
+from app.core.rate_limit import consume_spoken_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +29,16 @@ class ConnectionManager:
         # Conversation history lives in Redis for persistence across restarts.
         self.session_data: Dict[str, dict] = {}
 
-    async def connect(self, websocket: WebSocket, session_id: str):
+    async def connect(self, websocket: WebSocket, session_id: str, user_id: int):
         await websocket.accept()
         self.active_connections[session_id] = websocket
         self.session_data[session_id] = {
             "transcriptions": [],
             "started_at": datetime.utcnow(),
             "is_processing": False,
+            # Needed to bill spoken seconds against the right daily counter;
+            # session_id is prefixed with it but must not be parsed back out.
+            "user_id": user_id,
         }
         # Refresh TTL on reconnect so in-progress history is preserved
         _redis.expire(f"conv_history:{session_id}", _HISTORY_TTL)
@@ -83,13 +87,18 @@ class ConnectionManager:
 
             await self.send_message(session_id, {"type": "processing", "message": "Processing your audio..."})
 
-            user_text, ai_response, translation, ai_audio = await speech_manager.process_conversation_turn(
+            user_text, ai_response, translation, ai_audio, spoken_seconds = await speech_manager.process_conversation_turn(
                 audio_data=audio_bytes,
                 conversation_history=conversation_history,
                 language="ar",
                 mime_type=mime_type,
                 target_lang=target_lang,
             )
+
+            # Bill the turn once we know how much was actually spoken. Charged
+            # after the fact rather than up front so a turn that fails to
+            # transcribe costs the user nothing.
+            spoken_total = consume_spoken_seconds(session["user_id"], spoken_seconds)
 
             session["transcriptions"].extend([
                 {"speaker": "user", "text": user_text},
@@ -118,6 +127,12 @@ class ConnectionManager:
                 "type": "audio_response",
                 "audio_data": base64.b64encode(ai_audio).decode("utf-8"),
                 "format": "mp3",
+            })
+            # Live gauge update. Only the running total travels — the client
+            # already knows its plan and limit from GET /api/users/me/quota.
+            await self.send_message(session_id, {
+                "type": "quota_update",
+                "spoken_seconds_used": spoken_total,
             })
 
         except Exception as e:

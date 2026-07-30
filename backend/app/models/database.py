@@ -20,6 +20,10 @@ def get_db():
         db.close()
 
 
+PLAN_FREE = "free"
+PLAN_PRO = "pro"
+
+
 # Models
 class User(Base):
     """User model."""
@@ -31,6 +35,12 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Freemium plan — "free" (daily spoken-minutes quota) or "pro" (uncapped).
+    # No billing integration yet: Pro is granted manually while we measure
+    # paywall intent, so this column is the single source of truth for access.
+    plan = Column(String, nullable=False, server_default=PLAN_FREE, default=PLAN_FREE)
+    plan_updated_at = Column(DateTime, nullable=True)
 
     # Relationships
     sessions = relationship("Session", back_populates="user")
@@ -90,6 +100,24 @@ class SessionAnalytics(Base):
 
     # Relationships
     session = relationship("Session", back_populates="analytics")
+
+
+class PaywallEvent(Base):
+    """Measure-first funnel: both halves of the conversion rate in one table.
+
+    "wall_hit" is the denominator (a free user ran out of daily minutes and was
+    shown the upgrade screen, recorded once per user per day), "interest" is the
+    numerator (they clicked through and picked a billing period). Comparing the
+    two tells us whether the price or the wall is the problem — before writing
+    any billing code.
+    """
+    __tablename__ = "paywall_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    event = Column(String, nullable=False)  # "wall_hit" | "interest"
+    plan_choice = Column(String, nullable=True)  # "monthly" | "annual", interest only
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
 def init_db():

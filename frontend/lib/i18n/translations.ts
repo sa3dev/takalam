@@ -46,6 +46,27 @@ export const translations = {
     // Footer
     footer: {
       tagline: "Takalam - Apprenez l'arabe avec confiance et sans peur"
+    },
+    // Daily speaking allowance + upgrade screen
+    quota: {
+      label: "Temps de parole aujourd'hui",
+      remaining: "restantes",
+      proLabel: "Pro — temps de parole illimité",
+      resets: "Recharge à minuit",
+      wallTitle: "Tu as utilisé tes minutes du jour",
+      wallBody: "Tes minutes reviennent à minuit. Ou continue sans limite dès maintenant.",
+      monthly: "Mensuel",
+      annual: "Annuel",
+      perMonth: "/mois",
+      perYear: "/an",
+      annualHint: "2 mois offerts",
+      proFeatures: "Temps de parole illimité, historique complet et suivi détaillé de tes progrès.",
+      cta: "Je veux Takalam Pro",
+      ctaPending: "Enregistrement…",
+      notNow: "Plus tard",
+      thanksTitle: "Merci, c'est noté !",
+      thanksBody: "Les abonnements ne sont pas encore ouverts — on te préviendra dès que c'est prêt. En attendant, tes minutes reviennent à minuit.",
+      close: "Fermer"
     }
   },
   en: {
@@ -91,6 +112,26 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
+    },
+    quota: {
+      label: "Speaking time today",
+      remaining: "left",
+      proLabel: "Pro — unlimited speaking time",
+      resets: "Resets at midnight",
+      wallTitle: "You've used today's minutes",
+      wallBody: "Your minutes come back at midnight. Or keep going without limits right now.",
+      monthly: "Monthly",
+      annual: "Annual",
+      perMonth: "/month",
+      perYear: "/year",
+      annualHint: "2 months free",
+      proFeatures: "Unlimited speaking time, full history and detailed progress tracking.",
+      cta: "I want Takalam Pro",
+      ctaPending: "Saving…",
+      notNow: "Not now",
+      thanksTitle: "Thanks, noted!",
+      thanksBody: "Subscriptions aren't open yet — we'll let you know as soon as they are. In the meantime, your minutes come back at midnight.",
+      close: "Close"
     }
   },
   es: {
@@ -136,6 +177,26 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
+    },
+    quota: {
+      label: "Tiempo de habla de hoy",
+      remaining: "restantes",
+      proLabel: "Pro — tiempo de habla ilimitado",
+      resets: "Se recarga a medianoche",
+      wallTitle: "Has usado tus minutos de hoy",
+      wallBody: "Tus minutos vuelven a medianoche. O sigue sin límites ahora mismo.",
+      monthly: "Mensual",
+      annual: "Anual",
+      perMonth: "/mes",
+      perYear: "/año",
+      annualHint: "2 meses gratis",
+      proFeatures: "Tiempo de habla ilimitado, historial completo y seguimiento detallado de tu progreso.",
+      cta: "Quiero Takalam Pro",
+      ctaPending: "Guardando…",
+      notNow: "Más tarde",
+      thanksTitle: "¡Gracias, anotado!",
+      thanksBody: "Las suscripciones aún no están abiertas — te avisaremos en cuanto lo estén. Mientras tanto, tus minutos vuelven a medianoche.",
+      close: "Cerrar"
     }
   },
   it: {
@@ -181,6 +242,26 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
+    },
+    quota: {
+      label: "Tempo di parlato oggi",
+      remaining: "rimanenti",
+      proLabel: "Pro — tempo di parlato illimitato",
+      resets: "Si ricarica a mezzanotte",
+      wallTitle: "Hai usato i minuti di oggi",
+      wallBody: "I tuoi minuti tornano a mezzanotte. Oppure continua subito senza limiti.",
+      monthly: "Mensile",
+      annual: "Annuale",
+      perMonth: "/mese",
+      perYear: "/anno",
+      annualHint: "2 mesi gratis",
+      proFeatures: "Tempo di parlato illimitato, cronologia completa e monitoraggio dettagliato dei tuoi progressi.",
+      cta: "Voglio Takalam Pro",
+      ctaPending: "Salvataggio…",
+      notNow: "Più tardi",
+      thanksTitle: "Grazie, annotato!",
+      thanksBody: "Gli abbonamenti non sono ancora aperti — ti avviseremo appena saranno pronti. Nel frattempo, i tuoi minuti tornano a mezzanotte.",
+      close: "Chiudi"
     }
   },
   ru: {
@@ -226,6 +307,26 @@ export const translations = {
     },
     footer: {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
+    },
+    quota: {
+      label: "Время речи сегодня",
+      remaining: "осталось",
+      proLabel: "Pro — неограниченное время речи",
+      resets: "Обновится в полночь",
+      wallTitle: "Вы использовали минуты на сегодня",
+      wallBody: "Минуты вернутся в полночь. Или продолжайте без ограничений прямо сейчас.",
+      monthly: "Ежемесячно",
+      annual: "Ежегодно",
+      perMonth: "/мес",
+      perYear: "/год",
+      annualHint: "2 месяца бесплатно",
+      proFeatures: "Неограниченное время речи, полная история и подробное отслеживание прогресса.",
+      cta: "Хочу Takalam Pro",
+      ctaPending: "Сохранение…",
+      notNow: "Позже",
+      thanksTitle: "Спасибо, записали!",
+      thanksBody: "Подписки пока не открыты — мы сообщим, как только они появятся. А пока ваши минуты вернутся в полночь.",
+      close: "Закрыть"
     }
   },
   zh: {
@@ -271,6 +372,29 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
+    },
+    quota: {
+      label: "今日口语时间",
+      // The gauge renders "{time} {remaining}"; "剩余" before the number would
+      // read more naturally in Chinese, so "可用" ("available") is used to keep
+      // the sentence right in the order the component imposes.
+      remaining: "可用",
+      proLabel: "Pro — 无限口语时间",
+      resets: "午夜重置",
+      wallTitle: "今天的时间已用完",
+      wallBody: "您的时间将在午夜恢复。或者现在就无限畅聊。",
+      monthly: "月付",
+      annual: "年付",
+      perMonth: "/月",
+      perYear: "/年",
+      annualHint: "赠送 2 个月",
+      proFeatures: "无限口语时间、完整历史记录和详细的进度跟踪。",
+      cta: "我想要 Takalam Pro",
+      ctaPending: "保存中…",
+      notNow: "以后再说",
+      thanksTitle: "谢谢，已记录！",
+      thanksBody: "订阅尚未开放 — 开放后我们会第一时间通知您。在此期间，您的时间将在午夜恢复。",
+      close: "关闭"
     }
   },
   ar: {
@@ -316,6 +440,26 @@ export const translations = {
     },
     footer: {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
+    },
+    quota: {
+      label: "وقت التحدث اليوم",
+      remaining: "متبقية",
+      proLabel: "برو — وقت تحدث غير محدود",
+      resets: "يتجدد عند منتصف الليل",
+      wallTitle: "لقد استخدمت دقائق اليوم",
+      wallBody: "ستعود دقائقك عند منتصف الليل. أو تابع بلا حدود الآن.",
+      monthly: "شهري",
+      annual: "سنوي",
+      perMonth: "/شهر",
+      perYear: "/سنة",
+      annualHint: "شهران مجانًا",
+      proFeatures: "وقت تحدث غير محدود، وسجل كامل، ومتابعة مفصّلة لتقدمك.",
+      cta: "أريد تكلم برو",
+      ctaPending: "جارٍ الحفظ…",
+      notNow: "لاحقًا",
+      thanksTitle: "شكرًا، تم التسجيل!",
+      thanksBody: "الاشتراكات لم تُفتح بعد — سنخبرك فور جاهزيتها. في هذه الأثناء، ستعود دقائقك عند منتصف الليل.",
+      close: "إغلاق"
     }
   }
 }

@@ -40,6 +40,19 @@ class Settings(BaseSettings):
     # client-supplied X-Forwarded-For entries. Set 0 to disable XFF trust.
     TRUSTED_PROXY_COUNT: int = 1
 
+    # --- Freemium ------------------------------------------------------------
+    # The free plan is metered in *spoken* seconds (the audio duration Whisper
+    # reports), not wall-clock session time: a learner who hesitates before
+    # speaking must not burn their daily allowance for it — hesitation is
+    # exactly the behaviour this product exists to make safe.
+    # Tunable via env so the wall can be moved without a code deploy.
+    FREE_DAILY_SPOKEN_SECONDS: int = 600  # 10 minutes/day, resets at UTC midnight
+
+    # Displayed on the paywall. No billing integration yet — these are the
+    # prices we are measuring intent against.
+    PRO_PRICE_MONTHLY_EUR: float = 12.99
+    PRO_PRICE_ANNUAL_EUR: float = 129.0
+
     AUDIO_SAMPLE_RATE: int = 16000
     AUDIO_CHUNK_SIZE: int = 1024
     WS_HEARTBEAT_INTERVAL: int = 30

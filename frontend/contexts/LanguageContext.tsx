@@ -31,7 +31,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const value: LanguageContextType = {
     language,
     setLanguage,
-    t: translations[language]
+    // French is the reference locale (TranslationKeys is derived from it), so a
+    // section not yet translated falls back to it instead of crashing on an
+    // undefined group. Shipping a locale one section behind beats blocking it.
+    t: { ...translations.fr, ...translations[language] }
   }
 
   return (

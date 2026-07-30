@@ -4,8 +4,15 @@ from sqlalchemy.orm import Session
 from app.websocket.manager import manager
 from app.models.database import get_db, Session as DBSession
 from app.core.auth_deps import get_ws_user
-from app.core.rate_limit import check_ws_turn_limit
+from app.core.rate_limit import (
+    check_ws_turn_limit,
+    get_spoken_seconds_today,
+    has_quota_left,
+    quota_resets_at,
+)
+from app.config.settings import settings
 from app.models.database import User
+from app.services.paywall import record_wall_hit
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -32,7 +39,7 @@ async def websocket_endpoint(
     db_session_id = None
 
     try:
-        await manager.connect(websocket, scoped_session_id)
+        await manager.connect(websocket, scoped_session_id, current_user.id)
 
         while True:
             data = await websocket.receive_json()
@@ -40,13 +47,28 @@ async def websocket_endpoint(
 
             if message_type == "audio_chunk":
                 # Per-user cap on paid STT+LLM+TTS turns — checked before any
-                # provider call so rejected turns incur no cost.
+                # provider call so rejected turns incur no cost. Applies to
+                # every plan: this is an abuse ceiling, not a product limit.
                 if not check_ws_turn_limit(current_user.id):
                     await manager.send_message(scoped_session_id, {
                         "type": "rate_limited",
                         "message": "Trop de messages en peu de temps. Patiente un instant avant de continuer.",
                     })
                     continue
+
+                # Freemium daily allowance — the limit Pro lifts. Distinct from
+                # the cap above so the user sees a sales screen only when they
+                # genuinely ran out of minutes, not when they simply talk fast.
+                if not has_quota_left(current_user.id, current_user.plan):
+                    record_wall_hit(db, current_user.id)
+                    await manager.send_message(scoped_session_id, {
+                        "type": "quota_exceeded",
+                        "spoken_seconds_used": get_spoken_seconds_today(current_user.id),
+                        "spoken_seconds_limit": settings.FREE_DAILY_SPOKEN_SECONDS,
+                        "resets_at": quota_resets_at().isoformat(),
+                    })
+                    continue
+
                 await manager.handle_audio_chunk(
                     scoped_session_id,
                     data.get("audio_data"),

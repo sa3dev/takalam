@@ -2,14 +2,23 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWebSocket, TranscriptionMessage, AudioResponseMessage } from '@/hooks/useWebSocket'
+import {
+  useWebSocket,
+  TranscriptionMessage,
+  AudioResponseMessage,
+  QuotaUpdateMessage,
+  QuotaExceededMessage,
+} from '@/hooks/useWebSocket'
 import { useAudioRecorder, blobToBase64, formatRecordingTime } from '@/hooks/useAudioRecorder'
+import { useQuota } from '@/hooks/useQuota'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/AppLayout'
 import { RecordButton } from '@/components/RecordButton'
 import { TranscriptItem } from '@/components/TranscriptItem'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
+import { QuotaGauge } from '@/components/QuotaGauge'
+import { PaywallModal } from '@/components/PaywallModal'
 import { Card } from '@/components/Card'
 
 interface Transcript {
@@ -29,6 +38,7 @@ export default function ConversationPage() {
   useEffect(() => { languageRef.current = language }, [language])
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
 
@@ -68,11 +78,27 @@ export default function ConversationPage() {
     setIsProcessing(false)
   }, [])
 
+  const { quota, applyUsage } = useQuota(!!user)
+
+  const handleQuotaUpdate = useCallback((message: QuotaUpdateMessage) => {
+    applyUsage(message.spoken_seconds_used)
+  }, [applyUsage])
+
+  const handleQuotaExceeded = useCallback((message: QuotaExceededMessage) => {
+    // The turn was refused before any provider call, so nothing is coming back:
+    // release the UI, settle the gauge on the real total, then show the wall.
+    setIsProcessing(false)
+    applyUsage(message.spoken_seconds_used)
+    setIsPaywallOpen(true)
+  }, [applyUsage])
+
   const { isConnected, connectionError, sendAudioChunk, startSession, endSession } = useWebSocket({
     sessionId,
     isAuthenticated: !!user,
     onTranscription: handleTranscription,
     onAudioResponse: handleAudioResponse,
+    onQuotaUpdate: handleQuotaUpdate,
+    onQuotaExceeded: handleQuotaExceeded,
     onError: handleError,
   })
 
@@ -121,6 +147,9 @@ export default function ConversationPage() {
             <ConnectionStatus isConnected={isConnected} error={connectionError} />
           </div>
           <p className="text-calm-muted text-center mb-4">{t.home.subtitle}</p>
+          <div className="max-w-sm mx-auto">
+            <QuotaGauge quota={quota} />
+          </div>
         </div>
 
         <Card className="flex-1 overflow-y-auto scrollbar-thin mb-6">
@@ -180,6 +209,12 @@ export default function ConversationPage() {
         </div>
 
         <audio ref={audioRef} className="hidden" />
+
+        <PaywallModal
+          open={isPaywallOpen}
+          quota={quota}
+          onClose={() => setIsPaywallOpen(false)}
+        />
       </div>
     </AppLayout>
   )

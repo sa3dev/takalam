@@ -19,12 +19,31 @@ export interface AudioResponseMessage {
   format: string
 }
 
+/** Running total of speech metered today, pushed after each completed turn so
+ * the gauge moves without polling. Plan and limit come from the quota endpoint. */
+export interface QuotaUpdateMessage {
+  type: 'quota_update'
+  spoken_seconds_used: number
+}
+
+/** The free plan's daily allowance is spent: the turn was refused before any
+ * provider call. Not routed through onError — this is a product limit with its
+ * own screen, not a failure. */
+export interface QuotaExceededMessage {
+  type: 'quota_exceeded'
+  spoken_seconds_used: number
+  spoken_seconds_limit: number
+  resets_at: string
+}
+
 export interface UseWebSocketOptions {
   sessionId: string
   isAuthenticated: boolean
   onMessage?: (message: WebSocketMessage) => void
   onTranscription?: (message: TranscriptionMessage) => void
   onAudioResponse?: (message: AudioResponseMessage) => void
+  onQuotaUpdate?: (message: QuotaUpdateMessage) => void
+  onQuotaExceeded?: (message: QuotaExceededMessage) => void
   onError?: (error: Error) => void
 }
 
@@ -36,6 +55,8 @@ export function useWebSocket({
   onMessage,
   onTranscription,
   onAudioResponse,
+  onQuotaUpdate,
+  onQuotaExceeded,
   onError,
 }: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null)
@@ -48,12 +69,16 @@ export function useWebSocket({
   const onMessageRef = useRef(onMessage)
   const onTranscriptionRef = useRef(onTranscription)
   const onAudioResponseRef = useRef(onAudioResponse)
+  const onQuotaUpdateRef = useRef(onQuotaUpdate)
+  const onQuotaExceededRef = useRef(onQuotaExceeded)
   const onErrorRef = useRef(onError)
   const isAuthenticatedRef = useRef(isAuthenticated)
   useEffect(() => {
     onMessageRef.current = onMessage
     onTranscriptionRef.current = onTranscription
     onAudioResponseRef.current = onAudioResponse
+    onQuotaUpdateRef.current = onQuotaUpdate
+    onQuotaExceededRef.current = onQuotaExceeded
     onErrorRef.current = onError
     isAuthenticatedRef.current = isAuthenticated
   })
@@ -91,6 +116,10 @@ export function useWebSocket({
             onTranscriptionRef.current?.(message as unknown as TranscriptionMessage)
           } else if (message.type === 'audio_response') {
             onAudioResponseRef.current?.(message as unknown as AudioResponseMessage)
+          } else if (message.type === 'quota_update') {
+            onQuotaUpdateRef.current?.(message as unknown as QuotaUpdateMessage)
+          } else if (message.type === 'quota_exceeded') {
+            onQuotaExceededRef.current?.(message as unknown as QuotaExceededMessage)
           } else if (message.type === 'error' || message.type === 'rate_limited') {
             setConnectionError(message.message as string)
             onErrorRef.current?.(new Error(message.message as string))

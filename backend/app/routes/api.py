@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
+from app.config.settings import settings
 from app.models.database import (
     get_db,
     SessionLocal,
@@ -9,6 +10,7 @@ from app.models.database import (
     SessionAnalytics,
     Transcription,
     User,
+    PLAN_PRO,
 )
 from app.schemas.session import (
     SessionCreate,
@@ -16,8 +18,11 @@ from app.schemas.session import (
     AnalyticsResponse,
     TranscriptionResponse,
 )
+from app.schemas.billing import QuotaResponse, UpgradeInterestRequest
 from app.services.shadow_feedback import ShadowFeedbackAnalyzer
+from app.services.paywall import record_interest
 from app.core.auth_deps import get_current_user
+from app.core.rate_limit import get_spoken_seconds_today, quota_resets_at
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["api"])
@@ -180,6 +185,33 @@ async def analyze_session_background(session_id: int):
         db.rollback()
     finally:
         db.close()
+
+
+@router.get("/users/me/quota", response_model=QuotaResponse)
+def get_my_quota(current_user: User = Depends(get_current_user)):
+    """Daily speech allowance and its state — drives the gauge and the paywall."""
+    return QuotaResponse(
+        plan=current_user.plan,
+        spoken_seconds_used=get_spoken_seconds_today(current_user.id),
+        spoken_seconds_limit=(
+            None if current_user.plan == PLAN_PRO else settings.FREE_DAILY_SPOKEN_SECONDS
+        ),
+        resets_at=quota_resets_at(),
+        pro_price_monthly_eur=settings.PRO_PRICE_MONTHLY_EUR,
+        pro_price_annual_eur=settings.PRO_PRICE_ANNUAL_EUR,
+    )
+
+
+@router.post("/users/me/upgrade-interest", status_code=201)
+def register_upgrade_interest(
+    payload: UpgradeInterestRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Record intent to subscribe. Deliberately does not charge or grant Pro —
+    we are measuring demand at these prices before building checkout."""
+    record_interest(db, current_user.id, payload.plan_choice)
+    return {"status": "recorded", "plan_choice": payload.plan_choice}
 
 
 @router.post("/ws-ticket")
