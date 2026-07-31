@@ -55,12 +55,43 @@ est active. Ce n'est pas critique pour l'intégrité — juste pour le coût.
 
 ## 2. Avant d'ouvrir aux utilisateurs
 
-### [ ] Le quota se contourne en recréant un compte
+Tous les points de cette section sont traités (voir §5), sauf l'arbitrage
+ci-dessous, assumé sciemment.
+
+### [~] Le quota se contourne en recréant un compte — assumé, à surveiller
 
 Aucune vérification d'email à l'inscription : un utilisateur qui tape le mur
-crée un second compte et repart pour 10 minutes. Arbitrage produit à assumer
-consciemment — sans quoi les chiffres de conversion mesureront surtout la
-patience des gens.
+crée un second compte et repart pour 10 minutes.
+
+**Décision (31 juillet 2026) : on ne corrige pas maintenant.** Pendant une phase
+de mesure, la vérification d'email ajoute de la friction à l'inscription, donc
+en haut de l'entonnoir que le paywall cherche précisément à mesurer. Le remède
+fausserait la mesure autant que le mal.
+
+Signaux qui doivent déclencher la vérification d'email :
+
+- une part notable des comptes créés le même jour qu'un `wall_hit` provenant
+  d'une autre adresse — c'est la signature de la recréation de compte ;
+- plusieurs comptes partageant un même préfixe d'adresse (`sam+1@`, `sam+2@`) ;
+- une consommation Groq qui décroche du nombre de comptes actifs.
+
+Requête de détection à lancer périodiquement :
+
+```sql
+SELECT date(u.created_at) AS jour,
+       count(*) AS comptes_crees,
+       count(*) FILTER (WHERE EXISTS (
+         SELECT 1 FROM paywall_events pe
+         WHERE pe.event = 'wall_hit' AND date(pe.created_at) = date(u.created_at)
+       )) AS le_jour_d_un_mur
+FROM users u
+GROUP BY 1 ORDER BY 1 DESC LIMIT 30;
+```
+
+Le jour où le signal apparaît, le correctif est celui de tout le monde : table
+de tokens, endpoint de validation, écran « vérifie ta boîte », parole bloquée
+tant que le compte n'est pas vérifié — et un fournisseur d'envoi à choisir
+(Resend, Postmark, SES).
 
 ---
 
