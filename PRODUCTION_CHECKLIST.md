@@ -55,31 +55,6 @@ est active. Ce n'est pas critique pour l'intégrité — juste pour le coût.
 
 ## 2. Avant d'ouvrir aux utilisateurs
 
-### [ ] Le micro reste actif après le mur
-
-L'utilisateur ferme la modale, reparle, le serveur refuse, la modale revient.
-Le bouton devrait être désactivé avec la raison affichée, plutôt que de tendre
-un piège. C'est le seul endroit où l'app punit une action qu'elle a autorisée.
-
-### [ ] « Recharge à minuit » est faux
-
-Le quota est indexé sur la date **UTC** : le rechargement a lieu à 2h du matin
-à Paris l'été, 1h l'hiver. Deux options : corriger le texte (« à minuit UTC »),
-ou passer la clé Redis sur le fuseau de l'utilisateur — plus juste, mais il faut
-alors stocker ce fuseau.
-
-### [ ] L'écran de remerciement promet une notification
-
-« On te préviendra dès que c'est prêt » — aucun mécanisme d'envoi n'existe. Les
-adresses sont récupérables en base pour un envoi manuel, mais la promesse est
-prise auprès de l'utilisateur. Soit adoucir le texte, soit prévoir l'envoi.
-
-### [ ] Pas de limite de débit sur `POST /sessions/{id}/analyze`
-
-Chaque appel déclenche une analyse LLM. C'est le seul chemin payant que le
-quota freemium ne couvre pas, et rien ne le throttle. Antérieur au freemium,
-mais c'est un trou de coût réel.
-
 ### [ ] Le quota se contourne en recréant un compte
 
 Aucune vérification d'email à l'inscription : un utilisateur qui tape le mur
@@ -148,6 +123,25 @@ volume quotidien de `wall_hit` et la consommation cumulée.
 - [x] **Limite de débit sur `upgrade-interest`** (10/heure) — l'endpoint était
       spammable, ce qui polluait la métrique servant à décider du prix. Vérifié :
       la 11e requête renvoie 429.
+- [x] **Limite de débit sur `POST /sessions/{id}/analyze`** (20/heure) — chaque
+      appel déclenche une analyse LLM, et c'est le seul chemin payant que le
+      quota freemium ne couvre pas. Vérifié : la 21e requête renvoie 429.
+- [x] **Le micro se désactive quand l'allocation est épuisée**, avec le motif
+      affiché et un bouton pour rouvrir le paywall. Sans ce bouton le mur serait
+      une impasse : la modale n'est poussée par le serveur qu'au refus d'un tour,
+      et les tours ne partent plus. Le bouton « Terminer la session » reste
+      accessible — un utilisateur muré doit pouvoir clore proprement.
+- [x] **L'heure de rechargement est affichée dans le fuseau du lecteur.** Les
+      textes annonçaient « minuit » alors que le compteur est indexé sur la date
+      UTC, donc 2h du matin à Paris l'été. Les 3 clés concernées (`resets`,
+      `wallBody`, `thanksBody`) portent maintenant un gabarit `{time}` dans les
+      7 langues, rempli depuis `resets_at` — un instant absolu — via
+      `Intl.DateTimeFormat`. Aucun fuseau à stocker côté serveur.
+- [x] **L'écran de remerciement ne promet plus de notification.** « On te
+      préviendra dès que c'est prêt » engageait un envoi qui n'existe pas. Le
+      texte dit désormais que l'intérêt est enregistré et pèsera dans la
+      décision, ce qui est exactement ce que fait le code. Corrigé dans les
+      7 langues.
 - [x] Le mur tombe **avant** tout appel provider — vérifié, `quota_exceeded`
       immédiat, aucun appel Groq facturé.
 - [x] Déduplication du `wall_hit` — vérifié, deux tours murés ne produisent

@@ -117,7 +117,9 @@ def get_session_analytics(
 
 
 @router.post("/sessions/{session_id}/analyze")
+@limiter.limit("20/hour")
 async def trigger_session_analysis(
+    request: Request,
     session_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),

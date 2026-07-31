@@ -10,7 +10,7 @@ import {
   QuotaExceededMessage,
 } from '@/hooks/useWebSocket'
 import { useAudioRecorder, blobToBase64, formatRecordingTime } from '@/hooks/useAudioRecorder'
-import { useQuota } from '@/hooks/useQuota'
+import { useQuota, isOutOfQuota, formatResetTime } from '@/hooks/useQuota'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/AppLayout'
@@ -79,6 +79,9 @@ export default function ConversationPage() {
   }, [])
 
   const { quota, applyUsage } = useQuota(!!user)
+  // Once the allowance is spent the server refuses every turn, so the mic is
+  // disabled rather than left to invite a click it will punish.
+  const outOfQuota = isOutOfQuota(quota)
 
   const handleQuotaUpdate = useCallback((message: QuotaUpdateMessage) => {
     applyUsage(message.spoken_seconds_used)
@@ -202,11 +205,26 @@ export default function ConversationPage() {
           <RecordButton
             isRecording={isRecording}
             onClick={handleRecordButtonClick}
-            disabled={!isConnected || isProcessing}
+            disabled={!isConnected || isProcessing || outOfQuota}
           />
-          <p className="text-sm text-calm-muted">
-            {isRecording ? t.home.recording : isProcessing ? t.home.processing : t.home.clickToRecord}
-          </p>
+          {outOfQuota ? (
+            <>
+              <p className="text-sm text-calm-muted text-center max-w-xs">
+                {t.quota.wallTitle}
+                {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
+              </p>
+              {/* The wall is a dead end without this: the modal is only pushed
+                  by the server when a turn is refused, and turns are now
+                  blocked before they can be sent. */}
+              <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
+                {t.quota.cta}
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-calm-muted">
+              {isRecording ? t.home.recording : isProcessing ? t.home.processing : t.home.clickToRecord}
+            </p>
+          )}
           {transcripts.length > 0 && (
             <button onClick={handleEndSession} className="btn btn-secondary mt-1">
               {t.home.endSession}

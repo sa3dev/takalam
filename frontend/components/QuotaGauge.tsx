@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx'
 import { useLanguage } from '@/contexts/LanguageContext'
-import type { Quota } from '@/hooks/useQuota'
+import { formatResetTime, type Quota } from '@/hooks/useQuota'
 
 interface QuotaGaugeProps {
   quota: Quota | null
@@ -21,7 +21,7 @@ function formatDuration(totalSeconds: number): string {
 const LOW_REMAINING_SECONDS = 120
 
 export function QuotaGauge({ quota }: QuotaGaugeProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   // Render nothing until the real numbers arrive — an empty bar that fills in
   // a moment later reads as "you already used something".
@@ -68,7 +68,9 @@ export function QuotaGauge({ quota }: QuotaGaugeProps) {
         />
       </div>
 
-      <p className="mt-1.5 text-xs text-calm-muted">{t.quota.resets}</p>
+      <p className="mt-1.5 text-xs text-calm-muted">
+        {t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}
+      </p>
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { clsx } from 'clsx'
 import { useLanguage } from '@/contexts/LanguageContext'
-import type { Quota } from '@/hooks/useQuota'
+import { formatResetTime, type Quota } from '@/hooks/useQuota'
 
 type PlanChoice = 'monthly' | 'annual'
 
@@ -61,6 +61,12 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
 
   if (!open) return null
 
+  // Both bodies name the moment the allowance returns; keep them on the same
+  // clock as the gauge rather than repeating a "midnight" that is only true in
+  // UTC. Falls back to an empty slot if the quota fetch failed.
+  const withResetTime = (template: string) =>
+    template.replace('{time}', quota ? formatResetTime(quota.resets_at, language) : '')
+
   const formatPrice = (amount: number) =>
     new Intl.NumberFormat(language, { style: 'currency', currency: 'EUR' }).format(amount)
 
@@ -81,7 +87,7 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
             <h3 id="paywall-title" className="text-xl font-bold text-calm-text mb-3">
               {t.quota.thanksTitle}
             </h3>
-            <p className="text-calm-muted mb-6">{t.quota.thanksBody}</p>
+            <p className="text-calm-muted mb-6">{withResetTime(t.quota.thanksBody)}</p>
             <button onClick={onClose} className="btn btn-primary w-full" autoFocus>
               {t.quota.close}
             </button>
@@ -91,7 +97,7 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
             <h3 id="paywall-title" className="text-xl font-bold text-calm-text mb-2">
               {t.quota.wallTitle}
             </h3>
-            <p className="text-calm-muted mb-6">{t.quota.wallBody}</p>
+            <p className="text-calm-muted mb-6">{withResetTime(t.quota.wallBody)}</p>
 
             {quota && (
               <div className="grid grid-cols-2 gap-3 mb-4">
