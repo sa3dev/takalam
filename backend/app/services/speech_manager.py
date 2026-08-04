@@ -131,7 +131,17 @@ class SpeechManager:
         return await self.tts.synthesize(text, voice)
 
     # UI languages we translate the Arabic reply into (Arabic UI needs no translation)
-    _LANG_NAMES = {"fr": "French", "en": "English"}
+    # Every UI language except Arabic, which is the source: the interface offers
+    # seven, and a learner who picked one of the others used to get the reply with
+    # no translation at all, silently.
+    _LANG_NAMES = {
+        "fr": "French",
+        "en": "English",
+        "es": "Spanish",
+        "it": "Italian",
+        "ru": "Russian",
+        "zh": "Simplified Chinese",
+    }
 
     async def translate(self, text: str, target_lang: str) -> str:
         """Translate the assistant's Arabic reply into the user's UI language."""
