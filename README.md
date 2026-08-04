@@ -211,6 +211,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+**Tests** (en local, hors Docker) :
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Les tests n'ont besoin ni de PostgreSQL ni de Redis : SQLite en mémoire et un
+Redis simulé. Avec Docker, `docker compose exec backend python -m pytest` suffit.
+
 **Frontend** :
 ```bash
 cd frontend

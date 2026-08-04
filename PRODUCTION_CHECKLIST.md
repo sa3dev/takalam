@@ -214,9 +214,12 @@ dénominateur, un utilisateur muré trois jours de suite compte trois fois.
 ### Lancer les tests
 
 ```bash
-docker compose exec backend pip install -r requirements-dev.txt   # une fois
 docker compose exec backend python -m pytest
 ```
+
+`pytest` et `fakeredis` font partie de l'étage `dev` de l'image backend, donc
+rien à installer et la suite survit à un rebuild. L'image de production, elle,
+ne les embarque pas.
 
 Les tests n'ont besoin ni de Postgres ni de Redis : SQLite en mémoire (avec les
 clés étrangères activées, sans quoi le test de suppression RGPD ne prouverait
