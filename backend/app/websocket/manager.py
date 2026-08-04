@@ -8,7 +8,6 @@ from datetime import datetime
 from app.services.speech_manager import speech_manager
 from app.models.database import SessionLocal, Session, Transcription
 from app.core.redis_client import client as _redis
-from app.core.rate_limit import consume_spoken_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -70,19 +69,24 @@ class ConnectionManager:
     def _save_history(self, session_id: str, history: list) -> None:
         _redis.setex(f"conv_history:{session_id}", _HISTORY_TTL, json.dumps(history))
 
-    async def handle_audio_chunk(self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None):
+    async def handle_audio_chunk(
+        self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None
+    ) -> float | None:
+        """Run one conversation turn. Returns the seconds actually spoken, or
+        None if no transcription happened — the caller holds a quota reservation
+        and needs to know whether to keep it or hand it back."""
         session = self.session_data.get(session_id)
         if not session:
             await self.send_message(session_id, {"type": "error", "message": "Session not found"})
-            return
+            return None
 
         if not audio_data or len(audio_data) > _MAX_AUDIO_B64_LEN:
             await self.send_message(session_id, {"type": "error", "message": "Audio chunk too large"})
-            return
+            return None
 
         if session["is_processing"]:
             await self.send_message(session_id, {"type": "busy", "message": "Still processing previous audio"})
-            return
+            return None
 
         session["is_processing"] = True
         try:
@@ -99,11 +103,6 @@ class ConnectionManager:
                 mime_type=mime_type,
                 target_lang=target_lang,
             )
-
-            # Bill the turn once we know how much was actually spoken. Charged
-            # after the fact rather than up front so a turn that fails to
-            # transcribe costs the user nothing.
-            spoken_total = consume_spoken_seconds(session["user_id"], spoken_seconds)
 
             session["transcriptions"].extend([
                 {"speaker": "user", "text": user_text},
@@ -133,16 +132,12 @@ class ConnectionManager:
                 "audio_data": base64.b64encode(ai_audio).decode("utf-8"),
                 "format": "mp3",
             })
-            # Live gauge update. Only the running total travels — the client
-            # already knows its plan and limit from GET /api/users/me/quota.
-            await self.send_message(session_id, {
-                "type": "quota_update",
-                "spoken_seconds_used": spoken_total,
-            })
+            return spoken_seconds
 
         except Exception as e:
             logger.error("Error processing audio for session %s: %s", session_id, e)
             await self.send_message(session_id, {"type": "error", "message": "Error processing audio"})
+            return None
         finally:
             if session_id in self.session_data:
                 self.session_data[session_id]["is_processing"] = False

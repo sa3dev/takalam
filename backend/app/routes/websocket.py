@@ -6,9 +6,10 @@ from app.models.database import get_db, Session as DBSession
 from app.core.auth_deps import get_ws_user
 from app.core.rate_limit import (
     check_ws_turn_limit,
-    get_spoken_seconds_today,
-    has_quota_left,
+    estimate_spoken_seconds,
     quota_resets_at,
+    reserve_spoken_seconds,
+    settle_spoken_seconds,
 )
 from app.config.settings import settings
 from app.models.database import User
@@ -59,22 +60,42 @@ async def websocket_endpoint(
                 # Freemium daily allowance — the limit Pro lifts. Distinct from
                 # the cap above so the user sees a sales screen only when they
                 # genuinely ran out of minutes, not when they simply talk fast.
-                if not has_quota_left(current_user.id, current_user.plan):
+                # The estimate is claimed atomically here and replaced by the real
+                # duration after transcription, so two tabs can't both find room
+                # in the same remaining second.
+                audio_data = data.get("audio_data") or ""
+                reserved = estimate_spoken_seconds(len(audio_data))
+                allowed, used_before = reserve_spoken_seconds(
+                    current_user.id, current_user.plan, reserved
+                )
+                if not allowed:
                     record_wall_hit(db, current_user.id)
                     await manager.send_message(scoped_session_id, {
                         "type": "quota_exceeded",
-                        "spoken_seconds_used": get_spoken_seconds_today(current_user.id),
+                        "spoken_seconds_used": used_before,
                         "spoken_seconds_limit": settings.FREE_DAILY_SPOKEN_SECONDS,
                         "resets_at": quota_resets_at().isoformat(),
                     })
                     continue
 
-                await manager.handle_audio_chunk(
+                spoken = await manager.handle_audio_chunk(
                     scoped_session_id,
                     data.get("audio_data"),
                     data.get("mime_type", "audio/webm"),
                     data.get("target_lang"),
                 )
+
+                # Settle in the same place the reservation was taken, so every
+                # path that ends without a transcription — too large, busy,
+                # provider failure — gives the estimate back. A turn the user
+                # never got an answer to costs them nothing.
+                total = settle_spoken_seconds(current_user.id, reserved, spoken or 0.0)
+                # Live gauge update. Only the running total travels — the client
+                # already knows its plan and limit from GET /api/users/me/quota.
+                await manager.send_message(scoped_session_id, {
+                    "type": "quota_update",
+                    "spoken_seconds_used": total,
+                })
 
             elif message_type == "start_session":
                 db_session = DBSession(user_id=current_user.id)

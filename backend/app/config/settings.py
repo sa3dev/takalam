@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     PRO_PRICE_MONTHLY_EUR: float = 12.99
     PRO_PRICE_ANNUAL_EUR: float = 129.0
 
+    # Spoken seconds transcribed across all users in a UTC day, above which a
+    # warning is logged once. Provider cost scales with this number, so it is the
+    # cheapest early signal that something is off. 0 disables the warning.
+    DAILY_SPOKEN_SECONDS_ALERT: int = 36_000  # 10 hours/day, all users combined
+
     AUDIO_SAMPLE_RATE: int = 16000
     AUDIO_CHUNK_SIZE: int = 1024
     WS_HEARTBEAT_INTERVAL: int = 30

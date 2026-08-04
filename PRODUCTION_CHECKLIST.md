@@ -50,6 +50,7 @@ est active. Ce n'est pas critique pour l'intégrité — juste pour le coût.
 | `FREE_DAILY_SPOKEN_SECONDS` | 600 | Le mur se déplace sans redéploiement |
 | `PRO_PRICE_MONTHLY_EUR` | 12.99 | Affiché sur le paywall |
 | `PRO_PRICE_ANNUAL_EUR` | 129.0 | Affiché sur le paywall |
+| `DAILY_SPOKEN_SECONDS_ALERT` | 36000 | Seuil d'alerte dans les logs (10 h/jour, tous utilisateurs) ; 0 désactive |
 
 ---
 
@@ -97,28 +98,9 @@ tant que le compte n'est pas vérifié — et un fournisseur d'envoi à choisir
 
 ## 3. Rapidement après la mise en production
 
-### [ ] Aucun test automatisé
-
-`find backend -name "test_*.py"` ne renvoie rien. Le code qui décide qui paie
-et combien il consomme n'a aucune couverture. Par ordre de valeur :
-
-1. `consume_spoken_seconds` / `has_quota_left` (dont le cas Pro)
-2. Le passage de jour UTC (la clé change, le compteur repart)
-3. La déduplication du `wall_hit` (une seule ligne par utilisateur et par jour)
-4. La suppression RGPD d'un compte ayant des `paywall_events`
-
-### [ ] Débit non atomique entre onglets
-
-Le quota est vérifié avant le tour et débité après. Plusieurs onglets ouverts
-passent donc tous le contrôle avant que le premier ne débite. Le plafond de
-taille audio (~1 Mo) borne les dégâts, mais un dépassement reste possible.
-Correctif propre : pré-débiter une estimation basée sur la taille du chunk,
-puis réconcilier avec la durée réelle après transcription.
-
-### [ ] Observabilité
-
-Rien n'alerte sur une consommation Groq anormale. Au minimum, surveiller le
-volume quotidien de `wall_hit` et la consommation cumulée.
+Les trois points de cette section sont traités (voir §5). Ce qui reste à faire
+vivre : lancer la suite de tests avant chaque déploiement, et regarder les
+compteurs de consommation une fois par semaine (voir Procédures).
 
 ---
 
@@ -178,6 +160,20 @@ volume quotidien de `wall_hit` et la consommation cumulée.
 - [x] Déduplication du `wall_hit` — vérifié, deux tours murés ne produisent
       qu'une ligne.
 - [x] Reconnexion WebSocket au rechargement de page (`2d27f74`).
+- [x] **Suite de tests** — 17 tests sur `pytest` couvrant le quota (réservation,
+      règlement, cas Pro, passage de jour UTC), la déduplication du `wall_hit` et
+      la suppression RGPD. Le test de la suppression a été vérifié par mutation :
+      en retirant le correctif `d03e8b5`, il échoue bien.
+- [x] **Débit atomique entre onglets** — le quota est désormais *réservé* avant
+      la transcription et réglé après, au lieu d'être vérifié puis débité. La
+      réservation est un `INCRBY`, donc deux onglets ne peuvent plus lire le même
+      total et conclure chacun qu'il reste de la place. Un tour refusé, trop
+      volumineux, concurrent ou raté rend intégralement sa réservation :
+      vérifié en réel, le compteur revient à son point de départ.
+- [x] **Observabilité minimale** — compteur Redis de secondes transcrites par
+      jour, tous utilisateurs confondus, et avertissement dans les logs (une
+      seule fois par jour) au franchissement de `DAILY_SPOKEN_SECONDS_ALERT`.
+      C'est le coût provider qui est suivi, puisque c'est ce qui se facture.
 
 ---
 
@@ -214,6 +210,34 @@ GROUP BY plan_choice;
 
 Le `wall_hit` est dédupliqué par utilisateur et par jour : c'est bien le
 dénominateur, un utilisateur muré trois jours de suite compte trois fois.
+
+### Lancer les tests
+
+```bash
+docker compose exec backend pip install -r requirements-dev.txt   # une fois
+docker compose exec backend python -m pytest
+```
+
+Les tests n'ont besoin ni de Postgres ni de Redis : SQLite en mémoire (avec les
+clés étrangères activées, sans quoi le test de suppression RGPD ne prouverait
+rien) et un Redis simulé. À lancer avant chaque déploiement.
+
+### Surveiller la consommation
+
+```bash
+# Secondes transcrites aujourd'hui, tous utilisateurs confondus
+docker compose exec redis redis-cli get "usage:spoken:all:$(date -u +%F)"
+
+# Le franchissement du seuil apparaît une fois par jour dans les logs
+docker compose logs backend | grep "threshold crossed"
+```
+
+```sql
+-- Volume quotidien de murs : la demande refoulée, jour par jour
+SELECT date(created_at) AS jour, count(*) AS murs
+FROM paywall_events WHERE event = 'wall_hit'
+GROUP BY 1 ORDER BY 1 DESC LIMIT 30;
+```
 
 ### Forcer le mur pour tester
 
