@@ -163,8 +163,6 @@ async def analyze_session_background(session_id: int):
         if analytics:
             analytics.grammar_corrections = [c.model_dump() for c in feedback.grammar_corrections]
             analytics.vocabulary_new = feedback.vocabulary_new
-            analytics.fluency_score = feedback.fluency_score
-            analytics.confidence_level = feedback.confidence_level
             analytics.total_words_spoken = metrics["total_words_spoken"]
             analytics.average_response_time = metrics["average_response_time"]
         else:
@@ -172,8 +170,6 @@ async def analyze_session_background(session_id: int):
                 session_id=session_id,
                 grammar_corrections=[c.model_dump() for c in feedback.grammar_corrections],
                 vocabulary_new=feedback.vocabulary_new,
-                fluency_score=feedback.fluency_score,
-                confidence_level=feedback.confidence_level,
                 total_words_spoken=metrics["total_words_spoken"],
                 average_response_time=metrics["average_response_time"],
             )

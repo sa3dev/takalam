@@ -114,7 +114,10 @@ d'où l'intérêt de savoir laquelle les gens choisissent avant d'ouvrir la cais
 ### V1 — MVP (maintenant)
 - [x] Conversation vocale temps réel
 - [x] Tashkeel dans les réponses
-- [x] Shadow Feedback dashboard
+- [x] Shadow Feedback dashboard — corrections grammaticales et vocabulaire
+      nouveau. Les scores de fluidité et de confiance ont été retirés : ils
+      étaient déduits d'une transcription dont Whisper avait déjà effacé les
+      hésitations et le ton, donc invendables et indéfendables.
 - [x] Authentification + suppression de compte RGPD
 - [x] Traduction en direct des réponses (6 langues d'interface sur 7)
 - [x] Quota gratuit, paywall et mesure d'intention

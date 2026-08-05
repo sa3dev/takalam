@@ -85,9 +85,14 @@ class SessionAnalytics(Base):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id"), unique=True, nullable=False)
 
-    # Shadow Feedback Data (JSON structure as per CONTEXT.md)
+    # Shadow Feedback Data
     grammar_corrections = Column(JSON, default=list)  # [{"input": str, "output": str, "explanation": str}]
     vocabulary_new = Column(JSON, default=list)  # [str]
+
+    # Retired in V1 — nothing writes or reads these any more. They only ever held
+    # numbers the analyser invented from a transcript stripped of the hesitations
+    # and tone they claimed to measure. Kept unmigrated so historical rows survive
+    # and the decision stays reversible; drop them once it is settled.
     fluency_score = Column(Integer, nullable=True)  # 0-100
     confidence_level = Column(Integer, nullable=True)  # 0-100
 

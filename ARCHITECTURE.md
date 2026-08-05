@@ -146,7 +146,7 @@ l'apprenant.
 | `users` | identité, mot de passe bcrypt, `plan`, `plan_updated_at` | `plan` est la seule source d'autorité pour l'accès Pro |
 | `sessions` | une conversation, début, fin, durée | écrite à la fermeture de session |
 | `transcriptions` | chaque réplique, locuteur, langue | |
-| `session_analytics` | corrections, vocabulaire, fluidité, confiance | remplie en tâche de fond après la session |
+| `session_analytics` | corrections grammaticales, vocabulaire nouveau, mots prononcés | remplie en tâche de fond après la session ; les colonnes `fluency_score` et `confidence_level` subsistent mais ne sont plus écrites |
 | `paywall_events` | `wall_hit` et `interest` | numérateur et dénominateur de la conversion |
 | `alembic_version` | révision de schéma | **à vérifier avant tout déploiement** (voir `PRODUCTION_CHECKLIST.md`) |
 

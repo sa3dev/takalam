@@ -124,12 +124,15 @@ docker-compose up -d
 L'IA ne coupe jamais l'utilisateur. À la fin de la session :
 - **Corrections grammaticales** avec explications
 - **Vocabulaire nouveau** utilisé
-- **Score de fluidité** (0-100)
-- **Score de confiance** (0-100)
+
+> Un score de fluidité et un niveau de confiance existaient ici. Ils ont été
+> retirés en V1 : l'analyseur ne voit que la transcription, et Whisper en a déjà
+> retiré les hésitations, les silences et le ton que ces deux scores prétendaient
+> mesurer. Ne reste que ce qui repose sur une observation réelle.
 
 ### 3. Dashboard de Progression
 - Historique des sessions
-- Visualisation des scores
+- Mots prononcés, durée, vocabulaire nouveau
 - Liste des mots appris
 - Corrections grammaticales détaillées
 

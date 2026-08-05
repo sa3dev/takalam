@@ -13,11 +13,13 @@ class GrammarCorrection(BaseModel):
 
 # Shadow Feedback Schema
 class ShadowFeedback(BaseModel):
-    """Shadow feedback analysis schema (as per CONTEXT.md)."""
+    """Shadow feedback analysis schema.
+
+    Carries only what the analyser can observe in the transcript. The former
+    fluency_score and confidence_level were removed — see ShadowFeedbackAnalyzer.
+    """
     grammar_corrections: List[GrammarCorrection] = Field(default_factory=list)
     vocabulary_new: List[str] = Field(default_factory=list)
-    fluency_score: Optional[int] = Field(None, ge=0, le=100)
-    confidence_level: Optional[int] = Field(None, ge=0, le=100)
 
 
 # Transcription Schemas
@@ -68,8 +70,6 @@ class AnalyticsResponse(BaseModel):
     session_id: int
     grammar_corrections: List[dict]
     vocabulary_new: List[str]
-    fluency_score: Optional[int]
-    confidence_level: Optional[int]
     total_words_spoken: int
     average_response_time: Optional[float]
 

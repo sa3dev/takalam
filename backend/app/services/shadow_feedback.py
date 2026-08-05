@@ -8,7 +8,13 @@ from app.schemas.session import ShadowFeedback, GrammarCorrection
 class ShadowFeedbackAnalyzer:
     """
     Analyzes user speech sessions in the background without interrupting the flow.
-    Extracts grammar corrections, vocabulary, fluency, and confidence metrics.
+    Extracts grammar corrections and new vocabulary.
+
+    It used to also produce a fluency score and a confidence level. Both were
+    dropped: the model only ever sees the transcript, and Whisper has already
+    removed the hesitations, pauses and tone those two claimed to measure. They
+    were numbers with no observation behind them, shown to a learner as if they
+    were measurements. What is left is grounded in what the model actually reads.
     """
 
     ANALYSIS_PROMPT = """Tu es un analyseur pédagogique pour l'apprentissage de l'arabe.
@@ -23,16 +29,12 @@ Analyse la transcription suivante d'une conversation en arabe et retourne un JSO
       "explanation": "explication courte de la correction"
     }
   ],
-  "vocabulary_new": ["mot1", "mot2"],
-  "fluency_score": 75,
-  "confidence_level": 60
+  "vocabulary_new": ["mot1", "mot2"]
 }
 
 Critères :
 - grammar_corrections : Seulement les erreurs grammaticales réelles (pas de corrections stylistiques)
 - vocabulary_new : Nouveaux mots utilisés par l'utilisateur (non répétés)
-- fluency_score (0-100) : Basé sur la longueur des phrases et la cohérence
-- confidence_level (0-100) : Basé sur les hésitations, répétitions, mots de remplissage
 
 Transcription à analyser :"""
 
@@ -76,8 +78,6 @@ Transcription à analyser :"""
             return ShadowFeedback(
                 grammar_corrections=corrections,
                 vocabulary_new=data.get("vocabulary_new", []),
-                fluency_score=data.get("fluency_score"),
-                confidence_level=data.get("confidence_level"),
             )
         except Exception as e:
             print(f"Error parsing analysis: {e}")
@@ -87,8 +87,6 @@ Transcription à analyser :"""
         return json.dumps({
             "grammar_corrections": [],
             "vocabulary_new": [],
-            "fluency_score": None,
-            "confidence_level": None,
         })
 
     def calculate_additional_metrics(self, transcriptions: List[Dict[str, str]]) -> Dict:
