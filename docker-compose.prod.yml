@@ -46,8 +46,11 @@ services:
       target: production
     container_name: takalam-backend
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    # expose, pas ports : derrière Dokploy c'est Traefik qui route via le réseau
+    # Docker. Publier 8000 sur l'hôte rendrait l'API joignable en clair sur
+    # http://IP_DU_VPS:8000, court-circuitant le TLS.
+    expose:
+      - "8000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-takalam_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-takalam}
       REDIS_URL: redis://redis:6379/0
@@ -60,13 +63,27 @@ services:
       DEBUG: "False"
       # Comma-separated list of allowed frontend origins
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://takalam.ton-domaine.com}
+      # Nombre de proxies qui ajoutent leur maillon à X-Forwarded-For avant
+      # d'atteindre l'API. À vérifier après le premier déploiement : une valeur
+      # trop basse fait voir la même IP pour tout le monde, et les limites de
+      # débit deviennent globales. Procédure de contrôle dans DEPLOYMENT.md.
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-2}
+      # Quota freemium et prix affichés — déplaçables sans redéploiement
+      FREE_DAILY_SPOKEN_SECONDS: ${FREE_DAILY_SPOKEN_SECONDS:-600}
+      PRO_PRICE_MONTHLY_EUR: ${PRO_PRICE_MONTHLY_EUR:-12.99}
+      PRO_PRICE_ANNUAL_EUR: ${PRO_PRICE_ANNUAL_EUR:-129.0}
+      DAILY_SPOKEN_SECONDS_ALERT: ${DAILY_SPOKEN_SECONDS_ALERT:-36000}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # curl n'est pas installé dans python:3.11-slim : l'ancien healthcheck curl
+    # échouait toujours, le backend restait "unhealthy" et le frontend, qui
+    # l'attend, ne démarrait jamais. urllib fait partie de la bibliothèque
+    # standard, donc rien à installer.
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health || exit 1"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -86,8 +103,8 @@ services:
       target: production
     container_name: takalam-frontend
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
@@ -98,8 +115,9 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    # wget vient de busybox, présent dans node:20-alpine — contrairement à curl.
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

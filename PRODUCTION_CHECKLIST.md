@@ -8,6 +8,10 @@ par urgence, pas par difficulté. Les cases cochées sont faites et vérifiées.
 
 ---
 
+> Pour la marche à suivre complète (domaine, DNS, configuration Dokploy),
+> voir [DEPLOYMENT.md](DEPLOYMENT.md). Cette section reste la liste des
+> contrôles ; le guide donne l'ordre des opérations.
+
 ## 1. Bloquant — à contrôler avant tout déploiement
 
 ### [ ] État d'Alembic sur la base de production
