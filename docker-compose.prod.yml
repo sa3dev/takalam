@@ -62,7 +62,7 @@ services:
       ENVIRONMENT: production
       DEBUG: "False"
       # Comma-separated list of allowed frontend origins
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://takalam.ton-domaine.com}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://takalamapp.com,https://www.takalamapp.com}
       # Nombre de proxies qui ajoutent leur maillon à X-Forwarded-For avant
       # d'atteindre l'API. À vérifier après le premier déploiement : une valeur
       # trop basse fait voir la même IP pour tout le monde, et les limites de

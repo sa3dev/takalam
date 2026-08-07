@@ -11,16 +11,13 @@ DNS doit se propager avant que Dokploy puisse obtenir un certificat.
 
 ## 1. Le nom de domaine
 
-À acheter chez n'importe quel registrar (OVH, Namecheap, Porkbun, Cloudflare).
-Compte 10 à 15 €/an pour un `.com`.
-
-Le projet suppose **deux entrées** — c'est ce que suppose déjà
-`.env.production.example` :
+**Domaine retenu : `takalamapp.com`.** Toutes les valeurs de ce guide et de
+`.env.production.example` sont déjà à jour.
 
 | Domaine | Sert | Pourquoi séparé |
 |---|---|---|
-| `takalam.xyz` | le frontend Next.js | ce que les gens tapent |
-| `api.takalam.xyz` | le backend FastAPI | le WebSocket ne peut pas passer par le proxy Next |
+| `takalamapp.com` | le frontend Next.js | ce que les gens tapent |
+| `api.takalamapp.com` | le backend FastAPI | le WebSocket ne peut pas passer par le proxy Next |
 
 Le second n'est pas une coquetterie : les appels REST transitent par le proxy de
 Next (`/api/*`), mais le WebSocket attaque le backend directement. Il lui faut
@@ -28,23 +25,30 @@ donc une adresse publique à lui.
 
 ### DNS
 
-Deux enregistrements `A` vers l'IP du VPS :
+Trois enregistrements `A` vers l'IP du VPS :
 
 ```
 @      A     <IP_DU_VPS>
 api    A     <IP_DU_VPS>
+www    A     <IP_DU_VPS>
 ```
+
+`www` est facultatif mais recommandé : beaucoup de gens le tapent par réflexe, et
+sans lui ils tombent sur une erreur DNS. Le configurer dans Dokploy en
+redirection permanente vers l'apex. Il figure aussi dans `ALLOWED_ORIGINS`, au
+cas où il servirait directement — une origine autorisée en trop ne coûte rien,
+une manquante provoque une erreur CORS incompréhensible.
 
 Vérifier la propagation avant de continuer — sinon l'émission du certificat
 échoue et il faut recommencer :
 
 ```bash
-dig +short takalam.xyz
-dig +short api.takalam.xyz
+dig +short takalamapp.com
+dig +short api.takalamapp.com
+dig +short www.takalamapp.com
 ```
 
-Les deux doivent renvoyer l'IP du VPS. Compte de quelques minutes à quelques
-heures.
+Tous doivent renvoyer l'IP du VPS. Compte de quelques minutes à quelques heures.
 
 ---
 
@@ -92,19 +96,20 @@ Edge TTS ne demande rien, OpenAI et ElevenLabs ne servent pas.
    remplaçant les valeurs. Les entrées à ajuster au domaine réel :
 
    ```
-   NEXT_PUBLIC_API_URL=https://api.takalam.xyz
-   NEXT_PUBLIC_WS_URL=wss://api.takalam.xyz
-   NEXT_PUBLIC_DOMAIN=takalam.xyz
-   ALLOWED_ORIGINS=https://takalam.xyz
+   NEXT_PUBLIC_API_URL=https://api.takalamapp.com
+   NEXT_PUBLIC_WS_URL=wss://api.takalamapp.com
+   NEXT_PUBLIC_DOMAIN=takalamapp.com
+   ALLOWED_ORIGINS=https://takalamapp.com,https://www.takalamapp.com
    ```
 
    `wss://` et non `ws://` : en HTTPS, un navigateur refuse une WebSocket en
    clair. La politique de sécurité du contenu se règle d'elle-même sur cette
    variable, il n'y a rien d'autre à modifier.
 
-4. **Domaines** : `takalam.xyz` vers le service `frontend` port 3000,
-   `api.takalam.xyz` vers le service `backend` port 8000. Activer HTTPS
-   (Let's Encrypt) sur les deux.
+4. **Domaines** : `takalamapp.com` vers le service `frontend` port 3000,
+   `api.takalamapp.com` vers le service `backend` port 8000, et
+   `www.takalamapp.com` en redirection vers l'apex. Activer HTTPS
+   (Let's Encrypt) sur chacun.
 5. **Déployer**, puis suivre les journaux du backend : la ligne
    `Database initialized` signale que les migrations sont passées.
 
