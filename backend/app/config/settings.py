@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: Optional[str] = None
 
     # Voix Edge TTS — voir liste : edge-tts --list-voices | grep ar
-    EDGE_TTS_VOICE: str = "ar-SA-HamedNeural"  # voix arabe féminine (naturelle)
+    EDGE_TTS_VOICE: str = "ar-SA-HamedNeural"  # arabe saoudien, voix masculine
+    # (alternative féminine : ar-SA-ZariyahNeural)
 
     # No defaults — must be set via env vars
     SECRET_KEY: str
@@ -26,9 +27,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # AI config — Groq defaults
-    DEFAULT_STT_PROVIDER: str = "groq"
     DEFAULT_LLM_MODEL: str = "llama-3.3-70b-versatile"
-    DEFAULT_TTS_PROVIDER: str = "openai"
+    # DEFAULT_STT_PROVIDER et DEFAULT_TTS_PROVIDER ont été retirés : rien ne les
+    # lisait, et le second annonçait "openai" alors que le TTS est Edge depuis
+    # toujours. Un réglage mort qui ment est pire que pas de réglage.
+    # SpeechManager fixe ses providers à la construction.
 
     # Comma-separated allowed origins for CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://frontend:3000"

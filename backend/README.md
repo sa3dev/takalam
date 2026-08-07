@@ -33,26 +33,24 @@ backend/
 
 Classe modulaire permettant de switcher facilement entre providers :
 
-**STT (Speech-to-Text)** :
-- OpenAI Whisper (précision)
-- Groq Whisper (vitesse)
+**STT (Speech-to-Text)** : Whisper Large v3 via Groq
 
-**LLM (Conversation)** :
-- GPT-4o (configuré comme mentor bienveillant)
+**LLM (Conversation)** : Llama 3.3 70B via Groq, avec un prompt système
+de mentor bienveillant
 
-**TTS (Text-to-Speech)** :
-- OpenAI TTS
-- ElevenLabs (voix naturelles)
+**TTS (Text-to-Speech)** : Microsoft Edge TTS — gratuit, aucune clé API
 
-**Exemple d'utilisation** :
+Chaque provider implémente une interface abstraite, donc en remplacer un ne
+touche pas au reste. Le choix est fixé à la construction :
+
 ```python
-# Initialiser avec providers personnalisés
-speech_manager = SpeechManager(
-    stt_provider="groq",        # Groq pour la vitesse
-    tts_provider="elevenlabs"   # ElevenLabs pour la qualité
-)
+class SpeechManager:
+    def __init__(self):
+        self.stt = GroqSTT()
+        self.llm = GroqLLM()
+        self.tts: TTSProvider = EdgeTTS()
 
-# Ou utiliser les defaults (depuis settings)
+# Instance partagée, importée depuis app.services.speech_manager
 speech_manager = SpeechManager()
 ```
 
@@ -63,8 +61,10 @@ Analyse pédagogique non-intrusive qui s'exécute en arrière-plan :
 **Données extraites** :
 - `grammar_corrections` : Corrections grammaticales avec explications
 - `vocabulary_new` : Nouveaux mots utilisés
-- `fluency_score` : Score de fluidité (0-100)
-- `confidence_level` : Niveau de confiance (0-100)
+
+> Un `fluency_score` et un `confidence_level` existaient. Retirés : l'analyseur ne
+> voit que la transcription, dont Whisper a déjà ôté les hésitations et le ton que
+> ces scores prétendaient mesurer.
 
 **Flow** :
 1. L'utilisateur converse librement (pas d'interruption)
@@ -185,16 +185,19 @@ DATABASE_URL=postgresql://user:password@db:5432/takalam
 # Redis
 REDIS_URL=redis://redis:6379/0
 
-# AI API Keys
-OPENAI_API_KEY=sk-...
+# Clés API — seule GROQ_API_KEY est nécessaire
 GROQ_API_KEY=gsk_...
-ELEVENLABS_API_KEY=...
+# OPENAI_API_KEY et ELEVENLABS_API_KEY sont acceptées mais inutilisées
 
-# AI Configuration
-DEFAULT_STT_PROVIDER=openai      # "openai" ou "groq"
-DEFAULT_LLM_MODEL=gpt-4o
-DEFAULT_TTS_PROVIDER=openai      # "openai" ou "elevenlabs"
+# Configuration IA
+DEFAULT_LLM_MODEL=llama-3.3-70b-versatile
+EDGE_TTS_VOICE=ar-SA-HamedNeural   # masculine ; ar-SA-ZariyahNeural pour féminine
+
+# Freemium
+FREE_DAILY_SPOKEN_SECONDS=600      # 10 min/jour, remise à zéro à minuit UTC
 ```
+
+Liste complète des variables dans `.env.production.example`.
 
 ## Modèles de Données
 
@@ -211,19 +214,33 @@ DEFAULT_TTS_PROVIDER=openai      # "openai" ou "elevenlabs"
 - `id`, `session_id`
 - `grammar_corrections` (JSON)
 - `vocabulary_new` (JSON)
-- `fluency_score`, `confidence_level`
 - `total_words_spoken`, `average_response_time`
+- `fluency_score`, `confidence_level` — colonnes conservées mais plus écrites
 
 ## Tests
 
-```bash
-# Tests unitaires (à implémenter)
-pytest
+17 tests couvrant le quota freemium (réservation, règlement, cas Pro, passage de
+jour UTC), la déduplication du mur payant et la suppression de compte RGPD.
 
-# Linter
-ruff check .
+```bash
+docker compose exec backend python -m pytest
 ```
+
+Ils ne demandent ni PostgreSQL ni Redis : SQLite en mémoire (clés étrangères
+activées, sans quoi le test de suppression RGPD ne prouverait rien) et un Redis
+simulé. `pytest` et `fakeredis` font partie de l'étage `dev` de l'image.
+
+En local hors Docker :
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Aucun linter n'est configuré à ce jour.
 
 ## Déploiement
 
-Voir le fichier `docker-compose.yml` à la racine du projet pour un déploiement complet.
+Développement : `docker-compose.yml` à la racine (étage `dev` de l'image).
+Production : `docker-compose.prod.yml` (étage `production`), marche à suivre
+dans [DEPLOYMENT.md](../DEPLOYMENT.md).

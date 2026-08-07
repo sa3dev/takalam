@@ -130,10 +130,7 @@ npm run build
 # Démarrer en production
 npm start
 
-# Linter
-npm run lint
-
-# Type checking
+# Vérification des types
 npm run type-check
 ```
 

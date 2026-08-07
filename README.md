@@ -64,15 +64,15 @@ takalam/
 - **i18n** : Interface multi-langue (7 langues)
 
 ### IA Pipeline
-- **STT** : Whisper (OpenAI ou Groq)
-- **LLM** : GPT-4o (mentor bienveillant)
-- **TTS** : OpenAI TTS ou ElevenLabs
+- **STT** : Whisper Large v3 via Groq
+- **LLM** : Llama 3.3 70B via Groq (mentor bienveillant)
+- **TTS** : Microsoft Edge TTS — gratuit, aucune clé requise
 
 ## Démarrage Rapide
 
 ### 1. Prérequis
 - Docker & Docker Compose
-- Clés API : OpenAI (obligatoire), Groq et ElevenLabs (optionnels)
+- Une clé API Groq — la seule obligatoire (LLM + STT). Edge TTS ne demande rien.
 
 ### 2. Configuration
 
@@ -117,7 +117,7 @@ docker-compose up -d
 - Enregistrement audio via navigateur
 - Streaming WebSocket bidirectionnel
 - Transcription instantanée (Whisper)
-- Réponse IA bienveillante (GPT-4o)
+- Réponse IA bienveillante (Llama 3.3 70B)
 - Synthèse vocale naturelle (TTS)
 
 ### 2. Shadow Feedback (Analyse Non-Intrusive)
@@ -148,15 +148,35 @@ L'interface utilisateur est disponible en 7 langues (les conversations restent e
 
 Changement de langue via le sélecteur en haut à droite de l'interface.
 
-### 5. Architecture Modulaire
+Les réponses arabes de l'IA sont **traduites en direct** dans la langue choisie
+(les 6 langues autres que l'arabe, qui est la langue source).
 
-**SpeechManager** - Providers interchangeables :
+### 5. Temps de parole quotidien et Pro
+
+Le forfait gratuit donne **10 minutes de parole par jour**, comptées en secondes
+réellement parlées — la durée que Whisper rapporte, pas le temps passé à l'écran.
+Une hésitation avant de parler ne coûte donc rien, ce qui est précisément le
+comportement que ce produit existe pour rendre sans risque.
+
+Une jauge suit la consommation en direct. À l'épuisement, un écran présente Takalam
+Pro (12,99 €/mois ou 129 €/an) et **enregistre l'intention sans rien facturer** :
+il n'y a pas encore d'intégration de paiement, on mesure d'abord la demande.
+
+Réglable sans redéploiement via `FREE_DAILY_SPOKEN_SECONDS`.
+
+### 6. Architecture Modulaire
+
+**SpeechManager** - Providers derrière des interfaces abstraites
+(`STTProvider`, `LLMProvider`, `TTSProvider`), ce qui permet d'en changer sans
+toucher au reste. Le choix est fixé à la construction :
+
 ```python
-# Backend permet de choisir facilement les providers
-speech_manager = SpeechManager(
-    stt_provider="groq",        # Groq (rapide) ou OpenAI (précis)
-    tts_provider="elevenlabs"   # ElevenLabs (naturel) ou OpenAI
-)
+# app/services/speech_manager.py
+class SpeechManager:
+    def __init__(self):
+        self.stt = GroqSTT()      # Whisper Large v3
+        self.llm = GroqLLM()      # Llama 3.3 70B
+        self.tts = EdgeTTS()      # gratuit, sans clé
 ```
 
 ## Flow Complet
@@ -167,9 +187,9 @@ speech_manager = SpeechManager(
     ↓ Envoie chunk audio (WebSocket)
 
 [Backend]
-    ↓ STT : Audio → Texte (Whisper)
-    ↓ LLM : Génère réponse bienveillante (GPT-4o)
-    ↓ TTS : Texte → Audio (OpenAI/ElevenLabs)
+    ↓ STT : Audio → Texte (Whisper Large v3, Groq)
+    ↓ LLM : Génère réponse bienveillante (Llama 3.3 70B, Groq)
+    ↓ TTS : Texte → Audio (Edge TTS)
     ↓ Renvoie transcription + audio
 
 [Frontend]
@@ -188,11 +208,18 @@ speech_manager = SpeechManager(
 
 ### Variables d'Environnement
 
-**IA Providers** :
+**IA** :
 ```bash
-DEFAULT_STT_PROVIDER=openai      # "openai" ou "groq"
-DEFAULT_TTS_PROVIDER=openai      # "openai" ou "elevenlabs"
-DEFAULT_LLM_MODEL=gpt-4o
+GROQ_API_KEY=gsk_...               # la seule clé nécessaire
+DEFAULT_LLM_MODEL=llama-3.3-70b-versatile
+EDGE_TTS_VOICE=ar-SA-HamedNeural   # masculine ; ar-SA-ZariyahNeural pour féminine
+```
+
+**Freemium** (déplaçables sans redéploiement) :
+```bash
+FREE_DAILY_SPOKEN_SECONDS=600      # 10 min/jour, remise à zéro à minuit UTC
+PRO_PRICE_MONTHLY_EUR=12.99
+PRO_PRICE_ANNUAL_EUR=129.0
 ```
 
 **Ports** :
@@ -233,7 +260,12 @@ npm run dev
 
 ## Documentation
 
-- [Docker Setup](DOCKER_SETUP.md) - Guide Docker complet
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Carte du système, flux et stockage
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Mise en ligne sur Dokploy, étape par étape
+- [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) - Contrôles avant et après déploiement
+- [SERVICES.md](SERVICES.md) - Services tiers et comptes à créer
+- [BUSINESS_MODEL.md](BUSINESS_MODEL.md) - Modèle économique et tarifs
+- [DOCKER_SETUP.md](DOCKER_SETUP.md) - Guide Docker complet
 - [Backend README](backend/README.md) - Documentation backend
 - [Frontend README](frontend/README.md) - Documentation frontend
 - [CONTEXT.md](CONTEXT.md) - Contexte et vision du projet
@@ -243,6 +275,9 @@ npm run dev
 Une fois l'application lancée :
 - **Swagger UI** : http://localhost:8000/docs
 - **ReDoc** : http://localhost:8000/redoc
+
+> Ces deux pages sont **désactivées quand `ENVIRONMENT=production`** : inutile
+> d'exposer la carte de l'API à qui n'en a pas besoin.
 
 ## Commandes Utiles
 
@@ -267,11 +302,20 @@ docker-compose exec db psql -U takalam_user -d takalam
 
 ## Sécurité
 
-- [ ] Ajouter authentification JWT
-- [ ] Valider toutes les entrées utilisateur
-- [ ] Rate limiting sur l'API
-- [ ] HTTPS en production
-- [ ] Secrets management (vault)
+En place :
+- [x] Authentification JWT en cookie HttpOnly, mots de passe bcrypt
+- [x] Tickets WebSocket à usage unique (60 s) — pas de jeton dans l'URL
+- [x] Sessions WebSocket cloisonnées par utilisateur
+- [x] Limites de débit par IP (HTTP) et par utilisateur (tours de conversation)
+- [x] Validation des entrées via Pydantic
+- [x] Garde anti-injection sur la parole transcrite, détection de fuite d'identité
+- [x] En-têtes CSP, cookies `Secure` en production
+- [x] Suppression de compte RGPD effaçant réellement toutes les données
+
+À faire :
+- [ ] HTTPS en production — via Let's Encrypt dans Dokploy, voir [DEPLOYMENT.md](DEPLOYMENT.md)
+- [ ] Gestion des secrets par coffre-fort (aujourd'hui : variables Dokploy)
+- [ ] Sauvegardes PostgreSQL planifiées
 
 ## Roadmap
 
@@ -284,13 +328,16 @@ docker-compose exec db psql -U takalam_user -d takalam
 - [x] Page de conversation
 - [x] Dashboard analytics
 - [x] Interface multi-langue (7 langues)
+- [x] Authentification + suppression de compte RGPD
+- [x] Traduction en direct des réponses
+- [x] Quota gratuit, paywall et mesure d'intention
+- [x] Tests backend (quota, paywall, RGPD)
 
 ### V1.0
-- [ ] Authentification utilisateur
-- [ ] Multi-utilisateurs
+- [ ] Mise en ligne sur takalamapp.com
+- [ ] Paiement réel (Stripe) — si la mesure d'intention le justifie
 - [ ] Historique complet des sessions
 - [ ] Export des données (PDF, CSV)
-- [ ] Tests unitaires et d'intégration
 
 ### V2.0
 - [ ] Application mobile (React Native)

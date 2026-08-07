@@ -4,9 +4,10 @@
 
 | Service | Rôle | Compte requis | Variable d'env |
 |---|---|---|---|
-| Groq | LLM (Llama 3.3 70B) + STT (Whisper) | Oui | `GROQ_API_KEY` |
-| OpenAI | TTS (voix arabe) — fallback STT | Oui | `OPENAI_API_KEY` |
-| ElevenLabs | TTS voix arabe naturelle | Oui | `ELEVENLABS_API_KEY` |
+| Groq | LLM (Llama 3.3 70B) + STT (Whisper Large v3) | **Oui** | `GROQ_API_KEY` |
+| Microsoft Edge TTS | Synthèse vocale arabe | Non — aucune clé | — |
+| OpenAI | ~~TTS~~ — **non utilisé** | Non | `OPENAI_API_KEY` (ignorée) |
+| ElevenLabs | ~~TTS~~ — **non utilisé** | Non | `ELEVENLABS_API_KEY` (ignorée) |
 | GitHub | Hébergement du code source | Oui | — |
 | Hetzner | Serveur VPS | Oui (déjà fait) | — |
 | Dokploy | PaaS auto-hébergé | Oui (déjà fait) | — |
@@ -37,42 +38,39 @@ Groq fait tourner ces modèles sur du hardware dédié (LPU) → latence très f
 
 ---
 
-## 2. OpenAI
+## 2. Microsoft Edge TTS ⭐ La voix
 
-**Rôle dans Takalam :** TTS uniquement (voix arabe via `tts-1`)  
-Optionnel si ElevenLabs suffit — utile comme fallback ou alternative moins chère.
+**Rôle dans Takalam :** convertit les réponses de l'IA en voix arabe.
 
-**Configuration**
-1. Créer un compte sur [platform.openai.com](https://platform.openai.com)
-2. Aller dans **API Keys** → **Create new secret key**
-3. Ajouter du crédit dans **Billing** (pas de free tier en prod)
-4. Coller la clé dans Dokploy : `OPENAI_API_KEY=sk-...`
+**Configuration : aucune.** Pas de compte, pas de clé, pas de facture — la
+bibliothèque `edge-tts` appelle le service utilisé par le navigateur Edge. C'est
+ce qui fait tomber le coût variable de Takalam à zéro.
 
-**Modèle utilisé**
-- TTS : `tts-1` (voix `nova` ou `alloy`)
+**Voix configurée** : `ar-SA-HamedNeural` (masculine). Alternative féminine :
+`ar-SA-ZariyahNeural`. Se change par la variable `EDGE_TTS_VOICE`, sans
+redéploiement.
 
-**Coût estimé**
-- TTS : $15 / 1M caractères
+```bash
+docker compose exec backend edge-tts --list-voices | grep ar-
+```
+
+**Coût** : 0 €.
+
+> Risque assumé : ce service n'a pas de contrat de niveau de service. S'il
+> disparaissait, il faudrait basculer sur un TTS payant — `TTSProvider` est une
+> interface abstraite, précisément pour que ce jour-là ne soit pas une réécriture.
 
 ---
 
-## 3. ElevenLabs
+## 3. OpenAI et ElevenLabs — non utilisés
 
-**Rôle dans Takalam :** TTS — convertit les réponses texte de l'IA en voix arabe naturelle.
+Ils figuraient dans la conception initiale pour le TTS. **Le code ne les appelle
+pas** : `SpeechManager` construit `EdgeTTS()` en dur, qui est gratuit et donne
+un arabe de bonne qualité.
 
-**Configuration**
-1. Créer un compte sur [elevenlabs.io](https://elevenlabs.io)
-2. Aller dans **Profile** → **API Key**
-3. Choisir une voix arabe dans la **Voice Library** (rechercher "Arabic")
-4. Noter l'ID de la voix choisie (utilisé dans le code)
-5. Coller la clé dans Dokploy : `ELEVENLABS_API_KEY=...`
-
-**Coût**
-- Free tier : 10 000 caractères/mois
-- Starter ($5/mois) : 30 000 caractères
-- Pour une app en prod : plan Creator ($22/mois) recommandé
-
-**Alternative** : OpenAI TTS (`tts-1` avec voix `alloy` ou `nova`) si ElevenLabs est trop cher — qualité légèrement inférieure en arabe.
+Les variables `OPENAI_API_KEY` et `ELEVENLABS_API_KEY` sont encore acceptées par
+la configuration, mais rien ne les lit. **Ne crée pas ces comptes** pour lancer
+Takalam : tu paierais pour rien.
 
 ---
 
@@ -135,8 +133,9 @@ Les données persistent via les volumes Docker `postgres_data` et `redis_data` d
 
 ## Ordre de démarrage recommandé
 
-1. **Groq** → créer compte + clé (LLM + STT, gratuit pour démarrer) ← priorité
-2. **ElevenLabs** → créer compte + choisir voix arabe + clé
-3. **OpenAI** → créer compte + crédit + clé (TTS fallback, optionnel au départ)
-4. **GitHub** → créer repo + pousser le code
-5. **Dokploy** → créer projet + coller les vars + déployer
+1. **Groq** → créer compte + clé (LLM + STT, gratuit pour démarrer) ← la seule clé nécessaire
+2. **GitHub** → créer repo + pousser le code
+3. **Registrar** → acheter `takalamapp.com` + poser les enregistrements DNS
+4. **Dokploy** → créer projet + coller les vars + déployer
+
+Marche à suivre détaillée dans [DEPLOYMENT.md](DEPLOYMENT.md).
