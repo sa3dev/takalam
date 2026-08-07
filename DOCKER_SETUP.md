@@ -54,6 +54,26 @@ docker-compose build
 docker-compose build --no-cache
 ```
 
+### Les deux étages de l'image backend
+
+Le `Dockerfile` du backend a deux cibles, et chaque fichier compose nomme la
+sienne :
+
+| Cible | Utilisée par | Contient |
+|---|---|---|
+| `dev` | `docker-compose.yml` | l'application + `pytest` et `fakeredis` |
+| `production` | `docker-compose.prod.yml` | l'application seule |
+
+`production` est le dernier étage : un `docker build` lancé à la main **sans**
+`--target` produit donc l'image de production, jamais celle qui embarque les
+outils de test.
+
+### Lancer les tests
+
+```bash
+docker compose exec backend python -m pytest
+```
+
 ### Voir les logs
 
 ```bash

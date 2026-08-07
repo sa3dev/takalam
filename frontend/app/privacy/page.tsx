@@ -93,7 +93,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold mb-3" style={{ color: 'var(--terra-deep)' }}>8. Contact</h2>
             <p>
               Pour toute question relative à vos données, contactez-nous à{' '}
-              <a href="mailto:privacy@takalam.app" style={{ color: 'var(--terra)' }}>privacy@takalam.app</a>.
+              <a href="mailto:privacy@takalamapp.com" style={{ color: 'var(--terra)' }}>privacy@takalamapp.com</a>.
             </p>
           </section>
 

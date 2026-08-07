@@ -33,11 +33,11 @@ export const translations = {
       session: "Session",
       duration: "Durée",
       analyzing: "Analyse de la session en cours...",
-      fluency: "Fluidité",
-      confidence: "Confiance",
       wordsSpoken: "Mots prononcés",
       newWords: "Nouveaux mots utilisés",
       grammarCorrections: "Corrections grammaticales",
+      nothingToReport: "Rien à signaler cette fois",
+      nothingToReportBody: "Aucune erreur relevée dans cette conversation. Continue à parler, c'est comme ça que ça rentre.",
       youSaid: "Vous avez dit :",
       better: "Mieux :",
       minutes: "min",
@@ -46,6 +46,27 @@ export const translations = {
     // Footer
     footer: {
       tagline: "Takalam - Apprenez l'arabe avec confiance et sans peur"
+    },
+    // Daily speaking allowance + upgrade screen
+    quota: {
+      label: "Temps de parole aujourd'hui",
+      remaining: "restantes",
+      proLabel: "Pro — temps de parole illimité",
+      resets: "Recharge à {time}",
+      wallTitle: "Tu as utilisé tes minutes du jour",
+      wallBody: "Tes minutes reviennent à {time}. Ou continue sans limite dès maintenant.",
+      monthly: "Mensuel",
+      annual: "Annuel",
+      perMonth: "/mois",
+      perYear: "/an",
+      annualHint: "2 mois offerts",
+      proFeatures: "Temps de parole illimité, historique complet et suivi détaillé de tes progrès.",
+      cta: "Je veux Takalam Pro",
+      ctaPending: "Enregistrement…",
+      notNow: "Plus tard",
+      thanksTitle: "Merci, c'est noté !",
+      thanksBody: "Les abonnements ne sont pas encore ouverts. Ton intérêt est enregistré et pèsera dans la décision. En attendant, tes minutes reviennent à {time}.",
+      close: "Fermer"
     }
   },
   en: {
@@ -79,11 +100,11 @@ export const translations = {
       session: "Session",
       duration: "Duration",
       analyzing: "Analyzing session...",
-      fluency: "Fluency",
-      confidence: "Confidence",
       wordsSpoken: "Words Spoken",
       newWords: "New Words Used",
       grammarCorrections: "Grammar Corrections",
+      nothingToReport: "Nothing to flag this time",
+      nothingToReportBody: "No mistakes found in this conversation. Keep talking — that's how it sticks.",
       youSaid: "You said:",
       better: "Better:",
       minutes: "min",
@@ -91,6 +112,26 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
+    },
+    quota: {
+      label: "Speaking time today",
+      remaining: "left",
+      proLabel: "Pro — unlimited speaking time",
+      resets: "Resets at {time}",
+      wallTitle: "You've used today's minutes",
+      wallBody: "Your minutes come back at {time}. Or keep going without limits right now.",
+      monthly: "Monthly",
+      annual: "Annual",
+      perMonth: "/month",
+      perYear: "/year",
+      annualHint: "2 months free",
+      proFeatures: "Unlimited speaking time, full history and detailed progress tracking.",
+      cta: "I want Takalam Pro",
+      ctaPending: "Saving…",
+      notNow: "Not now",
+      thanksTitle: "Thanks, noted!",
+      thanksBody: "Subscriptions aren't open yet. Your interest is recorded and will weigh on the decision. In the meantime, your minutes come back at {time}.",
+      close: "Close"
     }
   },
   es: {
@@ -124,11 +165,11 @@ export const translations = {
       session: "Sesión",
       duration: "Duración",
       analyzing: "Analizando sesión...",
-      fluency: "Fluidez",
-      confidence: "Confianza",
       wordsSpoken: "Palabras Habladas",
       newWords: "Nuevas Palabras Usadas",
       grammarCorrections: "Correcciones Gramaticales",
+      nothingToReport: "Nada que señalar esta vez",
+      nothingToReportBody: "No se detectaron errores en esta conversación. Sigue hablando, así es como se aprende.",
       youSaid: "Dijiste:",
       better: "Mejor:",
       minutes: "min",
@@ -136,6 +177,26 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
+    },
+    quota: {
+      label: "Tiempo de habla de hoy",
+      remaining: "restantes",
+      proLabel: "Pro — tiempo de habla ilimitado",
+      resets: "Se recarga a las {time}",
+      wallTitle: "Has usado tus minutos de hoy",
+      wallBody: "Tus minutos vuelven a las {time}. O sigue sin límites ahora mismo.",
+      monthly: "Mensual",
+      annual: "Anual",
+      perMonth: "/mes",
+      perYear: "/año",
+      annualHint: "2 meses gratis",
+      proFeatures: "Tiempo de habla ilimitado, historial completo y seguimiento detallado de tu progreso.",
+      cta: "Quiero Takalam Pro",
+      ctaPending: "Guardando…",
+      notNow: "Más tarde",
+      thanksTitle: "¡Gracias, anotado!",
+      thanksBody: "Las suscripciones aún no están abiertas. Tu interés queda registrado y pesará en la decisión. Mientras tanto, tus minutos vuelven a las {time}.",
+      close: "Cerrar"
     }
   },
   it: {
@@ -169,11 +230,11 @@ export const translations = {
       session: "Sessione",
       duration: "Durata",
       analyzing: "Analisi sessione...",
-      fluency: "Fluidità",
-      confidence: "Fiducia",
       wordsSpoken: "Parole Pronunciate",
       newWords: "Nuove Parole Usate",
       grammarCorrections: "Correzioni Grammaticali",
+      nothingToReport: "Niente da segnalare stavolta",
+      nothingToReportBody: "Nessun errore rilevato in questa conversazione. Continua a parlare, è così che si impara.",
       youSaid: "Hai detto:",
       better: "Meglio:",
       minutes: "min",
@@ -181,6 +242,26 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
+    },
+    quota: {
+      label: "Tempo di parlato oggi",
+      remaining: "rimanenti",
+      proLabel: "Pro — tempo di parlato illimitato",
+      resets: "Si ricarica alle {time}",
+      wallTitle: "Hai usato i minuti di oggi",
+      wallBody: "I tuoi minuti tornano alle {time}. Oppure continua subito senza limiti.",
+      monthly: "Mensile",
+      annual: "Annuale",
+      perMonth: "/mese",
+      perYear: "/anno",
+      annualHint: "2 mesi gratis",
+      proFeatures: "Tempo di parlato illimitato, cronologia completa e monitoraggio dettagliato dei tuoi progressi.",
+      cta: "Voglio Takalam Pro",
+      ctaPending: "Salvataggio…",
+      notNow: "Più tardi",
+      thanksTitle: "Grazie, annotato!",
+      thanksBody: "Gli abbonamenti non sono ancora aperti. Il tuo interesse è registrato e peserà sulla decisione. Nel frattempo, i tuoi minuti tornano alle {time}.",
+      close: "Chiudi"
     }
   },
   ru: {
@@ -214,11 +295,11 @@ export const translations = {
       session: "Сеанс",
       duration: "Продолжительность",
       analyzing: "Анализ сеанса...",
-      fluency: "Беглость",
-      confidence: "Уверенность",
       wordsSpoken: "Произнесенных слов",
       newWords: "Использованы новые слова",
       grammarCorrections: "Грамматические исправления",
+      nothingToReport: "В этот раз замечаний нет",
+      nothingToReportBody: "В этом разговоре ошибок не найдено. Продолжайте говорить — так это и закрепляется.",
       youSaid: "Вы сказали:",
       better: "Лучше:",
       minutes: "мин",
@@ -226,6 +307,26 @@ export const translations = {
     },
     footer: {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
+    },
+    quota: {
+      label: "Время речи сегодня",
+      remaining: "осталось",
+      proLabel: "Pro — неограниченное время речи",
+      resets: "Обновится в {time}",
+      wallTitle: "Вы использовали минуты на сегодня",
+      wallBody: "Минуты вернутся в {time}. Или продолжайте без ограничений прямо сейчас.",
+      monthly: "Ежемесячно",
+      annual: "Ежегодно",
+      perMonth: "/мес",
+      perYear: "/год",
+      annualHint: "2 месяца бесплатно",
+      proFeatures: "Неограниченное время речи, полная история и подробное отслеживание прогресса.",
+      cta: "Хочу Takalam Pro",
+      ctaPending: "Сохранение…",
+      notNow: "Позже",
+      thanksTitle: "Спасибо, записали!",
+      thanksBody: "Подписки пока не открыты. Ваш интерес записан и будет учтён при решении. А пока ваши минуты вернутся в {time}.",
+      close: "Закрыть"
     }
   },
   zh: {
@@ -259,11 +360,11 @@ export const translations = {
       session: "会话",
       duration: "持续时间",
       analyzing: "分析会话中...",
-      fluency: "流利度",
-      confidence: "信心",
       wordsSpoken: "说的话",
       newWords: "使用的新词",
       grammarCorrections: "语法更正",
+      nothingToReport: "这次没有需要指出的问题",
+      nothingToReportBody: "本次对话没有发现错误。继续开口说，就是这样学会的。",
       youSaid: "您说：",
       better: "更好：",
       minutes: "分钟",
@@ -271,6 +372,29 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
+    },
+    quota: {
+      label: "今日口语时间",
+      // The gauge renders the duration then this word; "剩余" before the number would
+      // read more naturally in Chinese, so "可用" ("available") is used to keep
+      // the sentence right in the order the component imposes.
+      remaining: "可用",
+      proLabel: "Pro — 无限口语时间",
+      resets: "{time} 重置",
+      wallTitle: "今天的时间已用完",
+      wallBody: "您的时间将在 {time} 恢复。或者现在就无限畅聊。",
+      monthly: "月付",
+      annual: "年付",
+      perMonth: "/月",
+      perYear: "/年",
+      annualHint: "赠送 2 个月",
+      proFeatures: "无限口语时间、完整历史记录和详细的进度跟踪。",
+      cta: "我想要 Takalam Pro",
+      ctaPending: "保存中…",
+      notNow: "以后再说",
+      thanksTitle: "谢谢，已记录！",
+      thanksBody: "订阅尚未开放。您的意向已记录，会计入决策。在此期间，您的时间将在 {time} 恢复。",
+      close: "关闭"
     }
   },
   ar: {
@@ -304,11 +428,11 @@ export const translations = {
       session: "جلسة",
       duration: "المدة",
       analyzing: "جاري تحليل الجلسة...",
-      fluency: "الطلاقة",
-      confidence: "الثقة",
       wordsSpoken: "الكلمات المنطوقة",
       newWords: "كلمات جديدة استخدمتها",
       grammarCorrections: "تصحيحات نحوية",
+      nothingToReport: "لا شيء نشير إليه هذه المرة",
+      nothingToReportBody: "لم نجد أخطاء في هذه المحادثة. واصل الكلام، هكذا تترسّخ اللغة.",
       youSaid: "قلت:",
       better: "الأفضل:",
       minutes: "د",
@@ -316,6 +440,26 @@ export const translations = {
     },
     footer: {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
+    },
+    quota: {
+      label: "وقت التحدث اليوم",
+      remaining: "متبقية",
+      proLabel: "برو — وقت تحدث غير محدود",
+      resets: "يتجدد الساعة {time}",
+      wallTitle: "لقد استخدمت دقائق اليوم",
+      wallBody: "ستعود دقائقك الساعة {time}. أو تابع بلا حدود الآن.",
+      monthly: "شهري",
+      annual: "سنوي",
+      perMonth: "/شهر",
+      perYear: "/سنة",
+      annualHint: "شهران مجانًا",
+      proFeatures: "وقت تحدث غير محدود، وسجل كامل، ومتابعة مفصّلة لتقدمك.",
+      cta: "أريد تكلم برو",
+      ctaPending: "جارٍ الحفظ…",
+      notNow: "لاحقًا",
+      thanksTitle: "شكرًا، تم التسجيل!",
+      thanksBody: "الاشتراكات لم تُفتح بعد. تم تسجيل اهتمامك وسيؤخذ في الحسبان. في هذه الأثناء، ستعود دقائقك الساعة {time}.",
+      close: "إغلاق"
     }
   }
 }

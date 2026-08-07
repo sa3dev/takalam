@@ -12,12 +12,31 @@
 
 ## Modèle Freemium
 
-| Tier | Prix | Contenu |
-|---|---|---|
-| **Gratuit** | 0 € | 5 sessions/mois · Transcription basique · Pas de dashboard |
-| **Pro** | 9 €/mois | Sessions illimitées · Dashboard complet · Historique · Tashkeel activé |
-| **Famille** | 19 €/mois | 4 comptes Pro · Suivi parental des progrès |
-| **École** | 49 €/mois | 30 élèves · Dashboard enseignant · Rapports de classe |
+> Mis à jour le 4 août 2026 pour refléter ce qui tourne réellement. La version
+> précédente annonçait 5 sessions/mois et un Pro à 9 € — ni l'un ni l'autre n'a
+> jamais existé dans le code.
+
+| Tier | Prix | Contenu | État |
+|---|---|---|---|
+| **Gratuit** | 0 € | 10 min de parole/jour · conversation complète · dashboard inclus | **en production** |
+| **Pro** | 12,99 €/mois ou 129 €/an | Parole illimitée · historique complet · suivi détaillé | **affiché, non facturé** |
+| **Famille** | — | 4 comptes Pro · suivi parental | piste, aucun code |
+| **École** | — | 30 élèves · dashboard enseignant | piste, aucun code |
+
+**Le quota se compte en secondes *parlées*, pas en sessions ni en temps
+d'écran.** Un apprenant qui hésite trente secondes avant de se lancer ne perd
+rien : l'hésitation est précisément ce que ce produit existe pour rendre sans
+risque. Une allocation en sessions punirait la prudence.
+
+**Le dashboard est donné au gratuit.** Il n'a de valeur qu'après plusieurs
+conversations, donc le retenir empêcherait de le découvrir. Ce que Pro lève,
+c'est le mur de temps de parole — la seule limite que l'apprenant ressent.
+
+**Rien n'est encaissé aujourd'hui.** Le paywall affiche les prix et enregistre
+l'intention (`paywall_events`), sans intégration de paiement. On mesure la
+demande à ces prix avant d'écrire le moindre code de facturation. L'annuel à
+129 € revient à 10,75 €/mois : c'est la répartition mensuel/annuel qui décidera
+du revenu moyen réel, et c'est exactement ce que la table mesure.
 
 ---
 
@@ -35,18 +54,22 @@
 ### Seuil de rentabilité
 
 Avec un serveur Hetzner à ~20 €/mois :
-- **3 abonnés Pro** couvrent l'infrastructure
+- **2 abonnés Pro mensuels** couvrent l'infrastructure (25,98 €)
 - Tout le reste = marge brute
 
 ---
 
 ## Projections
 
+Au tarif mensuel plein (12,99 €). Un abonné annuel rapporte 10,75 €/mois
+équivalent, donc le mélange des deux formules tire ces chiffres vers le bas —
+d'où l'intérêt de savoir laquelle les gens choisissent avant d'ouvrir la caisse.
+
 | Scénario | Abonnés Pro | MRR | ARR |
 |---|---|---|---|
-| Lancement | 50 | 450 € | 5 400 € |
-| Traction | 500 | 4 500 € | 54 000 € |
-| Scale | 5 000 | 45 000 € | 540 000 € |
+| Lancement | 50 | 650 € | 7 800 € |
+| Traction | 500 | 6 500 € | 78 000 € |
+| Scale | 5 000 | 65 000 € | 780 000 € |
 
 > À 5 000 abonnés Pro, les coûts Groq dépassent le free tier → prévoir ~500 €/mois en API payante, marge reste >98%.
 
@@ -91,8 +114,13 @@ Avec un serveur Hetzner à ~20 €/mois :
 ### V1 — MVP (maintenant)
 - [x] Conversation vocale temps réel
 - [x] Tashkeel dans les réponses
-- [x] Shadow Feedback dashboard
-- [x] Authentification
+- [x] Shadow Feedback dashboard — corrections grammaticales et vocabulaire
+      nouveau. Les scores de fluidité et de confiance ont été retirés : ils
+      étaient déduits d'une transcription dont Whisper avait déjà effacé les
+      hésitations et le ton, donc invendables et indéfendables.
+- [x] Authentification + suppression de compte RGPD
+- [x] Traduction en direct des réponses (6 langues d'interface sur 7)
+- [x] Quota gratuit, paywall et mesure d'intention
 
 ### V2 — Rétention (3-6 mois)
 - [ ] Système de niveaux (A1 → C1)

@@ -1,7 +1,14 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
-from app.models.database import get_db, User, Session as DBSession, Transcription, SessionAnalytics
+from app.models.database import (
+    get_db,
+    User,
+    Session as DBSession,
+    Transcription,
+    SessionAnalytics,
+    PaywallEvent,
+)
 from app.schemas.auth import UserCreate, UserResponse, LoginRequest
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.auth_deps import get_current_user
@@ -91,6 +98,11 @@ def delete_account(
         db.query(SessionAnalytics).filter(SessionAnalytics.session_id.in_(session_ids)).delete(synchronize_session=False)
         db.query(Transcription).filter(Transcription.session_id.in_(session_ids)).delete(synchronize_session=False)
     db.query(DBSession).filter(DBSession.user_id == user_id).delete(synchronize_session=False)
+    # Paywall analytics reference the user too, and erasure is not negotiable:
+    # the funnel loses a data point rather than the account surviving a deletion
+    # request. Without this the FK blocks the delete outright, and precisely for
+    # the users who engaged most.
+    db.query(PaywallEvent).filter(PaywallEvent.user_id == user_id).delete(synchronize_session=False)
     db.delete(current_user)
     db.commit()
 

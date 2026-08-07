@@ -11,8 +11,13 @@ from app.core.redis_client import client as _redis
 
 logger = logging.getLogger(__name__)
 
-# ~10 MB decoded → ~13.3 MB base64
-_MAX_AUDIO_B64_LEN = 14_000_000
+# ~1 MB decoded — roughly 3 to 6 minutes of Opus depending on bitrate, which is
+# already far more than a conversational turn. The previous 14 MB allowed close
+# to an hour of audio in a single chunk, and since the daily quota is checked
+# before the turn and billed after it, one such chunk let an exhausted free
+# account buy itself an hour of Whisper. The ceiling is what makes the "overshoot
+# by one utterance" rule mean an utterance.
+_MAX_AUDIO_B64_LEN = 1_400_000
 # Keep last 20 user+assistant pairs to cap LLM token cost
 _MAX_HISTORY_MESSAGES = 40
 # Conversation history TTL in Redis: 1h of inactivity, refreshed on reconnect
@@ -28,13 +33,16 @@ class ConnectionManager:
         # Conversation history lives in Redis for persistence across restarts.
         self.session_data: Dict[str, dict] = {}
 
-    async def connect(self, websocket: WebSocket, session_id: str):
+    async def connect(self, websocket: WebSocket, session_id: str, user_id: int):
         await websocket.accept()
         self.active_connections[session_id] = websocket
         self.session_data[session_id] = {
             "transcriptions": [],
             "started_at": datetime.utcnow(),
             "is_processing": False,
+            # Needed to bill spoken seconds against the right daily counter;
+            # session_id is prefixed with it but must not be parsed back out.
+            "user_id": user_id,
         }
         # Refresh TTL on reconnect so in-progress history is preserved
         _redis.expire(f"conv_history:{session_id}", _HISTORY_TTL)
@@ -61,19 +69,24 @@ class ConnectionManager:
     def _save_history(self, session_id: str, history: list) -> None:
         _redis.setex(f"conv_history:{session_id}", _HISTORY_TTL, json.dumps(history))
 
-    async def handle_audio_chunk(self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None):
+    async def handle_audio_chunk(
+        self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None
+    ) -> float | None:
+        """Run one conversation turn. Returns the seconds actually spoken, or
+        None if no transcription happened — the caller holds a quota reservation
+        and needs to know whether to keep it or hand it back."""
         session = self.session_data.get(session_id)
         if not session:
             await self.send_message(session_id, {"type": "error", "message": "Session not found"})
-            return
+            return None
 
         if not audio_data or len(audio_data) > _MAX_AUDIO_B64_LEN:
             await self.send_message(session_id, {"type": "error", "message": "Audio chunk too large"})
-            return
+            return None
 
         if session["is_processing"]:
             await self.send_message(session_id, {"type": "busy", "message": "Still processing previous audio"})
-            return
+            return None
 
         session["is_processing"] = True
         try:
@@ -83,7 +96,7 @@ class ConnectionManager:
 
             await self.send_message(session_id, {"type": "processing", "message": "Processing your audio..."})
 
-            user_text, ai_response, translation, ai_audio = await speech_manager.process_conversation_turn(
+            user_text, ai_response, translation, ai_audio, spoken_seconds = await speech_manager.process_conversation_turn(
                 audio_data=audio_bytes,
                 conversation_history=conversation_history,
                 language="ar",
@@ -119,10 +132,12 @@ class ConnectionManager:
                 "audio_data": base64.b64encode(ai_audio).decode("utf-8"),
                 "format": "mp3",
             })
+            return spoken_seconds
 
         except Exception as e:
             logger.error("Error processing audio for session %s: %s", session_id, e)
             await self.send_message(session_id, {"type": "error", "message": "Error processing audio"})
+            return None
         finally:
             if session_id in self.session_data:
                 self.session_data[session_id]["is_processing"] = False

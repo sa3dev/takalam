@@ -19,8 +19,6 @@ interface Analytics {
   session_id: number
   grammar_corrections: Array<{ input: string; output: string; explanation: string }>
   vocabulary_new: string[]
-  fluency_score: number | null
-  confidence_level: number | null
   total_words_spoken: number
 }
 
@@ -168,18 +166,25 @@ export default function DashboardPage() {
               </Card>
             ) : (
               <>
+                {/* Counts, not scores: each of these is something we actually
+                    observed, so none of them needs defending. */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <ScoreCard title={t.dashboard.fluency} score={analytics.fluency_score} color="blue" />
-                  <ScoreCard title={t.dashboard.confidence} score={analytics.confidence_level} color="green" />
+                  <StatCard value={analytics.total_words_spoken} label={t.dashboard.wordsSpoken} />
+                  <StatCard
+                    value={formatDuration(sessions.find(s => s.id === selectedSession)?.duration_seconds ?? 0, t)}
+                    label={t.dashboard.duration}
+                  />
+                  <StatCard value={analytics.vocabulary_new.length} label={t.dashboard.newWords} />
+                </div>
+
+                {analytics.grammar_corrections.length === 0 && analytics.vocabulary_new.length === 0 && (
                   <Card>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-primary-600">
-                        {analytics.total_words_spoken}
-                      </div>
-                      <div className="text-sm text-calm-muted mt-1">{t.dashboard.wordsSpoken}</div>
+                    <div className="text-center py-8">
+                      <p className="text-calm-text font-medium mb-1">{t.dashboard.nothingToReport}</p>
+                      <p className="text-sm text-calm-muted">{t.dashboard.nothingToReportBody}</p>
                     </div>
                   </Card>
-                </div>
+                )}
 
                 {analytics.vocabulary_new.length > 0 && (
                   <Card title={t.dashboard.newWords}>
@@ -230,26 +235,12 @@ export default function DashboardPage() {
   )
 }
 
-function ScoreCard({ title, score, color }: { title: string; score: number | null; color: string }) {
-  const percentage = score ?? 0
+function StatCard({ value, label }: { value: number | string; label: string }) {
   return (
     <Card>
       <div className="text-center">
-        <div className="text-sm text-calm-muted mb-2">{title}</div>
-        <div className="relative w-20 h-20 mx-auto mb-2">
-          <svg className="transform -rotate-90 w-20 h-20">
-            <circle cx="40" cy="40" r="32" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-calm-border" />
-            <circle
-              cx="40" cy="40" r="32" stroke="currentColor" strokeWidth="8" fill="transparent"
-              strokeDasharray={`${2 * Math.PI * 32}`}
-              strokeDashoffset={`${2 * Math.PI * 32 * (1 - percentage / 100)}`}
-              className={`text-${color}-500`}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold">{percentage}</span>
-          </div>
-        </div>
+        <div className="text-3xl font-bold text-primary-600 tabular-nums">{value}</div>
+        <div className="text-sm text-calm-muted mt-1">{label}</div>
       </div>
     </Card>
   )

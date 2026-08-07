@@ -1,0 +1,4 @@
+# Test-only dependencies. Not installed in the production image.
+#   pip install -r requirements.txt -r requirements-dev.txt
+pytest==8.3.4
+fakeredis==2.26.2

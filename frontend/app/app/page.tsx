@@ -2,14 +2,23 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWebSocket, TranscriptionMessage, AudioResponseMessage } from '@/hooks/useWebSocket'
+import {
+  useWebSocket,
+  TranscriptionMessage,
+  AudioResponseMessage,
+  QuotaUpdateMessage,
+  QuotaExceededMessage,
+} from '@/hooks/useWebSocket'
 import { useAudioRecorder, blobToBase64, formatRecordingTime } from '@/hooks/useAudioRecorder'
+import { useQuota, isOutOfQuota, formatResetTime } from '@/hooks/useQuota'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/AppLayout'
 import { RecordButton } from '@/components/RecordButton'
 import { TranscriptItem } from '@/components/TranscriptItem'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
+import { QuotaGauge } from '@/components/QuotaGauge'
+import { PaywallModal } from '@/components/PaywallModal'
 import { Card } from '@/components/Card'
 
 interface Transcript {
@@ -29,6 +38,7 @@ export default function ConversationPage() {
   useEffect(() => { languageRef.current = language }, [language])
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
 
@@ -68,11 +78,30 @@ export default function ConversationPage() {
     setIsProcessing(false)
   }, [])
 
+  const { quota, applyUsage } = useQuota(!!user)
+  // Once the allowance is spent the server refuses every turn, so the mic is
+  // disabled rather than left to invite a click it will punish.
+  const outOfQuota = isOutOfQuota(quota)
+
+  const handleQuotaUpdate = useCallback((message: QuotaUpdateMessage) => {
+    applyUsage(message.spoken_seconds_used)
+  }, [applyUsage])
+
+  const handleQuotaExceeded = useCallback((message: QuotaExceededMessage) => {
+    // The turn was refused before any provider call, so nothing is coming back:
+    // release the UI, settle the gauge on the real total, then show the wall.
+    setIsProcessing(false)
+    applyUsage(message.spoken_seconds_used)
+    setIsPaywallOpen(true)
+  }, [applyUsage])
+
   const { isConnected, connectionError, sendAudioChunk, startSession, endSession } = useWebSocket({
     sessionId,
     isAuthenticated: !!user,
     onTranscription: handleTranscription,
     onAudioResponse: handleAudioResponse,
+    onQuotaUpdate: handleQuotaUpdate,
+    onQuotaExceeded: handleQuotaExceeded,
     onError: handleError,
   })
 
@@ -114,16 +143,25 @@ export default function ConversationPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 py-8 h-[calc(100vh-200px)] flex flex-col">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+      <div className="max-w-4xl mx-auto px-4 py-6 h-full flex flex-col">
+        <div className="mb-4 space-y-3">
+          <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-bold text-calm-text">{t.home.title}</h2>
             <ConnectionStatus isConnected={isConnected} error={connectionError} />
           </div>
-          <p className="text-calm-muted text-center mb-4">{t.home.subtitle}</p>
+          {/* Onboarding line — retired once the conversation starts, where the
+              transcript needs the room more than the instructions do. */}
+          {transcripts.length === 0 && (
+            <p className="text-calm-muted text-center">{t.home.subtitle}</p>
+          )}
+          <div className="max-w-sm mx-auto w-full">
+            <QuotaGauge quota={quota} />
+          </div>
         </div>
 
-        <Card className="flex-1 overflow-y-auto scrollbar-thin mb-6">
+        {/* min-h-0 is what makes flex-1 + overflow actually scroll here: without
+            it the card grows to fit the transcript and pushes the controls off. */}
+        <Card className="flex-1 min-h-0 overflow-y-auto scrollbar-thin mb-4">
           {transcripts.length === 0 ? (
             <div className="flex items-center justify-center h-full text-calm-muted">
               <p className="text-center">
@@ -158,7 +196,7 @@ export default function ConversationPage() {
           )}
         </Card>
 
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-3 shrink-0">
           {isRecording && (
             <div className="text-2xl font-mono text-red-500 font-bold">
               {formatRecordingTime(recordingTime)}
@@ -167,19 +205,40 @@ export default function ConversationPage() {
           <RecordButton
             isRecording={isRecording}
             onClick={handleRecordButtonClick}
-            disabled={!isConnected || isProcessing}
+            disabled={!isConnected || isProcessing || outOfQuota}
           />
-          <p className="text-sm text-calm-muted">
-            {isRecording ? t.home.recording : isProcessing ? t.home.processing : t.home.clickToRecord}
-          </p>
+          {outOfQuota ? (
+            <>
+              <p className="text-sm text-calm-muted text-center max-w-xs">
+                {t.quota.wallTitle}
+                {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
+              </p>
+              {/* The wall is a dead end without this: the modal is only pushed
+                  by the server when a turn is refused, and turns are now
+                  blocked before they can be sent. */}
+              <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
+                {t.quota.cta}
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-calm-muted">
+              {isRecording ? t.home.recording : isProcessing ? t.home.processing : t.home.clickToRecord}
+            </p>
+          )}
           {transcripts.length > 0 && (
-            <button onClick={handleEndSession} className="btn btn-secondary mt-4">
+            <button onClick={handleEndSession} className="btn btn-secondary mt-1">
               {t.home.endSession}
             </button>
           )}
         </div>
 
         <audio ref={audioRef} className="hidden" />
+
+        <PaywallModal
+          open={isPaywallOpen}
+          quota={quota}
+          onClose={() => setIsPaywallOpen(false)}
+        />
       </div>
     </AppLayout>
   )

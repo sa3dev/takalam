@@ -28,8 +28,8 @@ L'application doit être entièrement dockerisée pour un setup ⁠ docker-com
 Chaque échange doit être analysé pour extraire ces données JSON :
 •⁠  ⁠⁠ grammar_corrections ⁠: List[{ "input": str, "output": str, "explanation": str }]
 •⁠  ⁠⁠ vocabulary_new ⁠: List[str] (nouveaux mots utilisés par l'utilisateur)
-•⁠  ⁠⁠ fluency_score ⁠: int (calculé sur la longueur des phrases et le délai de réponse)
-•⁠  ⁠⁠ confidence_level ⁠: int (basé sur le ton ou les hésitations si possible)
+
+> `fluency_score` et `confidence_level` figuraient ici. Retirés en V1 : l'analyseur ne reçoit que la transcription, et Whisper en a déjà retiré les hésitations, les silences et le ton sur lesquels ces deux scores étaient censés reposer. Les colonnes existent toujours en base, mais plus rien ne les écrit.
 
 ## 4. Instructions pour Claude Code (MVP Priorities)
 1.  *Infrastructure :* Créer le ⁠ docker-compose.yml ⁠ incluant les services (app-front, app-back, db, redis).
