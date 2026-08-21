@@ -5,7 +5,7 @@ from typing import Dict
 from fastapi import WebSocket
 from fastapi.concurrency import run_in_threadpool
 from datetime import datetime
-from app.services.speech_manager import speech_manager
+from app.services.speech_manager import speech_manager, TurnFailedAfterTranscription
 from app.models.database import SessionLocal, Session, Transcription
 from app.core.redis_client import client as _redis
 
@@ -74,7 +74,13 @@ class ConnectionManager:
     ) -> float | None:
         """Run one conversation turn. Returns the seconds actually spoken, or
         None if no transcription happened — the caller holds a quota reservation
-        and needs to know whether to keep it or hand it back."""
+        and needs to know whether to keep it or hand it back.
+
+        "No transcription happened" is meant strictly: a turn that reached
+        Whisper and then broke returns its duration, not None. The provider
+        charged us for those seconds either way, and a refund is a refusal to
+        meter speech that really was spoken — which a client can trigger at will
+        by closing its socket mid-turn."""
         session = self.session_data.get(session_id)
         if not session:
             await self.send_message(session_id, {"type": "error", "message": "Session not found"})
@@ -89,6 +95,11 @@ class ConnectionManager:
             return None
 
         session["is_processing"] = True
+        # Filled in the moment Whisper reports a duration, and returned by every
+        # exit below — including the failure paths, which is the whole point:
+        # sending audio and hanging up before the reply must not be cheaper than
+        # staying to listen to it.
+        spoken_seconds: float | None = None
         try:
             audio_bytes = base64.b64decode(audio_data)
 
@@ -96,13 +107,17 @@ class ConnectionManager:
 
             await self.send_message(session_id, {"type": "processing", "message": "Processing your audio..."})
 
-            user_text, ai_response, translation, ai_audio, spoken_seconds = await speech_manager.process_conversation_turn(
-                audio_data=audio_bytes,
-                conversation_history=conversation_history,
-                language="ar",
-                mime_type=mime_type,
-                target_lang=target_lang,
-            )
+            try:
+                user_text, ai_response, translation, ai_audio, spoken_seconds = await speech_manager.process_conversation_turn(
+                    audio_data=audio_bytes,
+                    conversation_history=conversation_history,
+                    language="ar",
+                    mime_type=mime_type,
+                    target_lang=target_lang,
+                )
+            except TurnFailedAfterTranscription as e:
+                spoken_seconds = e.spoken_seconds
+                raise
 
             session["transcriptions"].extend([
                 {"speaker": "user", "text": user_text},
@@ -135,9 +150,18 @@ class ConnectionManager:
             return spoken_seconds
 
         except Exception as e:
-            logger.error("Error processing audio for session %s: %s", session_id, e)
-            await self.send_message(session_id, {"type": "error", "message": "Error processing audio"})
-            return None
+            logger.error(
+                "Error processing audio for session %s: %s (spoken: %s)",
+                session_id, e, "unknown" if spoken_seconds is None else f"{spoken_seconds:.1f}s",
+            )
+            try:
+                await self.send_message(session_id, {"type": "error", "message": "Error processing audio"})
+            except Exception:
+                # Socket already gone — that is often the very reason we are
+                # here. Reporting the failure is best-effort; returning the
+                # duration is not, so it must not be lost to a second error.
+                pass
+            return spoken_seconds
         finally:
             if session_id in self.session_data:
                 self.session_data[session_id]["is_processing"] = False

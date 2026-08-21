@@ -9,6 +9,22 @@ from app.config.settings import settings
 logger = logging.getLogger(__name__)
 
 
+class TurnFailedAfterTranscription(Exception):
+    """A turn whose speech reached Whisper before a later stage failed.
+
+    The distinction matters for billing, not for the user's experience: once the
+    transcription has run it has been paid for, whatever happens to the LLM or
+    the TTS afterwards. The caller holds a quota reservation and refunds it on
+    failure — without the duration travelling out with the error, it would give
+    back seconds the provider genuinely charged us for, which is enough to make
+    the daily allowance optional for anyone willing to abort their own turns.
+    """
+
+    def __init__(self, spoken_seconds: float, cause: Exception):
+        super().__init__(str(cause))
+        self.spoken_seconds = spoken_seconds
+
+
 class STTProvider(ABC):
     @abstractmethod
     async def transcribe(self, audio_data: bytes, language: str = "ar") -> tuple[str, float]:
@@ -200,28 +216,33 @@ class SpeechManager:
         user_text, spoken_seconds = await self.transcribe_audio(audio_data, language, mime_type)
         t1 = time.perf_counter()
 
-        safe_user_text = self._sanitize_input(user_text)
-        conversation_history.append({"role": "user", "content": safe_user_text})
-        ai_response = self._sanitize_response(await self.generate_response(conversation_history))
-        t2 = time.perf_counter()
+        # Past this line the speech has been transcribed and billed, so no
+        # failure below may leave without carrying its duration out.
+        try:
+            safe_user_text = self._sanitize_input(user_text)
+            conversation_history.append({"role": "user", "content": safe_user_text})
+            ai_response = self._sanitize_response(await self.generate_response(conversation_history))
+            t2 = time.perf_counter()
 
-        conversation_history.append({"role": "assistant", "content": ai_response})
+            conversation_history.append({"role": "assistant", "content": ai_response})
 
-        async def _maybe_translate() -> str:
-            if not target_lang or target_lang == "ar":
-                return ""
-            try:
-                return await self.translate(ai_response, target_lang)
-            except Exception as e:
-                logger.warning("Translation failed: %s", e)
-                return ""
+            async def _maybe_translate() -> str:
+                if not target_lang or target_lang == "ar":
+                    return ""
+                try:
+                    return await self.translate(ai_response, target_lang)
+                except Exception as e:
+                    logger.warning("Translation failed: %s", e)
+                    return ""
 
-        # Run TTS and translation concurrently — both depend only on ai_response
-        translation, ai_audio = await asyncio.gather(
-            _maybe_translate(),
-            self.synthesize_speech(ai_response),
-        )
-        t3 = time.perf_counter()
+            # Run TTS and translation concurrently — both depend only on ai_response
+            translation, ai_audio = await asyncio.gather(
+                _maybe_translate(),
+                self.synthesize_speech(ai_response),
+            )
+            t3 = time.perf_counter()
+        except Exception as e:
+            raise TurnFailedAfterTranscription(spoken_seconds, e) from e
 
         logger.info(
             "latency — STT: %.2fs | LLM: %.2fs | TTS+trans: %.2fs | total: %.2fs | spoken: %.1fs",
