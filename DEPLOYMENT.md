@@ -7,6 +7,11 @@ DNS doit se propager avant que Dokploy puisse obtenir un certificat.
 > Les libellés exacts de l'interface Dokploy peuvent différer selon la version —
 > à recouper avec sa documentation, la logique reste la même.
 
+> **À lire avant chaque mise en production :
+> [PIEGES_DEPLOIEMENT.md](PIEGES_DEPLOIEMENT.md).** Ce guide-ci décrit la marche
+> à suivre ; l'autre liste les pannes qui ne se signalent pas — celles où le site
+> répond 200 et où plus rien ne fonctionne.
+
 ---
 
 ## 1. Le nom de domaine
