@@ -82,8 +82,13 @@ services:
     # échouait toujours, le backend restait "unhealthy" et le frontend, qui
     # l'attend, ne démarrait jamais. urllib fait partie de la bibliothèque
     # standard, donc rien à installer.
+    # 127.0.0.1 et non localhost : dans un conteneur, localhost résout d'abord
+    # vers ::1, alors qu'uvicorn n'écoute que sur 0.0.0.0 (IPv4). urllib essaie
+    # les adresses l'une après l'autre et s'en sortait, mais la même écriture a
+    # rendu le frontend "unhealthy" en production — autant ne pas dépendre d'une
+    # différence de comportement entre deux clients HTTP.
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=5)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -116,8 +121,14 @@ services:
       backend:
         condition: service_healthy
     # wget vient de busybox, présent dans node:20-alpine — contrairement à curl.
+    # 127.0.0.1 et non localhost : localhost résout d'abord vers ::1, le serveur
+    # Next n'écoute que sur 0.0.0.0 (PORT/HOSTNAME du Dockerfile), et le wget de
+    # busybox ne réessaie pas en IPv4 après un refus. Le healthcheck échouait
+    # donc toujours, Traefik écarte les conteneurs non sains, et le domaine
+    # restait sans routeur : le site répondait 404 alors que l'application
+    # tournait très bien.
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/ || exit 1"]
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
