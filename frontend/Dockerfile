@@ -44,6 +44,23 @@ COPY . .
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Toute la configuration lue par next.config.js doit être connue **ici**, au
+# build. Next.js évalue rewrites(), headers() et le bloc env pendant
+# `next build` et grave le résultat dans .next/ : une variable fournie seulement
+# au conteneur en exécution arrive trop tard, et next.config.js retombe sur ses
+# défauts localhost. Les dégâts sont silencieux et sévères — /api/* en 500, une
+# WebSocket pointée sur la machine du visiteur, et un CSP qui interdit la bonne
+# origine. Les défauts ci-dessous ne conviennent qu'au développement ; le
+# compose de production passe les vraies valeurs en build args.
+ARG INTERNAL_API_URL=http://backend:8000
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG NEXT_PUBLIC_WS_URL=ws://localhost:8000
+ARG NEXT_PUBLIC_DOMAIN=localhost
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_DOMAIN=$NEXT_PUBLIC_DOMAIN
+
 # Build the application
 RUN npm run build
 
