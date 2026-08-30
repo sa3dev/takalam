@@ -31,6 +31,7 @@ _REDIS_CONSUMERS = (
     "app.services.paywall",
     "app.routes.auth",
     "app.websocket.manager",
+    "app.core.security",
 )
 
 
