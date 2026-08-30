@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 
 const LANDING_CSS = `
@@ -54,16 +55,15 @@ const LANDING_CSS = `
   .lp .hero h1 { font-size: clamp(44px, 7.5vw, 92px); margin-bottom: 24px; text-wrap: balance; opacity: 0; animation: rise .8s .2s forwards; }
   .lp .hero h1 .o { color: var(--terra-soft); }
   .lp .hero .lede { font-size: clamp(17px, 2.1vw, 21px); color: color-mix(in oklch, var(--cream) 82%, transparent); max-width: 560px; margin: 0 auto 40px; text-wrap: pretty; opacity: 0; animation: rise .8s .3s forwards; }
-  .lp .hero .signup { max-width: 460px; margin: 0 auto; opacity: 0; animation: rise .8s .42s forwards; }
-  .lp .hero .signup form { display: flex; gap: 7px; background: var(--cream); border-radius: 100px; padding: 7px 7px 7px 8px; box-shadow: 0 20px 50px -16px rgba(40,20,10,.5); }
-  .lp .hero .signup input { flex: 1; border: none; background: transparent; padding: 0 16px; font-family: var(--sans); font-size: 15.5px; color: var(--ink); outline: none; min-width: 0; }
-  .lp .hero .signup input::placeholder { color: var(--faint); }
-  .lp .hero .signup button { font-family: var(--sans); font-weight: 600; font-size: 14.5px; white-space: nowrap; background: var(--terra-deep); color: #fff; border: none; border-radius: 100px; padding: 13px 24px; cursor: pointer; transition: background .2s; }
-  .lp .hero .signup button:hover { background: var(--clay); }
-  .lp .hero .signup .note { font-size: 13.5px; color: color-mix(in oklch, var(--cream) 72%, transparent); margin-top: 16px; }
-  .lp .hero .signup.done form, .lp .hero .signup.done .note { display: none; }
-  .lp .hero .signup .ok { display: none; font-size: 16px; font-weight: 500; padding: 12px; }
-  .lp .hero .signup.done .ok { display: block; }
+  .lp .hero .cta { opacity: 0; animation: rise .8s .42s forwards; }
+  .lp .hero .cta .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .lp .cta-btn { font-family: var(--sans); font-weight: 600; font-size: 15.5px; text-decoration: none; white-space: nowrap; border-radius: 100px; padding: 15px 30px; transition: transform .15s, background .2s, border-color .2s; }
+  .lp .cta-btn:hover { transform: translateY(-1px); }
+  .lp .cta-btn.primary { background: var(--cream); color: var(--terra-deep); box-shadow: 0 20px 50px -16px rgba(40,20,10,.5); }
+  .lp .cta-btn.primary:hover { background: var(--terra-soft); }
+  .lp .cta-btn.secondary { border: 1.5px solid color-mix(in oklch, var(--cream) 40%, transparent); color: var(--cream); }
+  .lp .cta-btn.secondary:hover { border-color: var(--cream); }
+  .lp .hero .cta .note { font-size: 13.5px; color: color-mix(in oklch, var(--cream) 72%, transparent); margin-top: 18px; }
 
   .lp section { padding: 96px 0; }
   .lp .eyebrow.t { color: var(--terra); }
@@ -88,7 +88,7 @@ const LANDING_CSS = `
   .lp .scard p { color: var(--muted); font-size: 16px; }
 
   .lp .pricing { background: var(--cream-2); }
-  .lp .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .lp .plans { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; max-width: 760px; margin: 0 auto; }
   .lp .plan { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 36px 30px; display: flex; flex-direction: column; }
   .lp .plan.feat { background: var(--clay); color: var(--cream); border-color: var(--clay); transform: scale(1.04); box-shadow: 0 30px 60px -24px color-mix(in oklch, var(--clay) 70%, transparent); }
   .lp .plan .badge { align-self: flex-start; font-family: var(--disp); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; background: var(--terra); color: #fff; padding: 5px 12px; border-radius: 100px; margin-bottom: 16px; }
@@ -131,14 +131,8 @@ const LANDING_CSS = `
   .lp .endcta h2 { color: var(--cream); font-size: clamp(34px, 5.4vw, 64px); margin-bottom: 18px; text-wrap: balance; }
   .lp .endcta h2 .o { color: var(--terra-soft); }
   .lp .endcta p { color: color-mix(in oklch, var(--cream) 82%, transparent); font-size: 18px; margin-bottom: 36px; }
-  .lp .endcta .signup { max-width: 460px; margin: 0 auto; }
-  .lp .endcta .signup form { display: flex; gap: 7px; background: var(--cream); border-radius: 100px; padding: 7px 7px 7px 8px; box-shadow: 0 20px 50px -16px rgba(40,20,10,.5); }
-  .lp .endcta .signup input { flex: 1; border: none; background: transparent; padding: 0 16px; font-family: var(--sans); font-size: 15.5px; color: var(--ink); outline: none; min-width: 0; }
-  .lp .endcta .signup button { font-family: var(--sans); font-weight: 600; font-size: 14.5px; white-space: nowrap; background: var(--terra-deep); color: #fff; border: none; border-radius: 100px; padding: 13px 24px; cursor: pointer; }
-  .lp .endcta .signup button:hover { background: var(--clay); }
-  .lp .endcta .signup.done form { display: none; }
-  .lp .endcta .signup .ok { display: none; font-size: 16px; font-weight: 500; }
-  .lp .endcta .signup.done .ok { display: block; }
+  .lp .endcta .cta .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .lp .endcta .cta .note { font-size: 13.5px; color: color-mix(in oklch, var(--cream) 72%, transparent); margin-top: 18px; }
 
   .lp footer { background: var(--clay-d); color: color-mix(in oklch, var(--cream) 70%, transparent); padding: 50px 40px; }
   .lp .foot-row { max-width: 1160px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; }
@@ -182,10 +176,8 @@ const LANDING_CSS = `
     .lp .pricing .footnote { margin-top: 28px; }
     .lp footer { padding: 40px 24px; }
     .lp .foot-row { flex-direction: column; align-items: flex-start; gap: 22px; }
-    .lp .hero .signup form, .lp .endcta .signup form { flex-direction: column; background: transparent; box-shadow: none; padding: 0; gap: 10px; }
-    .lp .hero .signup input, .lp .endcta .signup input { width: 100%; background: var(--cream); border-radius: 100px; padding: 15px 22px; }
-    .lp .hero .signup button, .lp .endcta .signup button { width: 100%; padding: 15px; }
-    .lp .hero .signup .note { margin-top: 18px; }
+    .lp .hero .cta .btns, .lp .endcta .cta .btns { flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto; }
+    .lp .cta-btn { width: 100%; padding: 15px; text-align: center; }
   }
   @media (prefers-reduced-motion: reduce) {
     .lp .orb .core, .lp .orb .ring, .lp .orb .owave span { animation: none; }
@@ -209,11 +201,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Quand l'application sort-elle ?",
-    a: "Lancement prévu à l'automne 2026. Inscrivez-vous pour un accès anticipé et les tarifs de lancement, bloqués à vie.",
+    a: "Elle est déjà là. Takalam est en bêta : créez votre compte et lancez votre première conversation dès maintenant, gratuitement.",
   },
   {
     q: "Sur quels appareils ?",
-    a: "iOS et Android au lancement, avec une version web qui suivra peu après.",
+    a: "Depuis votre navigateur, sur ordinateur comme sur téléphone — rien à installer. Les applications iOS et Android viendront ensuite.",
   },
 ]
 
@@ -225,10 +217,6 @@ export default function LandingPage() {
   const faqRefs = useRef<(HTMLDivElement | null)[]>(Array(FAQ_ITEMS.length).fill(null))
 
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [email1, setEmail1] = useState('')
-  const [email2, setEmail2] = useState('')
-  const [form1Done, setForm1Done] = useState(false)
-  const [form2Done, setForm2Done] = useState(false)
 
   useEffect(() => {
     if (!isLoading && user) router.push('/app')
@@ -247,18 +235,6 @@ export default function LandingPage() {
     }
     return () => { wave.innerHTML = '' }
   }, [])
-
-  function handleForm1(e: React.FormEvent) {
-    e.preventDefault()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email1.trim())) return
-    setForm1Done(true)
-  }
-
-  function handleForm2(e: React.FormEvent) {
-    e.preventDefault()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email2.trim())) return
-    setForm2Done(true)
-  }
 
   function toggleFaq(index: number) {
     const prev = openFaq
@@ -289,7 +265,7 @@ export default function LandingPage() {
             <a href="#pricing">Tarifs</a>
             <a href="#faq">Questions</a>
           </div>
-          <a href="#join" className="nav-cta">Accès anticipé</a>
+          <Link href="/login" className="nav-cta">Se connecter</Link>
         </nav>
 
         <header className="hero">
@@ -307,21 +283,12 @@ export default function LandingPage() {
           <p className="lede">
             Takalam est votre partenaire de conversation par IA vocale. Vous parlez, il répond, vous progressez — sans jugement, sans public, sans la peur de mal faire.
           </p>
-          <div className={`signup${form1Done ? ' done' : ''}`} id="join">
-            <form onSubmit={handleForm1}>
-              <input
-                type="email"
-                name="email"
-                placeholder="votre@email.com"
-                required
-                aria-label="Adresse email"
-                value={email1}
-                onChange={e => setEmail1(e.target.value)}
-              />
-              <button type="submit">Rejoindre la liste</button>
-            </form>
-            <p className="note">Lancement automne 2026 · Tarifs de lancement bloqués à vie · Pas de spam</p>
-            <p className="ok">Merci&nbsp;! On vous écrit dès l&apos;ouverture des inscriptions.</p>
+          <div className="cta">
+            <div className="btns">
+              <Link href="/login?mode=register" className="cta-btn primary">Commencer gratuitement</Link>
+              <Link href="/login" className="cta-btn secondary">J&apos;ai déjà un compte</Link>
+            </div>
+            <p className="note">10 minutes de conversation offertes chaque jour · Sans carte bancaire</p>
           </div>
         </header>
 
@@ -388,7 +355,7 @@ export default function LandingPage() {
                   <li>Un dialecte au choix</li>
                   <li>Suivi de progression de base</li>
                 </ul>
-                <a href="#join" className="pbtn">Commencer gratuitement</a>
+                <Link href="/login?mode=register" className="pbtn">Commencer gratuitement</Link>
               </div>
               <div className="plan feat">
                 <span className="badge">Le plus choisi</span>
@@ -401,21 +368,10 @@ export default function LandingPage() {
                   <li>Retours détaillés après chaque échange</li>
                   <li>Mode hors-ligne</li>
                 </ul>
-                <a href="#join" className="pbtn">Choisir Pro</a>
-              </div>
-              <div className="plan">
-                <div className="pname">Famille</div>
-                <div className="price">19€ <small>/ mois</small></div>
-                <div className="ptag">Pour apprendre ensemble, chacun son rythme.</div>
-                <ul>
-                  <li>Jusqu&apos;à 5 profils</li>
-                  <li>Tout ce qu&apos;offre Pro, pour chacun</li>
-                  <li>Contrôle parental + tableau de bord familial</li>
-                </ul>
-                <a href="#join" className="pbtn">Choisir Famille</a>
+                <Link href="/login?mode=register" className="pbtn">Choisir Pro</Link>
               </div>
             </div>
-            <p className="footnote">Tarifs de lancement — bloqués à vie pour les premiers inscrits.</p>
+            <p className="footnote">Tarifs indicatifs pendant la bêta — rien n&apos;est facturé pour l&apos;instant.</p>
           </div>
         </section>
 
@@ -481,21 +437,13 @@ export default function LandingPage() {
         <section className="endcta">
           <div className="wrap">
             <h2>Et si parler arabe devenait <span className="o">sans enjeu&nbsp;?</span></h2>
-            <p>Rejoignez les premiers inscrits. On vous prévient dès l&apos;ouverture.</p>
-            <div className={`signup${form2Done ? ' done' : ''}`}>
-              <form onSubmit={handleForm2}>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="votre@email.com"
-                  required
-                  aria-label="Adresse email"
-                  value={email2}
-                  onChange={e => setEmail2(e.target.value)}
-                />
-                <button type="submit">Être prévenu</button>
-              </form>
-              <p className="ok">Merci&nbsp;! À très vite dans votre boîte mail.</p>
+            <p>Créez votre compte et lancez votre première conversation dans la minute.</p>
+            <div className="cta">
+              <div className="btns">
+                <Link href="/login?mode=register" className="cta-btn primary">Commencer gratuitement</Link>
+                <Link href="/login" className="cta-btn secondary">J&apos;ai déjà un compte</Link>
+              </div>
+              <p className="note">10 minutes offertes chaque jour · Sans carte bancaire</p>
             </div>
           </div>
         </section>
