@@ -118,6 +118,28 @@ class ConnectionManager:
 
             await self.send_message(session_id, {"type": "processing", "message": "Processing your audio..."})
 
+            # Each line is shown and recorded the moment it exists, rather than
+            # at the end of the turn. What the speaker saw and what the session
+            # keeps are then the same thing, even when a later stage fails.
+            async def announce_speech(text: str) -> None:
+                session["transcriptions"].append({"speaker": "user", "text": text})
+                await self.send_message(session_id, {
+                    "type": "transcription",
+                    "speaker": "user",
+                    "text": text,
+                    "is_final": True,
+                })
+
+            async def announce_answer(text: str, translation: str) -> None:
+                session["transcriptions"].append({"speaker": "assistant", "text": text})
+                await self.send_message(session_id, {
+                    "type": "transcription",
+                    "speaker": "assistant",
+                    "text": text,
+                    "translation": translation,
+                    "is_final": True,
+                })
+
             try:
                 user_text, ai_response, translation, ai_audio, spoken_seconds = await speech_manager.process_conversation_turn(
                     audio_data=audio_bytes,
@@ -125,34 +147,18 @@ class ConnectionManager:
                     language="ar",
                     mime_type=mime_type,
                     target_lang=target_lang,
+                    on_transcribed=announce_speech,
+                    on_answer=announce_answer,
                 )
             except TurnFailedAfterTranscription as e:
                 spoken_seconds = e.spoken_seconds
                 raise
-
-            session["transcriptions"].extend([
-                {"speaker": "user", "text": user_text},
-                {"speaker": "assistant", "text": ai_response},
-            ])
 
             # Trim then persist to Redis
             if len(conversation_history) > _MAX_HISTORY_MESSAGES:
                 conversation_history[:] = conversation_history[-_MAX_HISTORY_MESSAGES:]
             self._save_history(session_id, conversation_history)
 
-            await self.send_message(session_id, {
-                "type": "transcription",
-                "speaker": "user",
-                "text": user_text,
-                "is_final": True,
-            })
-            await self.send_message(session_id, {
-                "type": "transcription",
-                "speaker": "assistant",
-                "text": ai_response,
-                "translation": translation,
-                "is_final": True,
-            })
             await self.send_message(session_id, {
                 "type": "audio_response",
                 "audio_data": base64.b64encode(ai_audio).decode("utf-8"),

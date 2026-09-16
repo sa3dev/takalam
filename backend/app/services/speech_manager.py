@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Awaitable, Callable, Optional
 import io
 import edge_tts
 from groq import AsyncGroq
@@ -208,7 +208,19 @@ class SpeechManager:
         language: str = "ar",
         mime_type: str = "audio/webm",
         target_lang: Optional[str] = None,
+        on_transcribed: Optional[Callable[[str], Awaitable[None]]] = None,
+        on_answer: Optional[Callable[[str, str], Awaitable[None]]] = None,
     ) -> tuple[str, str, str, bytes, float]:
+        """Run one turn, announcing each stage as it completes.
+
+        The stages are announced rather than returned together because the
+        speaker is waiting at the other end. Transcription is ready about a
+        second in and the written answer a second after that, but both used to
+        be held back until the voice had finished synthesising — the one stage
+        whose duration is unpredictable, measured between 0.9s and 5.2s on the
+        same sentence. The total is unchanged; what changes is that nothing on
+        screen stays still for more than a second, and a failed synthesis now
+        leaves the conversation readable instead of empty."""
         import asyncio
         import time
         t0 = time.perf_counter()
@@ -219,6 +231,9 @@ class SpeechManager:
         # Past this line the speech has been transcribed and billed, so no
         # failure below may leave without carrying its duration out.
         try:
+            if on_transcribed:
+                await on_transcribed(user_text)
+
             safe_user_text = self._sanitize_input(user_text)
             conversation_history.append({"role": "user", "content": safe_user_text})
             ai_response = self._sanitize_response(await self.generate_response(conversation_history))
@@ -235,18 +250,30 @@ class SpeechManager:
                     logger.warning("Translation failed: %s", e)
                     return ""
 
-            # Run TTS and translation concurrently — both depend only on ai_response
-            translation, ai_audio = await asyncio.gather(
-                _maybe_translate(),
-                self.synthesize_speech(ai_response),
-            )
-            t3 = time.perf_counter()
+            # Started, not awaited: the voice synthesises while the translation
+            # runs and while the written answer travels to the client. Both
+            # still depend only on ai_response, so nothing that was concurrent
+            # before has been serialised.
+            speech = asyncio.create_task(self.synthesize_speech(ai_response))
+            try:
+                translation = await _maybe_translate()
+                t3 = time.perf_counter()
+                if on_answer:
+                    await on_answer(ai_response, translation)
+                ai_audio = await speech
+            except BaseException:
+                # Never leave the synthesis running behind a turn that failed —
+                # an orphaned task would finish into nothing and log it.
+                speech.cancel()
+                raise
+            t4 = time.perf_counter()
         except Exception as e:
             raise TurnFailedAfterTranscription(spoken_seconds, e) from e
 
         logger.info(
-            "latency — STT: %.2fs | LLM: %.2fs | TTS+trans: %.2fs | total: %.2fs | spoken: %.1fs",
-            t1 - t0, t2 - t1, t3 - t2, t3 - t0, spoken_seconds,
+            "latency — STT: %.2fs | LLM: %.2fs | trad: %.2fs | TTS: %.2fs | "
+            "lisible à: %.2fs | total: %.2fs | spoken: %.1fs",
+            t1 - t0, t2 - t1, t3 - t2, t4 - t3, t3 - t0, t4 - t0, spoken_seconds,
         )
         return user_text, ai_response, translation, ai_audio, spoken_seconds
 
