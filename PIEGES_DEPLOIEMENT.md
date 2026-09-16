@@ -152,6 +152,56 @@ backend attend `/ws/{session_id}` en entier.
 
 ---
 
+## 6. Un modèle Groq retiré rend le site muet, sans rien casser
+
+**Symptôme** — Tout va bien : le domaine répond, la WebSocket s'ouvre, le micro
+enregistre. Mais rien ne revient — ni texte arabe, ni audio. Aucun conteneur
+n'est malsain, aucune page n'est en erreur.
+
+**Cause** — `llama-3.3-70b-versatile` a été retiré de Groq le 16 août 2026.
+Un identifiant retiré ne se dégrade pas, il disparaît :
+
+```json
+{"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","code":"model_not_found"}}
+```
+
+L'appel échoue **après** la transcription. `process_conversation_turn` lève donc
+`TurnFailedAfterTranscription`, et le client ne reçoit qu'un
+`{"type":"error"}` générique : les secondes parlées sont facturées au quota,
+l'utilisateur n'obtient rien en échange. La panne est invisible côté
+infrastructure — elle ne vit que dans les journaux du backend :
+
+```
+Error processing audio for session <id>: ...
+```
+
+**Règle** — Le modèle est une dépendance externe *datée*, pas une constante.
+`DEFAULT_LLM_MODEL` est surchargeable par l'environnement dans les deux
+`docker-compose` : en changer ne demande qu'un redémarrage, jamais une
+reconstruction d'image.
+
+**Vérifier** — La seule source fiable est l'API, pas la documentation : la page
+des modèles de Groq listait encore `llama-3.3-70b-versatile` comme disponible un
+mois après son retrait, en contradiction avec sa propre page de dépréciations.
+
+```bash
+curl -s https://api.groq.com/openai/v1/models \
+  -H "Authorization: Bearer $GROQ_API_KEY" | grep -o '"id":"[^"]*"'
+```
+
+Et la vérification qui tranche vraiment, un vrai tour de parole :
+
+```bash
+curl -s https://api.groq.com/openai/v1/chat/completions \
+  -H "Authorization: Bearer $GROQ_API_KEY" -H "Content-Type: application/json" \
+  -d '{"model":"'"$DEFAULT_LLM_MODEL"'","messages":[{"role":"user","content":"ping"}],"max_tokens":5}'
+```
+
+**Note** — `whisper-large-v3` (STT) et Edge TTS n'étaient pas en cause et
+restent en service ; seul le LLM avait disparu.
+
+---
+
 ## Contrôles après chaque mise en production
 
 ```bash

@@ -56,7 +56,10 @@ Transcription à analyser :"""
     async def _call_analysis_api(self, transcription_text: str) -> str:
         try:
             response = await self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                # Même identifiant que la conversation, et pour la même raison :
+                # un modèle codé en dur ici survivrait au correctif appliqué
+                # ailleurs, et l'analyse retomberait seule sur un rapport vide.
+                model=settings.DEFAULT_LLM_MODEL,
                 messages=[
                     {"role": "system", "content": self.ANALYSIS_PROMPT},
                     {"role": "user", "content": transcription_text},

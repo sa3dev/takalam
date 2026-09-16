@@ -27,7 +27,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # AI config — Groq defaults
-    DEFAULT_LLM_MODEL: str = "llama-3.3-70b-versatile"
+    # Groq retire ses modèles, et un identifiant retiré ne renvoie pas une
+    # dégradation : il renvoie 404 `model_not_found`. Chaque tour de parole
+    # échoue alors après la transcription — l'utilisateur parle, paie ses
+    # secondes, et ne reçoit rien. `llama-3.3-70b-versatile` est parti ainsi le
+    # 16 août 2026. Laisser l'identifiant surchargeable par l'environnement
+    # permet d'en changer sans reconstruire l'image, le jour où celui-ci part
+    # à son tour. Liste des modèles vivants :
+    # curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $GROQ_API_KEY"
+    DEFAULT_LLM_MODEL: str = "qwen/qwen3.8-27b"
     # DEFAULT_STT_PROVIDER et DEFAULT_TTS_PROVIDER ont été retirés : rien ne les
     # lisait, et le second annonçait "openai" alors que le TTS est Edge depuis
     # toujours. Un réglage mort qui ment est pire que pas de réglage.

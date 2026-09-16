@@ -18,7 +18,7 @@ L'application doit être entièrement dockerisée pour un setup ⁠ docker-com
     * Orchestration asynchrone (BackgroundTasks) pour l'analyse des sessions.
 •⁠  ⁠*Pipeline IA (Low Latency):*
     * *STT :* Whisper Large v3 via Groq (faible latence, précision arabe). Focus sur la précision en langue arabe.
-    * *LLM :* Llama 3.3 70B via Groq (mentor bienveillant, même compte que le STT).
+    * *LLM :* Qwen3.8 27B via Groq (mentor bienveillant, même compte que le STT). Identifiant surchargeable par `DEFAULT_LLM_MODEL` — Groq retire ses modèles, et un identifiant mort rend le site muet.
     * *TTS :* Microsoft Edge TTS — gratuit et sans clé. (ElevenLabs et OpenAI étaient prévus ; le code ne les utilise pas.)
 •⁠  ⁠*Data & Cache:*
     * *PostgreSQL :* Stockage des utilisateurs, des transcriptions et des métriques de progression.

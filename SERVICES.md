@@ -4,7 +4,7 @@
 
 | Service | Rôle | Compte requis | Variable d'env |
 |---|---|---|---|
-| Groq | LLM (Llama 3.3 70B) + STT (Whisper Large v3) | **Oui** | `GROQ_API_KEY` |
+| Groq | LLM (Qwen3.8 27B) + STT (Whisper Large v3) | **Oui** | `GROQ_API_KEY` |
 | Microsoft Edge TTS | Synthèse vocale arabe | Non — aucune clé | — |
 | OpenAI | ~~TTS~~ — **non utilisé** | Non | `OPENAI_API_KEY` (ignorée) |
 | ElevenLabs | ~~TTS~~ — **non utilisé** | Non | `ELEVENLABS_API_KEY` (ignorée) |
@@ -17,7 +17,7 @@
 ## 1. Groq ⭐ Principal
 
 **Rôle dans Takalam :** deux usages sur un seul compte
-- **Llama 3.3 70B** → le "cerveau" de Takalam, génère les réponses bienveillantes en arabe
+- **Qwen3.8 27B** → le "cerveau" de Takalam, génère les réponses bienveillantes en arabe
 - **Whisper Large v3** → transcription audio arabe en texte (STT)
 
 Groq fait tourner ces modèles sur du hardware dédié (LPU) → latence très faible, idéal pour une app vocale temps réel.
@@ -28,11 +28,17 @@ Groq fait tourner ces modèles sur du hardware dédié (LPU) → latence très f
 3. Coller la clé dans Dokploy : `GROQ_API_KEY=gsk_...`
 
 **Modèles utilisés**
-- LLM : `llama-3.3-70b-versatile`
+- LLM : `qwen/qwen3.8-27b` — surchargeable par `DEFAULT_LLM_MODEL`.
+  Groq retire ses modèles : `llama-3.3-70b-versatile`, utilisé jusqu'ici, a été
+  retiré le 16 août 2026. Voir le piège 6 de `PIEGES_DEPLOIEMENT.md`.
 - STT : `whisper-large-v3`
 
 **Coût estimé**
-- Llama 3.3 70B : ~$0.59 / 1M tokens input, ~$0.79 / 1M tokens output
+- Qwen3.8 27B : ~$0.80 / 1M tokens input, ~$4.00 / 1M tokens output.
+  Choisi pour la latence (~0,5 s contre ~1,5 s pour `openai/gpt-oss-120b`), qui
+  se ressent dans une conversation parlée. C'est le poste le plus cher du
+  pipeline : `openai/gpt-oss-120b` revient à ~$0.15 / ~$0.60 et corrige mieux
+  les fautes d'arabe, si l'arbitrage doit être revu.
 - Whisper : ~$0.111 / heure audio
 - Free tier généreux pour démarrer (14 400 requêtes/jour)
 

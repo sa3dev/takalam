@@ -68,6 +68,11 @@ services:
       # trop basse fait voir la même IP pour tout le monde, et les limites de
       # débit deviennent globales. Procédure de contrôle dans DEPLOYMENT.md.
       TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-2}
+      # Modèle de conversation — déplaçable sans reconstruire l'image. Groq
+      # retire ses modèles sur préavis, et un identifiant retiré fait échouer
+      # chaque tour de parole. Pouvoir en changer par variable rend la panne
+      # réparable en un redémarrage.
+      DEFAULT_LLM_MODEL: ${DEFAULT_LLM_MODEL:-qwen/qwen3.8-27b}
       # Quota freemium et prix affichés — déplaçables sans redéploiement
       FREE_DAILY_SPOKEN_SECONDS: ${FREE_DAILY_SPOKEN_SECONDS:-600}
       PRO_PRICE_MONTHLY_EUR: ${PRO_PRICE_MONTHLY_EUR:-12.99}
