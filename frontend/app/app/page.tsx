@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   useWebSocket,
+  WebSocketMessage,
   TranscriptionMessage,
   AudioResponseMessage,
   QuotaUpdateMessage,
@@ -28,11 +29,46 @@ interface Transcript {
   timestamp: string
 }
 
+/** Rows as the transcriptions endpoint returns them. Translations are not
+ *  persisted, so a restored line carries the Arabic alone. */
+interface StoredTranscription {
+  speaker: 'user' | 'assistant'
+  text: string
+  created_at: string
+}
+
+const SESSION_ID_KEY = 'takalam:session-id'
+
+function formatTimestamp(value: string): string {
+  // The API serialises naive UTC. Without the marker a browser reads it as
+  // local time, and every restored line shows an hour or two off.
+  const iso = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`
+  return new Date(iso).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function ConversationPage() {
   const router = useRouter()
   const { t, language } = useLanguage()
   const { user, isLoading } = useAuth()
-  const [sessionId] = useState(() => `session-${Date.now()}`)
+  // Kept in sessionStorage, not minted per mount: a reload used to hand the
+  // backend a brand new id, which meant a blank screen, a second row in the
+  // dashboard, and an assistant that had forgotten the last five minutes. The
+  // id belongs to the tab, so closing it still starts a fresh conversation.
+  const [sessionId] = useState(() => {
+    const fresh = () => `session-${Date.now()}`
+    if (typeof window === 'undefined') return fresh()
+    try {
+      const stored = window.sessionStorage.getItem(SESSION_ID_KEY)
+      if (stored) return stored
+      const created = fresh()
+      window.sessionStorage.setItem(SESSION_ID_KEY, created)
+      return created
+    } catch {
+      // Private mode, storage disabled — a conversation that cannot survive a
+      // reload is still better than a page that will not load at all.
+      return fresh()
+    }
+  })
   // Keep the current UI language in a ref so the recorder callback never sends a stale value
   const languageRef = useRef(language)
   useEffect(() => { languageRef.current = language }, [language])
@@ -41,6 +77,10 @@ export default function ConversationPage() {
   const [isPaywallOpen, setIsPaywallOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
+  // Restoring happens once per mount. The automatic retry sends start_session
+  // again on every reconnect, and refetching then would race with turns already
+  // on screen — mid-conversation the list in memory is the authority.
+  const hasRestoredRef = useRef(false)
 
   useEffect(() => {
     if (!isLoading && !user) router.push('/login')
@@ -73,6 +113,30 @@ export default function ConversationPage() {
     }
   }, [])
 
+  /** Rebuild the conversation the backend already holds. Reached after a
+   *  reload, where the screen is empty but the session is not. */
+  const handleSessionStarted = useCallback(async (message: WebSocketMessage) => {
+    if (message.type !== 'session_started' || hasRestoredRef.current) return
+    hasRestoredRef.current = true
+
+    const dbSessionId = message.db_session_id
+    if (typeof dbSessionId !== 'number') return
+
+    try {
+      const res = await fetch(`/api/sessions/${dbSessionId}/transcriptions`, { credentials: 'include' })
+      if (!res.ok) return
+      const rows: StoredTranscription[] = await res.json()
+      if (rows.length === 0) return
+      setTranscripts(prev => (prev.length > 0 ? prev : rows.map(row => ({
+        speaker: row.speaker,
+        text: row.text,
+        timestamp: formatTimestamp(row.created_at),
+      }))))
+    } catch {
+      // Nothing to restore is not a failure — the conversation simply starts here.
+    }
+  }, [])
+
   const handleError = useCallback(() => {
     // Unblock the UI when the server rejects a turn (rate limit, processing error, …)
     setIsProcessing(false)
@@ -98,6 +162,7 @@ export default function ConversationPage() {
   const { isConnected, connectionError, sendAudioChunk, startSession, endSession } = useWebSocket({
     sessionId,
     isAuthenticated: !!user,
+    onMessage: handleSessionStarted,
     onTranscription: handleTranscription,
     onAudioResponse: handleAudioResponse,
     onQuotaUpdate: handleQuotaUpdate,
@@ -135,6 +200,9 @@ export default function ConversationPage() {
   function handleEndSession() {
     if (confirm(t.home.endSessionConfirm)) {
       endSession()
+      // Deliberately ended, so the id must not be inherited by the next
+      // conversation — that is the one case where starting over is the point.
+      try { window.sessionStorage.removeItem(SESSION_ID_KEY) } catch { /* nothing to clear */ }
       router.push('/dashboard')
     }
   }

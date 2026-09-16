@@ -98,11 +98,21 @@ async def websocket_endpoint(
                 })
 
             elif message_type == "start_session":
-                db_session = DBSession(user_id=current_user.id)
-                db.add(db_session)
-                db.commit()
-                db.refresh(db_session)
-                db_session_id = db_session.id
+                # A reconnect is not a new conversation. The client keeps its
+                # session id across a reload and the automatic retry, so the row
+                # it is already being written to must be reused — otherwise one
+                # conversation reaches the dashboard cut into pieces, each with
+                # its own duration and its own analysis.
+                db_session_id = manager.recall_db_session(scoped_session_id)
+                if db_session_id is None:
+                    db_session = DBSession(user_id=current_user.id)
+                    db.add(db_session)
+                    db.commit()
+                    db.refresh(db_session)
+                    db_session_id = db_session.id
+                    manager.remember_db_session(scoped_session_id, db_session_id)
+                # Carries the row id back so the client can fetch what was
+                # already said and rebuild the conversation it lost.
                 await manager.send_message(scoped_session_id, {
                     "type": "session_started",
                     "db_session_id": db_session_id,
@@ -117,11 +127,17 @@ async def websocket_endpoint(
                 await manager.send_message(scoped_session_id, {"type": "pong"})
 
     except WebSocketDisconnect:
+        # A socket that went away is an interruption, not a decision. Save what
+        # was said and leave the conversation — its history, its database row —
+        # standing, so reconnecting resumes it. Only the explicit end_session
+        # above closes a session and clears its memory.
         if db_session_id:
-            await manager.end_session(scoped_session_id, db_session_id)
+            await manager.save_progress(scoped_session_id, db_session_id)
 
     except Exception as e:
         logger.error("WebSocket error for session %s: %s", scoped_session_id, e)
+        if db_session_id:
+            await manager.save_progress(scoped_session_id, db_session_id)
         await manager.send_message(scoped_session_id, {"type": "error", "message": "Internal server error"})
 
     finally:
