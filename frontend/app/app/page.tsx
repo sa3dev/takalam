@@ -284,43 +284,36 @@ export default function ConversationPage() {
         </Card>
 
         {started ? (
-          /* One row: the microphone, and beside it the words that would
-             otherwise cost two more. */
-          <div className="flex items-center justify-center gap-4 shrink-0">
-            <RecordButton
-              isRecording={isRecording}
-              onClick={handleRecordButtonClick}
-              disabled={!isConnected || isProcessing || outOfQuota}
-            />
-            <div className="flex flex-col items-start gap-1.5 min-w-0">
-              {outOfQuota ? (
-                <p className="text-sm text-calm-muted max-w-xs">
-                  {t.quota.wallTitle}
-                  {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
-                </p>
-              ) : (
-                <span
-                  className={clsx(
-                    'text-sm tabular-nums',
-                    isRecording ? 'font-mono font-bold text-red-500' : 'text-calm-muted'
-                  )}
-                >
-                  {isRecording ? formatRecordingTime(recordingTime) : hint}
+          /* One row, the two ends of it: leaving on the left, speaking on the
+             right, and nothing in between. The invitation to press a microphone
+             is carried by the microphone. */
+          <div className="flex items-center justify-between gap-4 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <button onClick={handleEndSession} className="btn btn-secondary">
+                {t.home.endSession}
+              </button>
+              {/* The wall is a dead end without this: the modal is only pushed
+                  by the server when a turn is refused, and turns are now
+                  blocked before they can be sent. It carries the reset time,
+                  so the row needs no sentence of its own. */}
+              {outOfQuota && (
+                <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
+                  {t.quota.cta}
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              {/* A count is not a caption: it says something the button cannot. */}
+              {isRecording && (
+                <span className="text-lg font-mono font-bold text-red-500 tabular-nums">
+                  {formatRecordingTime(recordingTime)}
                 </span>
               )}
-              <div className="flex items-center gap-2">
-                {/* The wall is a dead end without this: the modal is only pushed
-                    by the server when a turn is refused, and turns are now
-                    blocked before they can be sent. */}
-                {outOfQuota && (
-                  <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
-                    {t.quota.cta}
-                  </button>
-                )}
-                <button onClick={handleEndSession} className="btn btn-secondary">
-                  {t.home.endSession}
-                </button>
-              </div>
+              <RecordButton
+                isRecording={isRecording}
+                onClick={handleRecordButtonClick}
+                disabled={!isConnected || isProcessing || outOfQuota}
+              />
             </div>
           </div>
         ) : (
