@@ -156,6 +156,7 @@ l'apprenant.
 |---|---|---|
 | `ws_ticket:{ticket}` | ticket WebSocket à usage unique | 60 s |
 | `conv_history:{user}:{session}` | historique envoyé au LLM | 1 h, prolongée à la reconnexion |
+| `conv_session:{user}:{session}` | ligne `sessions` que la conversation alimente | 1 h, prolongée à la reconnexion |
 | `ws_turns:min:{user}` · `ws_turns:day:{user}` | plafond anti-abus, tous plans confondus | 60 s · 24 h |
 | `quota:spoken:{user}:{date}` | allocation quotidienne consommée | 48 h |
 | `paywall:wall_hit:{user}:{date}` | déduplication du mur | 48 h |

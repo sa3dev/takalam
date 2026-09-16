@@ -46,6 +46,7 @@ class ConnectionManager:
         }
         # Refresh TTL on reconnect so in-progress history is preserved
         _redis.expire(f"conv_history:{session_id}", _HISTORY_TTL)
+        _redis.expire(f"conv_session:{session_id}", _HISTORY_TTL)
         await self.send_message(session_id, {
             "type": "connected",
             "message": "WebSocket connection established",
@@ -68,6 +69,16 @@ class ConnectionManager:
 
     def _save_history(self, session_id: str, history: list) -> None:
         _redis.setex(f"conv_history:{session_id}", _HISTORY_TTL, json.dumps(history))
+
+    def recall_db_session(self, session_id: str) -> int | None:
+        """The database row this conversation is already being written to, if it
+        has one. Outlives the connection, exactly like the history it belongs
+        to, so a reconnect continues a session instead of opening a second."""
+        raw = _redis.get(f"conv_session:{session_id}")
+        return int(raw) if raw else None
+
+    def remember_db_session(self, session_id: str, db_session_id: int) -> None:
+        _redis.setex(f"conv_session:{session_id}", _HISTORY_TTL, db_session_id)
 
     async def handle_audio_chunk(
         self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None
@@ -166,16 +177,27 @@ class ConnectionManager:
             if session_id in self.session_data:
                 self.session_data[session_id]["is_processing"] = False
 
-    async def end_session(self, session_id: str, db_session_id: int):
-        if session_id not in self.session_data:
-            return
+    async def save_progress(self, session_id: str, db_session_id: int) -> int:
+        """Write what this connection produced to Postgres, without closing the
+        session.
 
-        session = self.session_data[session_id]
+        Called when the socket simply goes away — a reload, a tunnel, a closed
+        lid. None of those mean the conversation is over, but all of them mean
+        its only copy is in this process's memory. Treating a dropped socket as
+        a deliberate ending is what used to erase a conversation the user had
+        every intention of continuing.
+
+        Returns the session's accumulated duration, so the caller can announce
+        the whole thing rather than the last leg of it."""
+        session = self.session_data.get(session_id)
+        if not session:
+            return 0
+
         ended_at = datetime.utcnow()
         duration = int((ended_at - session["started_at"]).total_seconds())
         transcriptions = session["transcriptions"]
 
-        await run_in_threadpool(
+        total = await run_in_threadpool(
             self._persist_session,
             db_session_id,
             ended_at,
@@ -183,22 +205,37 @@ class ConnectionManager:
             transcriptions,
         )
 
+        # Written down is no longer owed. A second call for the same connection
+        # — explicit end right after a drop — must not bill these seconds or
+        # insert these lines twice.
+        session["transcriptions"] = []
+        session["started_at"] = ended_at
+        return total
+
+    async def end_session(self, session_id: str, db_session_id: int):
+        """The deliberate ending, and the only thing that discards the
+        conversation. Everything else is an interruption."""
+        total = await self.save_progress(session_id, db_session_id)
+
         # Conversation is over — clean up Redis
         _redis.delete(f"conv_history:{session_id}")
+        _redis.delete(f"conv_session:{session_id}")
 
         await self.send_message(session_id, {
             "type": "session_ended",
-            "duration_seconds": duration,
+            "duration_seconds": total,
             "message": "Session saved successfully",
         })
 
-    def _persist_session(self, db_session_id: int, ended_at, duration: int, transcriptions: list):
+    def _persist_session(self, db_session_id: int, ended_at, duration: int, transcriptions: list) -> int:
         db = SessionLocal()
         try:
             db_session = db.query(Session).filter(Session.id == db_session_id).first()
             if db_session:
                 db_session.ended_at = ended_at
-                db_session.duration_seconds = duration
+                # Accumulated, not replaced: a session can now span several
+                # connections, and assigning here would report only the last one.
+                db_session.duration_seconds = (db_session.duration_seconds or 0) + duration
 
             for t in transcriptions:
                 db.add(Transcription(
@@ -209,9 +246,11 @@ class ConnectionManager:
                 ))
 
             db.commit()
+            return db_session.duration_seconds if db_session else 0
         except Exception as e:
             logger.error("Error persisting session %s: %s", db_session_id, e)
             db.rollback()
+            return 0
         finally:
             db.close()
 
