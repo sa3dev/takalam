@@ -56,7 +56,7 @@ flowchart TB
     end
 
     subgraph Ext["Dépendances externes"]
-        Groq["Groq API<br/>whisper-large-v3 (STT)<br/>llama-3.3-70b (LLM)"]
+        Groq["Groq API<br/>whisper-large-v3 (STT)<br/>qwen3.8-27b (LLM)"]
         Edge["Microsoft Edge TTS<br/>synthèse vocale · sans clé"]
     end
 
@@ -117,7 +117,7 @@ sequenceDiagram
         M->>S: process_conversation_turn
         S->>G: transcription (whisper-large-v3)
         G-->>S: texte + durée réelle
-        S->>G: réponse (llama-3.3-70b)
+        S->>G: réponse (qwen3.8-27b)
         par en parallèle
             S->>E: synthèse vocale
         and

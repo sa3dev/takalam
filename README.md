@@ -65,7 +65,7 @@ takalam/
 
 ### IA Pipeline
 - **STT** : Whisper Large v3 via Groq
-- **LLM** : Llama 3.3 70B via Groq (mentor bienveillant)
+- **LLM** : Qwen3.8 27B via Groq (mentor bienveillant)
 - **TTS** : Microsoft Edge TTS — gratuit, aucune clé requise
 
 ## Démarrage Rapide
@@ -117,7 +117,7 @@ docker-compose up -d
 - Enregistrement audio via navigateur
 - Streaming WebSocket bidirectionnel
 - Transcription instantanée (Whisper)
-- Réponse IA bienveillante (Llama 3.3 70B)
+- Réponse IA bienveillante (Qwen3.8 27B)
 - Synthèse vocale naturelle (TTS)
 
 ### 2. Shadow Feedback (Analyse Non-Intrusive)
@@ -175,7 +175,7 @@ toucher au reste. Le choix est fixé à la construction :
 class SpeechManager:
     def __init__(self):
         self.stt = GroqSTT()      # Whisper Large v3
-        self.llm = GroqLLM()      # Llama 3.3 70B
+        self.llm = GroqLLM()      # Qwen3.8 27B
         self.tts = EdgeTTS()      # gratuit, sans clé
 ```
 
@@ -188,7 +188,7 @@ class SpeechManager:
 
 [Backend]
     ↓ STT : Audio → Texte (Whisper Large v3, Groq)
-    ↓ LLM : Génère réponse bienveillante (Llama 3.3 70B, Groq)
+    ↓ LLM : Génère réponse bienveillante (Qwen3.8 27B, Groq)
     ↓ TTS : Texte → Audio (Edge TTS)
     ↓ Renvoie transcription + audio
 
@@ -211,7 +211,7 @@ class SpeechManager:
 **IA** :
 ```bash
 GROQ_API_KEY=gsk_...               # la seule clé nécessaire
-DEFAULT_LLM_MODEL=llama-3.3-70b-versatile
+DEFAULT_LLM_MODEL=qwen/qwen3.8-27b
 EDGE_TTS_VOICE=ar-SA-HamedNeural   # masculine ; ar-SA-ZariyahNeural pour féminine
 ```
 

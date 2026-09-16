@@ -35,7 +35,7 @@ Classe modulaire permettant de switcher facilement entre providers :
 
 **STT (Speech-to-Text)** : Whisper Large v3 via Groq
 
-**LLM (Conversation)** : Llama 3.3 70B via Groq, avec un prompt système
+**LLM (Conversation)** : Qwen3.8 27B via Groq, avec un prompt système
 de mentor bienveillant
 
 **TTS (Text-to-Speech)** : Microsoft Edge TTS — gratuit, aucune clé API
@@ -190,7 +190,7 @@ GROQ_API_KEY=gsk_...
 # OPENAI_API_KEY et ELEVENLABS_API_KEY sont acceptées mais inutilisées
 
 # Configuration IA
-DEFAULT_LLM_MODEL=llama-3.3-70b-versatile
+DEFAULT_LLM_MODEL=qwen/qwen3.8-27b
 EDGE_TTS_VOICE=ar-SA-HamedNeural   # masculine ; ar-SA-ZariyahNeural pour féminine
 
 # Freemium
