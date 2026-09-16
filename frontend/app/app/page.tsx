@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { clsx } from 'clsx'
 import { useRouter } from 'next/navigation'
 import {
   useWebSocket,
@@ -209,27 +210,45 @@ export default function ConversationPage() {
 
   if (isLoading || !user) return null
 
+  // Everything above the transcript is introduction, and an introduction has
+  // done its job once the conversation exists. From the first exchange the page
+  // rearranges itself around the transcript: the heading goes, the gauge folds
+  // into one line, and the controls stop stacking — around 200 vertical pixels
+  // handed back to the only part anyone is reading.
+  const started = transcripts.length > 0
+
+  const hint = isRecording
+    ? t.home.recording
+    : isProcessing
+    ? t.home.processing
+    : t.home.clickToRecord
+
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 py-6 h-full flex flex-col">
-        <div className="mb-4 space-y-3">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold text-calm-text">{t.home.title}</h2>
+      <div className={clsx('max-w-4xl mx-auto px-4 h-full flex flex-col', started ? 'py-3' : 'py-6')}>
+        {started ? (
+          <div className="flex items-center gap-4 mb-2 shrink-0">
             <ConnectionStatus isConnected={isConnected} error={connectionError} />
+            <div className="ml-auto w-40 sm:w-52 shrink-0">
+              <QuotaGauge quota={quota} compact />
+            </div>
           </div>
-          {/* Onboarding line — retired once the conversation starts, where the
-              transcript needs the room more than the instructions do. */}
-          {transcripts.length === 0 && (
+        ) : (
+          <div className="mb-4 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-bold text-calm-text">{t.home.title}</h2>
+              <ConnectionStatus isConnected={isConnected} error={connectionError} />
+            </div>
             <p className="text-calm-muted text-center">{t.home.subtitle}</p>
-          )}
-          <div className="max-w-sm mx-auto w-full">
-            <QuotaGauge quota={quota} />
+            <div className="max-w-sm mx-auto w-full">
+              <QuotaGauge quota={quota} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* min-h-0 is what makes flex-1 + overflow actually scroll here: without
             it the card grows to fit the transcript and pushes the controls off. */}
-        <Card className="flex-1 min-h-0 overflow-y-auto scrollbar-thin mb-4">
+        <Card className={clsx('flex-1 min-h-0 overflow-y-auto scrollbar-thin', started ? 'mb-3' : 'mb-4')}>
           {transcripts.length === 0 ? (
             <div className="flex items-center justify-center h-full text-calm-muted">
               <p className="text-center">
@@ -264,41 +283,73 @@ export default function ConversationPage() {
           )}
         </Card>
 
-        <div className="flex flex-col items-center gap-3 shrink-0">
-          {isRecording && (
-            <div className="text-2xl font-mono text-red-500 font-bold">
-              {formatRecordingTime(recordingTime)}
+        {started ? (
+          /* One row: the microphone, and beside it the words that would
+             otherwise cost two more. */
+          <div className="flex items-center justify-center gap-4 shrink-0">
+            <RecordButton
+              isRecording={isRecording}
+              onClick={handleRecordButtonClick}
+              disabled={!isConnected || isProcessing || outOfQuota}
+            />
+            <div className="flex flex-col items-start gap-1.5 min-w-0">
+              {outOfQuota ? (
+                <p className="text-sm text-calm-muted max-w-xs">
+                  {t.quota.wallTitle}
+                  {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
+                </p>
+              ) : (
+                <span
+                  className={clsx(
+                    'text-sm tabular-nums',
+                    isRecording ? 'font-mono font-bold text-red-500' : 'text-calm-muted'
+                  )}
+                >
+                  {isRecording ? formatRecordingTime(recordingTime) : hint}
+                </span>
+              )}
+              <div className="flex items-center gap-2">
+                {/* The wall is a dead end without this: the modal is only pushed
+                    by the server when a turn is refused, and turns are now
+                    blocked before they can be sent. */}
+                {outOfQuota && (
+                  <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
+                    {t.quota.cta}
+                  </button>
+                )}
+                <button onClick={handleEndSession} className="btn btn-secondary">
+                  {t.home.endSession}
+                </button>
+              </div>
             </div>
-          )}
-          <RecordButton
-            isRecording={isRecording}
-            onClick={handleRecordButtonClick}
-            disabled={!isConnected || isProcessing || outOfQuota}
-          />
-          {outOfQuota ? (
-            <>
-              <p className="text-sm text-calm-muted text-center max-w-xs">
-                {t.quota.wallTitle}
-                {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
-              </p>
-              {/* The wall is a dead end without this: the modal is only pushed
-                  by the server when a turn is refused, and turns are now
-                  blocked before they can be sent. */}
-              <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
-                {t.quota.cta}
-              </button>
-            </>
-          ) : (
-            <p className="text-sm text-calm-muted">
-              {isRecording ? t.home.recording : isProcessing ? t.home.processing : t.home.clickToRecord}
-            </p>
-          )}
-          {transcripts.length > 0 && (
-            <button onClick={handleEndSession} className="btn btn-secondary mt-1">
-              {t.home.endSession}
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 shrink-0">
+            {isRecording && (
+              <div className="text-2xl font-mono text-red-500 font-bold">
+                {formatRecordingTime(recordingTime)}
+              </div>
+            )}
+            <RecordButton
+              isRecording={isRecording}
+              onClick={handleRecordButtonClick}
+              disabled={!isConnected || isProcessing || outOfQuota}
+            />
+            {outOfQuota ? (
+              <>
+                <p className="text-sm text-calm-muted text-center max-w-xs">
+                  {t.quota.wallTitle}
+                  {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
+                </p>
+                <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
+                  {t.quota.cta}
+                </button>
+              </>
+            ) : (
+              <p className="text-sm text-calm-muted">{hint}</p>
+            )}
+          </div>
+        )}
 
         <audio ref={audioRef} className="hidden" />
 
