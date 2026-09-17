@@ -141,7 +141,7 @@ d'où l'intérêt de savoir laquelle les gens choisissent avant d'ouvrir la cais
 | Risque | Probabilité | Mitigation |
 |---|---|---|
 | Groq passe en payant | Moyenne | Modèle swappable (GroqLLM abstrait) → Mistral, Gemini |
-| Microsoft coupe Edge TTS | Faible | Fallback ElevenLabs déjà câblé dans le code |
+| Microsoft coupe Edge TTS | Faible | Secours Azure câblé dans `speech_manager.py` — mêmes voix, ~$16/1M car. Ne se déclenche que sur échec ou dépassement de délai, donc le coût suit les incidents, pas le trafic. |
 | Duolingo lance produit vocal arabe | Moyenne | Différenciateur "no shame" difficile à copier culturellement |
 | Coût infra explose à l'échelle | Faible | Architecture Docker → Kubernetes si besoin |
 

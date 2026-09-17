@@ -68,6 +68,14 @@ services:
       # trop basse fait voir la même IP pour tout le monde, et les limites de
       # débit deviennent globales. Procédure de contrôle dans DEPLOYMENT.md.
       TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-2}
+      # Secours de synthèse vocale. Non renseigné, Edge est simplement retenté :
+      # le secours est une amélioration, pas une dépendance. Renseigné, il prend
+      # la main quand Edge dépasse ses délais — mêmes voix, facturé au caractère,
+      # donc on ne paie que les tours où le gratuit renonce.
+      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY:-}
+      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-}
+      TTS_FIRST_BYTE_TIMEOUT: ${TTS_FIRST_BYTE_TIMEOUT:-2.0}
+      TTS_TOTAL_TIMEOUT: ${TTS_TOTAL_TIMEOUT:-6.0}
       # Modèle de conversation — déplaçable sans reconstruire l'image. Groq
       # retire ses modèles sur préavis, et un identifiant retiré fait échouer
       # chaque tour de parole. Pouvoir en changer par variable rend la panne

@@ -6,6 +6,7 @@
 |---|---|---|---|
 | Groq | LLM (Qwen3.8 27B) + STT (Whisper Large v3) | **Oui** | `GROQ_API_KEY` |
 | Microsoft Edge TTS | Synthèse vocale arabe | Non — aucune clé | — |
+| Azure Speech | Secours de synthèse vocale | Recommandé | `AZURE_SPEECH_KEY` · `AZURE_SPEECH_REGION` |
 | OpenAI | ~~TTS~~ — **non utilisé** | Non | `OPENAI_API_KEY` (ignorée) |
 | ElevenLabs | ~~TTS~~ — **non utilisé** | Non | `ELEVENLABS_API_KEY` (ignorée) |
 | GitHub | Hébergement du code source | Oui | — |
@@ -62,17 +63,55 @@ docker compose exec backend edge-tts --list-voices | grep ar-
 
 **Coût** : 0 €.
 
-> Risque assumé : ce service n'a pas de contrat de niveau de service. S'il
-> disparaissait, il faudrait basculer sur un TTS payant — `TTSProvider` est une
-> interface abstraite, précisément pour que ce jour-là ne soit pas une réécriture.
+**Ce qu'il coûte ailleurs** : sa régularité. Huit synthèses du même texte ont
+mis de 1,4 s à 10,3 s, et l'une des huit n'a jamais rendu d'audio. La médiane
+est excellente, c'est la queue qui se voit — d'où les délais ci-dessous et le
+secours de la section 3.
 
 ---
 
-## 3. OpenAI et ElevenLabs — non utilisés
+## 3. Azure Speech — le secours
+
+**Rôle dans Takalam :** prendre la main quand Edge dépasse ses délais.
+
+**Pourquoi Azure et pas un autre** : edge-tts n'est pas un moteur, c'est un
+client non officiel de l'endpoint « Edge Read Aloud » de Microsoft, qui sert les
+voix **Azure Neural**. `ar-SA-HamedNeural` est un identifiant Azure. Le secours
+rend donc exactement la même voix, dans le même format
+(`audio-24khz-48kbitrate-mono-mp3`) : personne n'entend la bascule.
+
+**Configuration**
+1. Créer une ressource Speech :
+   [portal.azure.com](https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices)
+2. Région `West Europe`, palier **F0** (gratuit, 500 000 caractères/mois)
+3. **Keys and Endpoint** → `AZURE_SPEECH_KEY` et `AZURE_SPEECH_REGION`
+
+Sans ces deux variables, le secours est inactif et une synthèse ratée est
+simplement retentée sur Edge. C'est une amélioration, jamais une dépendance.
+
+**Délais** — mesurés, pas devinés. Les synthèses saines rendent leur premier
+octet entre 0,73 s et 1,29 s ; couper à 2 s n'en interrompt aucune et borne
+celles qui ne finiront pas.
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `TTS_FIRST_BYTE_TIMEOUT` | `2.0` | attente maximale avant le moindre octet |
+| `TTS_TOTAL_TIMEOUT` | `6.0` | plafond de la synthèse entière |
+
+**Coût** : ~$16 le million de caractères, après 500 000 offerts par mois. Une
+réponse fait ~220 caractères, donc ~0,35 centime par tour **secouru** — et le
+chemin normal reste gratuit. Surveiller la ligne `tts — secours azure` dans les
+journaux : sa fréquence dit si le secours reste un secours.
+
+---
+
+## 4. OpenAI et ElevenLabs — non utilisés
 
 Ils figuraient dans la conception initiale pour le TTS. **Le code ne les appelle
-pas** : `SpeechManager` construit `EdgeTTS()` en dur, qui est gratuit et donne
-un arabe de bonne qualité.
+pas** : `SpeechManager` synthétise avec `EdgeTTS`, gratuit et d'un bon arabe, et
+se rabat sur `AzureTTS` (section 3) quand celui-ci dépasse ses délais.
+ElevenLabs rendrait une voix différente pour environ trois fois le prix d'Azure ;
+il n'y a pas de raison technique de l'ajouter aujourd'hui.
 
 Les variables `OPENAI_API_KEY` et `ELEVENLABS_API_KEY` sont encore acceptées par
 la configuration, mais rien ne les lit. **Ne crée pas ces comptes** pour lancer
@@ -80,7 +119,7 @@ Takalam : tu paierais pour rien.
 
 ---
 
-## 4. GitHub
+## 5. GitHub
 
 **Rôle dans Takalam :** hébergement du repo, source pour les déploiements Dokploy (pull automatique à chaque push).
 
@@ -97,7 +136,7 @@ git push -u origin master
 
 ---
 
-## 5. Hetzner (déjà configuré)
+## 6. Hetzner (déjà configuré)
 
 **Rôle :** VPS qui héberge Dokploy et tous les containers Docker.
 
@@ -109,7 +148,7 @@ git push -u origin master
 
 ---
 
-## 6. Dokploy (déjà configuré)
+## 7. Dokploy (déjà configuré)
 
 **Rôle :** orchestre les containers, gère SSL (via Traefik + Let's Encrypt), reverse proxy.
 
