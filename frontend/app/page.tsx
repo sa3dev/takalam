@@ -457,9 +457,9 @@ export default function LandingPage() {
               <span className="ar">تكلّم</span>
             </div>
             <div className="foot-links">
-              <a href="#" data-umami-event="landing-footer-privacy">Confidentialité</a>
-              <a href="#" data-umami-event="landing-footer-terms">Conditions</a>
-              <a href="#" data-umami-event="landing-footer-contact">Contact</a>
+              <Link href="/privacy" data-umami-event="landing-footer-privacy">Confidentialité</Link>
+              <Link href="/terms" data-umami-event="landing-footer-terms">Conditions</Link>
+              <Link href="/contact" data-umami-event="landing-footer-contact">Contact</Link>
             </div>
             <div className="cr">© 2026 Takalam — Apprendre à parler, sans la peur.</div>
           </div>

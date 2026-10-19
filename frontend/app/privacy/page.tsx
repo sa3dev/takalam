@@ -86,6 +86,7 @@ export default function PrivacyPage() {
             <p>
               Takalam utilise un seul cookie <code>takalam_token</code> — un cookie de session HttpOnly nécessaire à votre authentification.
               Il n'y a aucun cookie publicitaire ni cookie de tracking.
+              Nous mesurons la fréquentation avec Umami, un outil de statistiques sans cookie, auto-hébergé, qui n'identifie pas les visiteurs et ne partage rien avec des tiers.
             </p>
           </section>
 
