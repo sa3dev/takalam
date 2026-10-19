@@ -1,8 +1,11 @@
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, Optional
+from xml.sax.saxutils import escape
 import io
 import edge_tts
+import httpx
 from groq import AsyncGroq
 from app.config.settings import settings
 
@@ -100,16 +103,95 @@ class GroqLLM(LLMProvider):
 
 
 class EdgeTTS(TTSProvider):
-    """Microsoft Edge TTS — gratuit, aucune clé API requise, voix arabes naturelles."""
+    """Microsoft Edge TTS — gratuit, aucune clé API requise, voix arabes naturelles.
+
+    Rapide en général et imprévisible parfois : sur huit synthèses du même texte,
+    six ont rendu leur audio entre 1,4 s et 3,5 s, une a mis 10,3 s, et une
+    n'a jamais répondu. C'est un endpoint non officiel, sans SLA, et une
+    conversation parlée ne peut pas attendre qu'il se décide. D'où les deux
+    délais : le premier borne l'attente avant le moindre octet, le second borne
+    la synthèse entière. Dépasser l'un ou l'autre lève, et l'appelant bascule."""
 
     async def synthesize(self, text: str, voice: Optional[str] = None) -> bytes:
         selected_voice = voice or settings.EDGE_TTS_VOICE
         communicate = edge_tts.Communicate(text, selected_voice)
-        chunks = []
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
+        stream = communicate.stream()
+        chunks: list[bytes] = []
+        loop = asyncio.get_running_loop()
+        started = loop.time()
+        timeout = settings.TTS_FIRST_BYTE_TIMEOUT
+
+        try:
+            while True:
+                try:
+                    chunk = await asyncio.wait_for(stream.__anext__(), timeout=timeout)
+                except StopAsyncIteration:
+                    break
+                if chunk["type"] != "audio":
+                    continue
                 chunks.append(chunk["data"])
+                # Le premier octet arrivé, c'est la synthèse entière qui compte.
+                remaining = settings.TTS_TOTAL_TIMEOUT - (loop.time() - started)
+                if remaining <= 0:
+                    raise asyncio.TimeoutError("TTS exceeded its total budget")
+                timeout = remaining
+        finally:
+            # Un flux abandonné garde sa WebSocket ouverte : la refermer ici
+            # évite de laisser un socket par synthèse ratée. Au mieux : fermer
+            # un générateur qu'on vient d'annuler peut lever à son tour, et
+            # cette erreur-là remplacerait dans le `finally` celle qui explique
+            # vraiment ce qui s'est passé.
+            try:
+                await stream.aclose()
+            except Exception as close_error:
+                logger.debug("edge tts stream close failed: %s", close_error)
+
+        if not chunks:
+            raise RuntimeError("Edge TTS returned no audio")
         return b"".join(chunks)
+
+
+class AzureTTS(TTSProvider):
+    """Le chemin officiel vers les voix qu'Edge atteint sans autorisation.
+
+    Même catalogue, même identifiant de voix, et le même format de sortie que
+    celui qu'Edge renvoie — donc une bascule que personne n'entend. Ce qui
+    change est ce qu'on achète : un service avec un SLA, à ~$16 le million de
+    caractères, au lieu d'un endpoint qui peut se taire sans prévenir."""
+
+    # Identique à ce que rend edge-tts : le client ne voit aucune différence.
+    _OUTPUT_FORMAT = "audio-24khz-48kbitrate-mono-mp3"
+
+    @property
+    def configured(self) -> bool:
+        return bool(settings.AZURE_SPEECH_KEY and settings.AZURE_SPEECH_REGION)
+
+    async def synthesize(self, text: str, voice: Optional[str] = None) -> bytes:
+        selected_voice = voice or settings.EDGE_TTS_VOICE
+        # "ar-SA-HamedNeural" → "ar-SA" : la locale est le préfixe du nom.
+        locale = "-".join(selected_voice.split("-")[:2])
+        ssml = (
+            f"<speak version='1.0' xml:lang='{locale}'>"
+            f"<voice name='{selected_voice}'>{escape(text)}</voice>"
+            f"</speak>"
+        )
+        url = f"https://{settings.AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1"
+
+        async with httpx.AsyncClient(timeout=settings.TTS_TOTAL_TIMEOUT) as client:
+            response = await client.post(
+                url,
+                headers={
+                    "Ocp-Apim-Subscription-Key": settings.AZURE_SPEECH_KEY,
+                    "Content-Type": "application/ssml+xml",
+                    "X-Microsoft-OutputFormat": self._OUTPUT_FORMAT,
+                    "User-Agent": "takalam",
+                },
+                content=ssml.encode("utf-8"),
+            )
+        response.raise_for_status()
+        if not response.content:
+            raise RuntimeError("Azure TTS returned no audio")
+        return response.content
 
 
 class SpeechManager:
@@ -136,6 +218,10 @@ class SpeechManager:
         self.stt = GroqSTT()
         self.llm = GroqLLM()
         self.tts: TTSProvider = EdgeTTS()
+        # Le secours, pas le moteur : Edge est gratuit et sans limite de débit,
+        # Azure est facturé au caractère. Ne payer que les tours où le gratuit
+        # renonce garde le coût proche de zéro tout en bornant l'attente.
+        self.fallback_tts = AzureTTS()
 
     async def transcribe_audio(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> tuple[str, float]:
         return await self.stt.transcribe(audio_data, language, mime_type)
@@ -144,7 +230,31 @@ class SpeechManager:
         return await self.llm.generate_response(conversation_history, self.SYSTEM_PROMPT)
 
     async def synthesize_speech(self, text: str, voice: Optional[str] = None) -> bytes:
-        return await self.tts.synthesize(text, voice)
+        """Edge d'abord, et quelque chose d'autre quand Edge ne répond pas.
+
+        Le premier essai est borné par les délais d'EdgeTTS, donc un échec ici
+        coûte au plus deux secondes, pas une conversation. Le second essai va
+        sur Azure quand il est configuré — même voix, avec un SLA — et retourne
+        sur Edge sinon, parce qu'une deuxième chance sur un endpoint capricieux
+        vaut encore mieux qu'un tour perdu."""
+        try:
+            audio = await self.tts.synthesize(text, voice)
+            logger.info("tts — edge, %d octets", len(audio))
+            return audio
+        except Exception as e:
+            logger.warning("tts — edge a échoué (%s: %s)", type(e).__name__, e)
+
+        if self.fallback_tts.configured:
+            audio = await self.fallback_tts.synthesize(text, voice)
+            # Journalisé au niveau warning exprès : chaque ligne est un tour
+            # facturé à Azure, et leur fréquence dit si le secours reste un
+            # secours ou devient le moteur.
+            logger.warning("tts — secours azure, %d octets", len(audio))
+            return audio
+
+        audio = await self.tts.synthesize(text, voice)
+        logger.info("tts — edge au second essai, %d octets", len(audio))
+        return audio
 
     # UI languages we translate the Arabic reply into (Arabic UI needs no translation)
     # Every UI language except Arabic, which is the source: the interface offers

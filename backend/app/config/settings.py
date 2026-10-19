@@ -18,6 +18,23 @@ class Settings(BaseSettings):
 
     # Voix Edge TTS — voir liste : edge-tts --list-voices | grep ar
     EDGE_TTS_VOICE: str = "ar-SA-HamedNeural"  # arabe saoudien, voix masculine
+
+    # Azure Speech — le chemin officiel vers *les mêmes voix*. edge-tts est un
+    # client non officiel de l'endpoint « Edge Read Aloud » de Microsoft, qui
+    # sert les voix Azure Neural : `ar-SA-HamedNeural` est un identifiant Azure.
+    # La bascule est donc inaudible. Non renseigné, le secours est simplement
+    # désactivé et une synthèse ratée est retentée par Edge.
+    AZURE_SPEECH_KEY: Optional[str] = None
+    AZURE_SPEECH_REGION: Optional[str] = None  # ex. westeurope
+
+    # Délais de synthèse, mesurés plutôt que devinés. Sur huit essais du même
+    # texte, Edge a rendu son premier octet entre 0,73 s et 1,29 s dans les cas
+    # sains — et 9,18 s dans un cas, puis rien du tout dans un autre. Couper à
+    # 2 s n'interrompt donc aucune synthèse saine, et borne les pathologiques.
+    # Le plafond total laisse passer les essais simplement lents (jusqu'à 3,5 s
+    # mesurés) et arrête ceux qui ne finiront pas.
+    TTS_FIRST_BYTE_TIMEOUT: float = 2.0
+    TTS_TOTAL_TIMEOUT: float = 6.0
     # (alternative féminine : ar-SA-ZariyahNeural)
 
     # No defaults — must be set via env vars

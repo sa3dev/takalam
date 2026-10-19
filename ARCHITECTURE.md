@@ -58,6 +58,7 @@ flowchart TB
     subgraph Ext["Dépendances externes"]
         Groq["Groq API<br/>whisper-large-v3 (STT)<br/>qwen3.8-27b (LLM)"]
         Edge["Microsoft Edge TTS<br/>synthèse vocale · sans clé"]
+        Azure["Azure Speech<br/>secours TTS · mêmes voix"]
     end
 
     User -->|"HTTPS — pages"| Pages
@@ -171,7 +172,8 @@ planifiée, un nouveau jour est simplement une nouvelle clé.
 | Service | Usage | Clé requise | Si indisponible |
 |---|---|---|---|
 | **Groq** | transcription, réponse, traduction, analyse | `GROQ_API_KEY` | le tour échoue et rend sa réservation |
-| **Edge TTS** | synthèse vocale | aucune | le tour échoue, aucun coût |
+| **Edge TTS** | synthèse vocale | Azure Speech, si configuré | le tour échoue, aucun coût |
+| **Azure Speech** | secours TTS | aucune | le tour échoue ; n'est appelé que si Edge a déjà renoncé |
 | OpenAI, ElevenLabs | déclarés, **non utilisés** par défaut | optionnelles | — |
 
 ## Deux précisions qui évitent des malentendus
