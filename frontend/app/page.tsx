@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { track } from '@/lib/analytics'
 
 const LANDING_CSS = `
   :root {
@@ -246,6 +247,7 @@ export default function LandingPage() {
     if (next !== null && faqRefs.current[next]) {
       faqRefs.current[next]!.style.maxHeight = `${faqRefs.current[next]!.scrollHeight}px`
     }
+    if (next !== null) track('landing-faq-open', { question: FAQ_ITEMS[next].q })
     setOpenFaq(next)
   }
 
@@ -261,11 +263,11 @@ export default function LandingPage() {
             <span className="ar">تكلّم</span>
           </div>
           <div className="nav-links">
-            <a href="#how">Comment ça marche</a>
-            <a href="#pricing">Tarifs</a>
-            <a href="#faq">Questions</a>
+            <a href="#how" data-umami-event="landing-nav-how">Comment ça marche</a>
+            <a href="#pricing" data-umami-event="landing-nav-pricing">Tarifs</a>
+            <a href="#faq" data-umami-event="landing-nav-faq">Questions</a>
           </div>
-          <Link href="/login" className="nav-cta">Se connecter</Link>
+          <Link href="/login" className="nav-cta" data-umami-event="landing-nav-login">Se connecter</Link>
         </nav>
 
         <header className="hero">
@@ -285,8 +287,8 @@ export default function LandingPage() {
           </p>
           <div className="cta">
             <div className="btns">
-              <Link href="/login?mode=register" className="cta-btn primary">Commencer gratuitement</Link>
-              <Link href="/login" className="cta-btn secondary">J&apos;ai déjà un compte</Link>
+              <Link data-umami-event="landing-hero-signup" href="/login?mode=register" className="cta-btn primary">Commencer gratuitement</Link>
+              <Link data-umami-event="landing-hero-login" href="/login" className="cta-btn secondary">J&apos;ai déjà un compte</Link>
             </div>
             <p className="note">10 minutes de conversation offertes chaque jour · Sans carte bancaire</p>
           </div>
@@ -355,7 +357,7 @@ export default function LandingPage() {
                   <li>Un dialecte au choix</li>
                   <li>Suivi de progression de base</li>
                 </ul>
-                <Link href="/login?mode=register" className="pbtn">Commencer gratuitement</Link>
+                <Link href="/login?mode=register" className="pbtn" data-umami-event="landing-plan-free">Commencer gratuitement</Link>
               </div>
               <div className="plan feat">
                 <span className="badge">Le plus choisi</span>
@@ -368,7 +370,7 @@ export default function LandingPage() {
                   <li>Retours détaillés après chaque échange</li>
                   <li>Mode hors-ligne</li>
                 </ul>
-                <Link href="/login?mode=register" className="pbtn">Choisir Pro</Link>
+                <Link href="/login?mode=register" className="pbtn" data-umami-event="landing-plan-pro">Choisir Pro</Link>
               </div>
             </div>
             <p className="footnote">Tarifs indicatifs pendant la bêta — rien n&apos;est facturé pour l&apos;instant.</p>
@@ -440,8 +442,8 @@ export default function LandingPage() {
             <p>Créez votre compte et lancez votre première conversation dans la minute.</p>
             <div className="cta">
               <div className="btns">
-                <Link href="/login?mode=register" className="cta-btn primary">Commencer gratuitement</Link>
-                <Link href="/login" className="cta-btn secondary">J&apos;ai déjà un compte</Link>
+                <Link data-umami-event="landing-end-signup" href="/login?mode=register" className="cta-btn primary">Commencer gratuitement</Link>
+                <Link data-umami-event="landing-end-login" href="/login" className="cta-btn secondary">J&apos;ai déjà un compte</Link>
               </div>
               <p className="note">10 minutes offertes chaque jour · Sans carte bancaire</p>
             </div>
@@ -455,9 +457,9 @@ export default function LandingPage() {
               <span className="ar">تكلّم</span>
             </div>
             <div className="foot-links">
-              <a href="#">Confidentialité</a>
-              <a href="#">Conditions</a>
-              <a href="#">Contact</a>
+              <Link href="/privacy" data-umami-event="landing-footer-privacy">Confidentialité</Link>
+              <Link href="/terms" data-umami-event="landing-footer-terms">Conditions</Link>
+              <Link href="/contact" data-umami-event="landing-footer-contact">Contact</Link>
             </div>
             <div className="cr">© 2026 Takalam — Apprendre à parler, sans la peur.</div>
           </div>

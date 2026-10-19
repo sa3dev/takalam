@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Card } from '@/components/Card'
+import { track } from '@/lib/analytics'
 
 function LoginForm() {
   const router = useRouter()
@@ -38,8 +39,10 @@ function LoginForm() {
     try {
       if (mode === 'login') {
         await login(email, password)
+        track('login-success')
       } else {
         await register(email, username, password)
+        track('signup-success')
       }
       router.push('/app')
     } catch (err) {

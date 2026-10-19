@@ -22,6 +22,7 @@ import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { QuotaGauge } from '@/components/QuotaGauge'
 import { PaywallModal } from '@/components/PaywallModal'
 import { Card } from '@/components/Card'
+import { track } from '@/lib/analytics'
 
 interface Transcript {
   speaker: 'user' | 'assistant'
@@ -119,6 +120,7 @@ export default function ConversationPage() {
   const handleSessionStarted = useCallback(async (message: WebSocketMessage) => {
     if (message.type !== 'session_started' || hasRestoredRef.current) return
     hasRestoredRef.current = true
+    track('session-started')
 
     const dbSessionId = message.db_session_id
     if (typeof dbSessionId !== 'number') return
@@ -147,6 +149,21 @@ export default function ConversationPage() {
   // Once the allowance is spent the server refuses every turn, so the mic is
   // disabled rather than left to invite a click it will punish.
   const outOfQuota = isOutOfQuota(quota)
+
+  // Daily spoken-time thresholds, fired when the running total crosses them.
+  // The first value seen (page load) only seeds the baseline, so reloading
+  // mid-day does not replay milestones the user reached earlier.
+  const lastUsedRef = useRef<number | null>(null)
+  const used = quota?.spoken_seconds_used
+  useEffect(() => {
+    if (used === undefined) return
+    const prev = lastUsedRef.current
+    lastUsedRef.current = used
+    if (prev === null) return
+    for (const minutes of [2, 5, 10]) {
+      if (prev < minutes * 60 && used >= minutes * 60) track(`spoken-${minutes}min`)
+    }
+  }, [used])
 
   const handleQuotaUpdate = useCallback((message: QuotaUpdateMessage) => {
     applyUsage(message.spoken_seconds_used)

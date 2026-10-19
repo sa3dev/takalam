@@ -6,17 +6,22 @@ const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'
 // Derive the ws: and wss: connect-src directive from the configured WS URL
 const wsOrigin = wsUrl.replace(/^ws/, 'ws').replace(/^http/, 'ws')
 
+// Umami (analytics auto-hébergé). Son origine doit figurer dans script-src
+// (chargement du tracker) et connect-src (envoi des événements).
+const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL || ''
+const umamiOrigin = umamiUrl ? new URL(umamiUrl).origin : ''
+
 const cspDirectives = [
   "default-src 'self'",
   // Next.js needs 'unsafe-inline' for its runtime scripts; nonce-based CSP would remove this
   // but requires custom server setup — deferred for now
-  "script-src 'self' 'unsafe-inline'" + (isProd ? '' : " 'unsafe-eval'"),
+  "script-src 'self' 'unsafe-inline'" + (umamiOrigin ? ` ${umamiOrigin}` : '') + (isProd ? '' : " 'unsafe-eval'"),
   // Tailwind and component inline styles
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   // API calls go to same origin via Next.js proxy rewrite
   // WS connects directly to backend (can't be proxied)
-  `connect-src 'self' ${wsOrigin}`,
+  `connect-src 'self' ${wsOrigin}${umamiOrigin ? ` ${umamiOrigin}` : ''}`,
   // blob: needed for audio playback via URL.createObjectURL
   "media-src 'self' blob:",
   "img-src 'self' data:",

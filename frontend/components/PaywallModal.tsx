@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { clsx } from 'clsx'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { formatResetTime, type Quota } from '@/hooks/useQuota'
+import { track } from '@/lib/analytics'
 
 type PlanChoice = 'monthly' | 'annual'
 
@@ -25,6 +26,7 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
   // walled again should see the choice, not last time's thank-you screen.
   useEffect(() => {
     if (open) {
+      track('paywall-shown')
       setChoice(null)
       setIsSaving(false)
       setHasRecorded(false)
@@ -51,6 +53,7 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
         body: JSON.stringify({ plan_choice: choice }),
       })
       if (!res.ok) throw new Error('could not record interest')
+      track('paywall-plan-confirm', { plan: choice })
       setHasRecorded(true)
     } catch {
       // Leave the user on the choice screen with a live button so the click can
@@ -106,7 +109,7 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
                   price={formatPrice(quota.pro_price_monthly_eur)}
                   period={t.quota.perMonth}
                   selected={choice === 'monthly'}
-                  onSelect={() => setChoice('monthly')}
+                  onSelect={() => { setChoice('monthly'); track('paywall-plan-select', { plan: 'monthly' }) }}
                 />
                 <PlanOption
                   label={t.quota.annual}
@@ -114,7 +117,7 @@ export function PaywallModal({ open, quota, onClose }: PaywallModalProps) {
                   period={t.quota.perYear}
                   hint={t.quota.annualHint}
                   selected={choice === 'annual'}
-                  onSelect={() => setChoice('annual')}
+                  onSelect={() => { setChoice('annual'); track('paywall-plan-select', { plan: 'annual' }) }}
                 />
               </div>
             )}
