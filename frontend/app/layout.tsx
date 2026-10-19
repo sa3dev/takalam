@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -10,6 +11,12 @@ import { AuthProvider } from '@/contexts/AuthContext'
 const siteUrl = process.env.NEXT_PUBLIC_DOMAIN
   ? `https://${process.env.NEXT_PUBLIC_DOMAIN}`
   : 'http://localhost:3000'
+
+// Umami: inactif tant que l'URL et l'ID ne sont pas fournis (dev local, previews).
+const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL
+const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID
+// Doit correspondre à TRACKER_SCRIPT_NAME côté Umami (défaut: script.js).
+const umamiScript = process.env.NEXT_PUBLIC_UMAMI_SCRIPT || 'script.js'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -44,6 +51,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        {umamiUrl && umamiWebsiteId && (
+          <Script
+            src={`${umamiUrl.replace(/\/$/, '')}/${umamiScript}`}
+            data-website-id={umamiWebsiteId}
+            strategy="afterInteractive"
+          />
+        )}
         <AuthProvider>
           <LanguageProvider>
             {children}
