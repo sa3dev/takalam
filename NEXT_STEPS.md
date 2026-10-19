@@ -54,6 +54,19 @@ Cible: francophones d'origine arabe qui n'osent pas parler, convertis, expatrié
 - [ ] Mettre l'annuel (129 €) en avant, offre de lancement limitée (ex. -30 % pour les 100 premiers)
 - [ ] Brancher Stripe quand le taux d'intérêt (`interest` / `wall_hit`) est satisfaisant
 
+## 6. Emails (procédure réutilisable pour chaque MVP)
+
+Objectif: ne plus recréer des boîtes à chaque projet. Tout converge vers une seule boîte.
+
+- [ ] **Compte "tech" unique** pour les outils (Azure, Groq, Hetzner, GitHub, Stripe, Umami…): `dev@sdservices.dev` ou un Gmail dédié. Alertes et factures au même endroit.
+- [ ] **Catch-all par domaine**: `*@takalamapp.com` redirige vers cette boîte (Cloudflare Email Routing, gratuit, si le DNS y est). `contact@`, `privacy@`, `support@`… marchent sans rien créer.
+- [ ] **Étiquettes Gmail** par projet, via des filtres sur le champ « À ».
+- [ ] **Répondre depuis l'adresse du produit** (optionnel): Gmail « Envoyer en tant que » avec un SMTP externe gratuit (Resend, Brevo ou Zoho). Ajouter les enregistrements **SPF** et **DKIM** dans le DNS, sinon les réponses finissent en spam.
+- [ ] **Filtre anti-spam** sur le catch-all: isoler les adresses jamais utilisées.
+- [ ] Pour Takalam: les adresses affichées sur le site sont `contact@takalamapp.com` et `privacy@takalamapp.com` (à faire fonctionner en premier).
+
+Pour un nouveau MVP: acheter le domaine → activer le catch-all vers la boîte tech → ajouter SPF/DKIM si l'on veut répondre. Rien d'autre.
+
 ## Infos à fournir
 - URL de l'instance Umami: _à compléter_
 - Website ID Takalam: _à compléter_
