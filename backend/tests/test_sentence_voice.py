@@ -95,3 +95,11 @@ def test_no_more_syntheses_run_at_once_than_edge_tolerates(monkeypatch):
 
     asyncio.run(speech_manager.process_conversation_turn(b"audio", [], on_audio=on_audio))
     assert peak == 3
+
+
+def test_formatting_marks_are_not_read_aloud():
+    from app.services.speech_manager import clean_for_speech
+    assert clean_for_speech("هذه **كلمة** مهمة") == "هذه كلمة مهمة"
+    assert clean_for_speech("# عنوان\n- أولا\n- ثانيا") == "عنوان\nأولا\nثانيا"
+    assert clean_for_speech("انظر [الرابط](http://x.y) الآن") == "انظر الرابط الآن"
+    assert clean_for_speech("جملة عادية، بلا رموز.") == "جملة عادية، بلا رموز."

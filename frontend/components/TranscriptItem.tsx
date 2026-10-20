@@ -12,6 +12,16 @@ interface TranscriptItemProps {
   onReplay?: () => void
 }
 
+/** The model sometimes marks words with **stars**. Show them as emphasis rather
+ *  than as punctuation, and drop any stray mark left over. */
+function renderEmphasis(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') && part.length > 4
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : part.replace(/[*_`#]+/g, '')
+  )
+}
+
 export function TranscriptItem({ speaker, text, translation, timestamp, onReplay }: TranscriptItemProps) {
   const { t } = useLanguage()
   const isUser = speaker === 'user'
@@ -37,7 +47,7 @@ export function TranscriptItem({ speaker, text, translation, timestamp, onReplay
         </div>
 
         {/* Message text */}
-        <p className="text-base leading-relaxed arabic">{text}</p>
+        <p className="text-base leading-relaxed arabic">{renderEmphasis(text)}</p>
 
         {/* Translation of the assistant's Arabic reply, in the user's UI language */}
         {translation && (

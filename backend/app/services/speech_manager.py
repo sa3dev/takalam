@@ -206,6 +206,22 @@ _MAX_CHUNKS = 6
 _MAX_PARALLEL_VOICE = 3
 
 
+_MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_MARKDOWN_MARKS = re.compile(r"[*_`#>~]+")
+_LIST_BULLET = re.compile(r"^\s*(?:[-•]|\d+[.)])\s+", re.MULTILINE)
+
+
+def clean_for_speech(text: str) -> str:
+    """Drop the formatting a voice would read out loud.
+
+    The model likes to emphasise with **stars**, and a synthesiser pronounces
+    them. Nothing here changes the words, only the marks around them."""
+    text = _MARKDOWN_LINK.sub(r"\1", text)
+    text = _LIST_BULLET.sub("", text)
+    text = _MARKDOWN_MARKS.sub("", text)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()
+
+
 def split_sentences(text: str) -> list[str]:
     """Cut a reply into pieces that can be voiced independently.
 
@@ -255,6 +271,7 @@ class SpeechManager:
 - كن صديقاً صبوراً ومشجعاً، ليس معلماً صارماً
 - لا تقاطع بتصحيحات مباشرة — استمر في المحادثة بشكل طبيعي
 - ردود قصيرة ومشجعة تحفز المستخدم على الاستمرار
+- اكتب نصاً عادياً فقط، دون رموز تنسيق مثل النجمة (*) أو الشباك (#) أو الشرطة السفلية، لأن ردودك تُقرأ بصوت عالٍ
 - اكتب جميع ردودك بالتشكيل الكامل (فَتْحة، كَسْرة، ضَمَّة، سُكُون، شَدَّة) لمساعدة المتعلم على النطق الصحيح"""
 
     def __init__(self):
@@ -413,7 +430,8 @@ class SpeechManager:
             # piece is synthesised at once, but delivered in order the moment
             # it is ready, so the voice starts after the first sentence rather
             # than after the whole answer.
-            chunks = split_sentences(ai_response) if on_audio else [ai_response]
+            spoken = clean_for_speech(ai_response)
+            chunks = split_sentences(spoken) if on_audio else [spoken]
             gate = asyncio.Semaphore(_MAX_PARALLEL_VOICE)
 
             async def voice(chunk: str) -> bytes:
