@@ -8,9 +8,11 @@ interface TranscriptItemProps {
   text: string
   translation?: string
   timestamp?: string
+  /** Present once the spoken version of this reply has arrived. */
+  onReplay?: () => void
 }
 
-export function TranscriptItem({ speaker, text, translation, timestamp }: TranscriptItemProps) {
+export function TranscriptItem({ speaker, text, translation, timestamp, onReplay }: TranscriptItemProps) {
   const { t } = useLanguage()
   const isUser = speaker === 'user'
 
@@ -44,10 +46,27 @@ export function TranscriptItem({ speaker, text, translation, timestamp }: Transc
           </p>
         )}
 
-        {/* Timestamp */}
-        {timestamp && (
-          <div className="text-xs opacity-60 mt-1 text-left">
-            {timestamp}
+        {(timestamp || onReplay) && (
+          <div className="flex items-center justify-between gap-3 mt-1">
+            {/* A click is a user gesture, so this also plays what the browser
+                refused to start on its own. */}
+            {onReplay ? (
+              <button
+                type="button"
+                onClick={onReplay}
+                aria-label={t.home.replay}
+                title={t.home.replay}
+                className="flex items-center gap-1 text-xs opacity-70 hover:opacity-100 transition-opacity"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+                {t.home.replay}
+              </button>
+            ) : <span />}
+            {timestamp && <span className="text-xs opacity-60">{timestamp}</span>}
           </div>
         )}
       </div>

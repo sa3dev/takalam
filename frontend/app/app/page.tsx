@@ -29,6 +29,8 @@ interface Transcript {
   text: string
   translation?: string
   timestamp: string
+  /** Blob URL of the spoken reply, kept so it can be played again. */
+  audioUrl?: string
 }
 
 /** Rows as the transcriptions endpoint returns them. Translations are not
@@ -78,6 +80,9 @@ export default function ConversationPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isPaywallOpen, setIsPaywallOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const audioUnlockedRef = useRef(false)
+  const silentUrlRef = useRef<string | null>(null)
+  const audioUrlsRef = useRef<string[]>([])
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   // Restoring happens once per mount. The automatic retry sends start_session
   // again on every reconnect, and refetching then would race with turns already
@@ -96,6 +101,44 @@ export default function ConversationPage() {
     else setIsProcessing(false)
   }, [])
 
+  /** Play a reply. The error is surfaced, not swallowed: a refused play() is
+   *  exactly how the voice used to go missing without a trace. */
+  const playAudio = useCallback(async (url: string) => {
+    const el = audioRef.current
+    if (!el) return
+    try {
+      el.src = url
+      await el.play()
+    } catch (error) {
+      const name = error instanceof Error ? error.name : 'unknown'
+      console.error('Audio playback failed:', error)
+      track('audio-play-failed', { error: name })
+    }
+  }, [])
+
+  /** Browsers only let a page start sound inside a user gesture, and the reply
+   *  arrives seconds after the click. Playing a silent clip on the click itself
+   *  marks the element as allowed, so the reply can start by itself later. */
+  const unlockAudio = useCallback(() => {
+    const el = audioRef.current
+    if (!el || audioUnlockedRef.current) return
+    try {
+      if (!silentUrlRef.current) {
+        // 44-byte WAV header + 1 sample of silence
+        const wav = new Uint8Array([
+          82,73,70,70,38,0,0,0,87,65,86,69,102,109,116,32,16,0,0,0,1,0,1,0,
+          64,31,0,0,128,62,0,0,2,0,16,0,100,97,116,97,2,0,0,0,0,0,
+        ])
+        silentUrlRef.current = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }))
+      }
+      el.src = silentUrlRef.current
+      const attempt = el.play()
+      if (attempt) attempt.then(() => { audioUnlockedRef.current = true }).catch(() => {})
+    } catch {
+      // unlocking is an optimisation; the replay button still works
+    }
+  }, [])
+
   const handleAudioResponse = useCallback(async (message: AudioResponseMessage) => {
     try {
       const byteCharacters = atob(message.audio_data)
@@ -105,15 +148,19 @@ export default function ConversationPage() {
       }
       const audioBlob = new Blob([byteArray], { type: 'audio/mp3' })
       const audioUrl = URL.createObjectURL(audioBlob)
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl
-        await audioRef.current.play()
-        audioRef.current.onended = () => URL.revokeObjectURL(audioUrl)
-      }
-    } catch {
-      // audio playback errors are non-fatal
+      audioUrlsRef.current.push(audioUrl)
+      // The reply text arrived first, so the voice belongs to the last line
+      // the assistant spoke.
+      setTranscripts(prev => {
+        const index = prev.map(item => item.speaker).lastIndexOf('assistant')
+        if (index === -1) return prev
+        return prev.map((item, i) => (i === index ? { ...item, audioUrl } : item))
+      })
+      await playAudio(audioUrl)
+    } catch (error) {
+      console.error('Could not decode the spoken reply:', error)
     }
-  }, [])
+  }, [playAudio])
 
   /** Rebuild the conversation the backend already holds. Reached after a
    *  reload, where the screen is empty but the session is not. */
@@ -210,7 +257,14 @@ export default function ConversationPage() {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [transcripts])
 
+  // Blob URLs are kept so a reply can be replayed; release them with the page.
+  useEffect(() => {
+    const urls = audioUrlsRef.current
+    return () => urls.forEach(url => URL.revokeObjectURL(url))
+  }, [])
+
   function handleRecordButtonClick() {
+    unlockAudio()
     if (isRecording) stopRecording()
     else startRecording()
   }
@@ -282,6 +336,7 @@ export default function ConversationPage() {
                   text={transcript.text}
                   translation={transcript.translation}
                   timestamp={transcript.timestamp}
+                  onReplay={transcript.audioUrl ? () => playAudio(transcript.audioUrl!) : undefined}
                 />
               ))}
               {isProcessing && (
