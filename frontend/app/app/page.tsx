@@ -296,15 +296,6 @@ export default function ConversationPage() {
     return () => urls.forEach(url => URL.revokeObjectURL(url))
   }, [])
 
-  // The next clip starts when the current one ends.
-  useEffect(() => {
-    const el = audioRef.current
-    if (!el) return
-    const onEnded = () => { void playNext() }
-    el.addEventListener('ended', onEnded)
-    return () => el.removeEventListener('ended', onEnded)
-  }, [playNext])
-
   function handleRecordButtonClick() {
     unlockAudio()
     if (isRecording) stopRecording()
@@ -458,7 +449,10 @@ export default function ConversationPage() {
           </div>
         )}
 
-        <audio ref={audioRef} className="hidden" />
+        {/* The next clip starts when the current one ends. Bound here and not in an
+            effect: this page renders nothing until the session resolves, so an
+            effect would run before the element exists and never attach. */}
+        <audio ref={audioRef} className="hidden" onEnded={() => { void playNext() }} />
 
         <PaywallModal
           open={isPaywallOpen}
