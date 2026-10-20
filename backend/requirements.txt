@@ -23,7 +23,7 @@ httpx==0.26.0
 aiohttp==3.9.1
 
 # TTS gratuit (Microsoft Edge TTS, aucune clé API requise)
-edge-tts
+edge-tts>=7.3.1
 
 # AI/ML APIs
 openai==1.10.0
