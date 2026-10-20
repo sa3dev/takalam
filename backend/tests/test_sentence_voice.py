@@ -66,3 +66,32 @@ def test_a_lost_middle_sentence_leaves_a_gap_not_a_failed_turn(monkeypatch):
     received = _turn_with_voice(monkeypatch, synth)
     # Numbered by what was delivered, so the client still sees 0 then 1.
     assert [i for i, _, _ in received] == [0, 1]
+
+
+def test_no_more_syntheses_run_at_once_than_edge_tolerates(monkeypatch):
+    running = 0
+    peak = 0
+
+    async def synth(text, voice=None):
+        nonlocal running, peak
+        running += 1
+        peak = max(peak, running)
+        await asyncio.sleep(0.02)
+        running -= 1
+        return text.encode()
+
+    async def transcribed(*_a, **_k):
+        return "مرحبا", 3.0
+
+    async def answer(*_a, **_k):
+        return " ".join(f"هذه هي الجملة رقم {i} في هذا الرد الطويل." for i in range(6))
+
+    monkeypatch.setattr(speech_manager, "transcribe_audio", transcribed)
+    monkeypatch.setattr(speech_manager, "generate_response", answer)
+    monkeypatch.setattr(speech_manager, "synthesize_speech", synth)
+
+    async def on_audio(*_a):
+        pass
+
+    asyncio.run(speech_manager.process_conversation_turn(b"audio", [], on_audio=on_audio))
+    assert peak == 3

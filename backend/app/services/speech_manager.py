@@ -200,6 +200,10 @@ class AzureTTS(TTSProvider):
 _SENTENCE_END = re.compile(r"(?<=[.!?؟۔…])\s+|\n+")
 _MIN_CHUNK_CHARS = 15
 _MAX_CHUNKS = 6
+# Edge refuses to be hammered: measured on six sentences at once, about half
+# timed out while connecting. Three at a time lost none (2.0-2.7s for the whole
+# reply), two at a time lost none but took 3.8s, and six at a time lost half.
+_MAX_PARALLEL_VOICE = 3
 
 
 def split_sentences(text: str) -> list[str]:
@@ -410,7 +414,13 @@ class SpeechManager:
             # it is ready, so the voice starts after the first sentence rather
             # than after the whole answer.
             chunks = split_sentences(ai_response) if on_audio else [ai_response]
-            speech = [asyncio.create_task(self.synthesize_speech(chunk)) for chunk in chunks]
+            gate = asyncio.Semaphore(_MAX_PARALLEL_VOICE)
+
+            async def voice(chunk: str) -> bytes:
+                async with gate:
+                    return await self.synthesize_speech(chunk)
+
+            speech = [asyncio.create_task(voice(chunk)) for chunk in chunks]
             try:
                 translation = await _maybe_translate()
                 t3 = time.perf_counter()
