@@ -17,6 +17,10 @@ export interface AudioResponseMessage {
   type: 'audio_response'
   audio_data: string
   format: string
+  /** Position of this sentence in the reply and how many there are; absent when
+   * the reply came as a single clip. */
+  index?: number
+  total?: number
 }
 
 /** Running total of speech metered today, pushed after each completed turn so

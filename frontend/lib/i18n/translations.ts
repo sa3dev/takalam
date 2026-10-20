@@ -19,6 +19,7 @@ export const translations = {
       processing: "Traitement en cours...",
       clickToRecord: "Cliquez pour enregistrer",
       endSession: "Terminer la session",
+      replay: "Réécouter",
       endSessionConfirm: "Voulez-vous terminer la session ?",
       you: "Vous",
       assistant: "Takalam"
@@ -87,6 +88,7 @@ export const translations = {
       processing: "Processing...",
       clickToRecord: "Click to record",
       endSession: "End Session",
+      replay: "Listen again",
       endSessionConfirm: "Do you want to end the session?",
       you: "You",
       assistant: "Takalam"
@@ -152,6 +154,7 @@ export const translations = {
       processing: "Procesando...",
       clickToRecord: "Haz clic para grabar",
       endSession: "Terminar sesión",
+      replay: "Escuchar de nuevo",
       endSessionConfirm: "¿Quieres terminar la sesión?",
       you: "Tú",
       assistant: "Takalam"
@@ -217,6 +220,7 @@ export const translations = {
       processing: "Elaborazione...",
       clickToRecord: "Clicca per registrare",
       endSession: "Termina Sessione",
+      replay: "Riascolta",
       endSessionConfirm: "Vuoi terminare la sessione?",
       you: "Tu",
       assistant: "Takalam"
@@ -282,6 +286,7 @@ export const translations = {
       processing: "Обработка...",
       clickToRecord: "Нажмите для записи",
       endSession: "Завершить сеанс",
+      replay: "Прослушать ещё раз",
       endSessionConfirm: "Вы хотите завершить сеанс?",
       you: "Вы",
       assistant: "Такалам"
@@ -347,6 +352,7 @@ export const translations = {
       processing: "处理中...",
       clickToRecord: "点击录音",
       endSession: "结束会话",
+      replay: "再听一遍",
       endSessionConfirm: "您想结束会话吗？",
       you: "您",
       assistant: "Takalam"
@@ -415,6 +421,7 @@ export const translations = {
       processing: "جاري المعالجة...",
       clickToRecord: "اضغط للتسجيل",
       endSession: "إنهاء الجلسة",
+      replay: "استمع مرة أخرى",
       endSessionConfirm: "هل تريد إنهاء الجلسة؟",
       you: "أنت",
       assistant: "تكلم"

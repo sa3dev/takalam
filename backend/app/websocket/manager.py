@@ -140,6 +140,19 @@ class ConnectionManager:
                     "is_final": True,
                 })
 
+            streamed = False
+
+            async def announce_audio(index: int, total: int, audio: bytes) -> None:
+                nonlocal streamed
+                streamed = True
+                await self.send_message(session_id, {
+                    "type": "audio_response",
+                    "audio_data": base64.b64encode(audio).decode("utf-8"),
+                    "format": "mp3",
+                    "index": index,
+                    "total": total,
+                })
+
             try:
                 user_text, ai_response, translation, ai_audio, spoken_seconds = await speech_manager.process_conversation_turn(
                     audio_data=audio_bytes,
@@ -149,6 +162,7 @@ class ConnectionManager:
                     target_lang=target_lang,
                     on_transcribed=announce_speech,
                     on_answer=announce_answer,
+                    on_audio=announce_audio,
                 )
             except TurnFailedAfterTranscription as e:
                 spoken_seconds = e.spoken_seconds
@@ -159,11 +173,12 @@ class ConnectionManager:
                 conversation_history[:] = conversation_history[-_MAX_HISTORY_MESSAGES:]
             self._save_history(session_id, conversation_history)
 
-            await self.send_message(session_id, {
-                "type": "audio_response",
-                "audio_data": base64.b64encode(ai_audio).decode("utf-8"),
-                "format": "mp3",
-            })
+            if not streamed:
+                await self.send_message(session_id, {
+                    "type": "audio_response",
+                    "audio_data": base64.b64encode(ai_audio).decode("utf-8"),
+                    "format": "mp3",
+                })
             return spoken_seconds
 
         except Exception as e:

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from abc import ABC, abstractmethod
 from typing import Awaitable, Callable, Optional
 from xml.sax.saxutils import escape
@@ -194,6 +195,64 @@ class AzureTTS(TTSProvider):
         return response.content
 
 
+# A sentence ends at . ! ? … or the Arabic question mark and full stop, followed
+# by whitespace; a line break also ends one. The terminator stays with its sentence.
+_SENTENCE_END = re.compile(r"(?<=[.!?؟۔…])\s+|\n+")
+_MIN_CHUNK_CHARS = 15
+_MAX_CHUNKS = 6
+# Edge refuses to be hammered: measured on six sentences at once, about half
+# timed out while connecting. Three at a time lost none (2.0-2.7s for the whole
+# reply), two at a time lost none but took 3.8s, and six at a time lost half.
+_MAX_PARALLEL_VOICE = 3
+
+
+_MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_MARKDOWN_MARKS = re.compile(r"[*_`#>~]+")
+_LIST_BULLET = re.compile(r"^\s*(?:[-•]|\d+[.)])\s+", re.MULTILINE)
+
+
+def clean_for_speech(text: str) -> str:
+    """Drop the formatting a voice would read out loud.
+
+    The model likes to emphasise with **stars**, and a synthesiser pronounces
+    them. Nothing here changes the words, only the marks around them."""
+    text = _MARKDOWN_LINK.sub(r"\1", text)
+    text = _LIST_BULLET.sub("", text)
+    text = _MARKDOWN_MARKS.sub("", text)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()
+
+
+def split_sentences(text: str) -> list[str]:
+    """Cut a reply into pieces that can be voiced independently.
+
+    The voice starts when the *first* piece is ready, so the first one is the
+    only one whose length matters: short means early. Fragments under a few
+    words are glued to their neighbour (a synthesis has a fixed cost, and a
+    two-word clip sounds clipped), and the count is capped so a long answer
+    cannot open a dozen connections at once."""
+    pieces = [p.strip() for p in _SENTENCE_END.split(text) if p and p.strip()]
+    if not pieces:
+        return [text.strip()] if text.strip() else []
+
+    merged: list[str] = []
+    carry = ""
+    for piece in pieces:
+        carry = f"{carry} {piece}".strip() if carry else piece
+        if len(carry) >= _MIN_CHUNK_CHARS:
+            merged.append(carry)
+            carry = ""
+    if carry:
+        if merged:
+            merged[-1] = f"{merged[-1]} {carry}"
+        else:
+            merged.append(carry)
+
+    while len(merged) > _MAX_CHUNKS:
+        merged[-2] = f"{merged[-2]} {merged[-1]}"
+        merged.pop()
+    return merged
+
+
 class SpeechManager:
     SYSTEM_PROMPT = """أنت مساعد لتعلم اللغة العربية اسمه تكلم. دورك الوحيد هو مساعدة المستخدم على ممارسة المحادثة باللغة العربية.
 
@@ -212,6 +271,7 @@ class SpeechManager:
 - كن صديقاً صبوراً ومشجعاً، ليس معلماً صارماً
 - لا تقاطع بتصحيحات مباشرة — استمر في المحادثة بشكل طبيعي
 - ردود قصيرة ومشجعة تحفز المستخدم على الاستمرار
+- اكتب نصاً عادياً فقط، دون رموز تنسيق مثل النجمة (*) أو الشباك (#) أو الشرطة السفلية، لأن ردودك تُقرأ بصوت عالٍ
 - اكتب جميع ردودك بالتشكيل الكامل (فَتْحة، كَسْرة، ضَمَّة، سُكُون، شَدَّة) لمساعدة المتعلم على النطق الصحيح"""
 
     def __init__(self):
@@ -320,6 +380,7 @@ class SpeechManager:
         target_lang: Optional[str] = None,
         on_transcribed: Optional[Callable[[str], Awaitable[None]]] = None,
         on_answer: Optional[Callable[[str, str], Awaitable[None]]] = None,
+        on_audio: Optional[Callable[[int, int, bytes], Awaitable[None]]] = None,
     ) -> tuple[str, str, str, bytes, float]:
         """Run one turn, announcing each stage as it completes.
 
@@ -364,17 +425,51 @@ class SpeechManager:
             # runs and while the written answer travels to the client. Both
             # still depend only on ai_response, so nothing that was concurrent
             # before has been serialised.
-            speech = asyncio.create_task(self.synthesize_speech(ai_response))
+            #
+            # With on_audio the reply is voiced sentence by sentence: every
+            # piece is synthesised at once, but delivered in order the moment
+            # it is ready, so the voice starts after the first sentence rather
+            # than after the whole answer.
+            spoken = clean_for_speech(ai_response)
+            chunks = split_sentences(spoken) if on_audio else [spoken]
+            gate = asyncio.Semaphore(_MAX_PARALLEL_VOICE)
+
+            async def voice(chunk: str) -> bytes:
+                async with gate:
+                    return await self.synthesize_speech(chunk)
+
+            speech = [asyncio.create_task(voice(chunk)) for chunk in chunks]
             try:
                 translation = await _maybe_translate()
                 t3 = time.perf_counter()
                 if on_answer:
                     await on_answer(ai_response, translation)
-                ai_audio = await speech
+
+                delivered: list[bytes] = []
+                for index, task in enumerate(speech):
+                    try:
+                        audio = await task
+                    except Exception as e:
+                        # A hole in the middle of a reply beats losing all of it,
+                        # but a reply with no voice at all is a failed turn.
+                        logger.warning("tts — phrase %d/%d perdue (%s: %s)", index + 1, len(speech), type(e).__name__, e)
+                        if index == len(speech) - 1 and not delivered:
+                            raise
+                        continue
+                    delivered.append(audio)
+                    if on_audio:
+                        # Numbered by what was delivered, not by sentence: the
+                        # client treats 0 as "a new reply starts here", so a
+                        # lost first sentence must not hand that role to nobody.
+                        await on_audio(len(delivered) - 1, len(speech), audio)
+                # Streamed audio has already been sent; only the single-clip
+                # path hands bytes back to the caller.
+                ai_audio = b"" if on_audio else b"".join(delivered)
             except BaseException:
                 # Never leave the synthesis running behind a turn that failed —
                 # an orphaned task would finish into nothing and log it.
-                speech.cancel()
+                for task in speech:
+                    task.cancel()
                 raise
             t4 = time.perf_counter()
         except Exception as e:
