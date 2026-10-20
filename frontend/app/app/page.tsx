@@ -29,8 +29,8 @@ interface Transcript {
   text: string
   translation?: string
   timestamp: string
-  /** Blob URL of the spoken reply, kept so it can be played again. */
-  audioUrl?: string
+  /** Blob URLs of the spoken reply, one per sentence, kept so it can be played again. */
+  audioUrls?: string[]
 }
 
 /** Rows as the transcriptions endpoint returns them. Translations are not
@@ -83,6 +83,8 @@ export default function ConversationPage() {
   const audioUnlockedRef = useRef(false)
   const silentUrlRef = useRef<string | null>(null)
   const audioUrlsRef = useRef<string[]>([])
+  const queueRef = useRef<string[]>([])
+  const isPlayingRef = useRef(false)
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   // Restoring happens once per mount. The automatic retry sends start_session
   // again on every reconnect, and refetching then would race with turns already
@@ -101,11 +103,19 @@ export default function ConversationPage() {
     else setIsProcessing(false)
   }, [])
 
-  /** Play a reply. The error is surfaced, not swallowed: a refused play() is
-   *  exactly how the voice used to go missing without a trace. */
-  const playAudio = useCallback(async (url: string) => {
+  /** Play the queue one clip after the other. A reply arrives as several
+   *  sentences, and each starts as the previous one ends. When the queue runs
+   *  dry we just go idle: the next sentence to arrive restarts it. The error is
+   *  surfaced, not swallowed: a refused play() is exactly how the voice used to
+   *  go missing without a trace. */
+  const playNext = useCallback(async () => {
     const el = audioRef.current
-    if (!el) return
+    const url = queueRef.current.shift()
+    if (!el || !url) {
+      isPlayingRef.current = false
+      return
+    }
+    isPlayingRef.current = true
     try {
       el.src = url
       await el.play()
@@ -113,8 +123,23 @@ export default function ConversationPage() {
       const name = error instanceof Error ? error.name : 'unknown'
       console.error('Audio playback failed:', error)
       track('audio-play-failed', { error: name })
+      queueRef.current = []
+      isPlayingRef.current = false
     }
   }, [])
+
+  /** Enqueue clips, starting playback if nothing is playing. */
+  const enqueueAudio = useCallback((urls: string[]) => {
+    queueRef.current.push(...urls)
+    if (!isPlayingRef.current) void playNext()
+  }, [playNext])
+
+  /** Replace whatever is playing with this reply, from its first sentence. */
+  const replayAudio = useCallback((urls: string[]) => {
+    queueRef.current = [...urls]
+    isPlayingRef.current = false
+    void playNext()
+  }, [playNext])
 
   /** Browsers only let a page start sound inside a user gesture, and the reply
    *  arrives seconds after the click. Playing a silent clip on the click itself
@@ -149,18 +174,26 @@ export default function ConversationPage() {
       const audioBlob = new Blob([byteArray], { type: 'audio/mp3' })
       const audioUrl = URL.createObjectURL(audioBlob)
       audioUrlsRef.current.push(audioUrl)
-      // The reply text arrived first, so the voice belongs to the last line
-      // the assistant spoke.
+      // The reply text arrived first, so the voice belongs to the last line the
+      // assistant spoke. The first sentence starts a fresh list; the rest add to it.
+      const isFirst = !message.index
       setTranscripts(prev => {
         const index = prev.map(item => item.speaker).lastIndexOf('assistant')
         if (index === -1) return prev
-        return prev.map((item, i) => (i === index ? { ...item, audioUrl } : item))
+        return prev.map((item, i) => (
+          i === index ? { ...item, audioUrls: isFirst ? [audioUrl] : [...(item.audioUrls ?? []), audioUrl] } : item
+        ))
       })
-      await playAudio(audioUrl)
+      // A new reply interrupts what is left of the previous one.
+      if (isFirst) {
+        queueRef.current = []
+        isPlayingRef.current = false
+      }
+      enqueueAudio([audioUrl])
     } catch (error) {
       console.error('Could not decode the spoken reply:', error)
     }
-  }, [playAudio])
+  }, [enqueueAudio])
 
   /** Rebuild the conversation the backend already holds. Reached after a
    *  reload, where the screen is empty but the session is not. */
@@ -263,6 +296,15 @@ export default function ConversationPage() {
     return () => urls.forEach(url => URL.revokeObjectURL(url))
   }, [])
 
+  // The next clip starts when the current one ends.
+  useEffect(() => {
+    const el = audioRef.current
+    if (!el) return
+    const onEnded = () => { void playNext() }
+    el.addEventListener('ended', onEnded)
+    return () => el.removeEventListener('ended', onEnded)
+  }, [playNext])
+
   function handleRecordButtonClick() {
     unlockAudio()
     if (isRecording) stopRecording()
@@ -336,7 +378,7 @@ export default function ConversationPage() {
                   text={transcript.text}
                   translation={transcript.translation}
                   timestamp={transcript.timestamp}
-                  onReplay={transcript.audioUrl ? () => playAudio(transcript.audioUrl!) : undefined}
+                  onReplay={transcript.audioUrls?.length ? () => replayAudio(transcript.audioUrls!) : undefined}
                 />
               ))}
               {isProcessing && (
