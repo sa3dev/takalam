@@ -7,7 +7,11 @@ from app.models.database import Base
 
 config = context.config
 
-if config.config_file_name is not None:
+# fileConfig() replaces the root handlers and, by default, disables every logger
+# that already exists. Run from the app's startup, that silenced the whole
+# backend after the first line: no latency, no tts, not even logger.error. The
+# app asks to keep its own logging; the alembic CLI still gets alembic.ini's.
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
 # Inject DATABASE_URL from settings so alembic.ini doesn't hold secrets
