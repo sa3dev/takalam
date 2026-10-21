@@ -31,6 +31,10 @@ export default function DashboardPage() {
   const [selectedSession, setSelectedSession] = useState<number | null>(null)
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [isFetching, setIsFetching] = useState(true)
+  // Selection mode: rows turn into checkboxes and a bar offers to delete them.
+  const [selecting, setSelecting] = useState(false)
+  const [checked, setChecked] = useState<Set<number>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !user) router.push('/login')
@@ -88,6 +92,52 @@ export default function DashboardPage() {
     fetchAnalytics(sessionId)
   }
 
+  function toggleSelecting() {
+    setSelecting(prev => !prev)
+    setChecked(new Set())
+  }
+
+  function toggleChecked(sessionId: number) {
+    setChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(sessionId)) next.delete(sessionId)
+      else next.add(sessionId)
+      return next
+    })
+  }
+
+  async function handleDeleteSelected() {
+    if (checked.size === 0) return
+    if (!confirm(t.dashboard.confirmDeleteSessions.replace('{n}', String(checked.size)))) return
+    setIsDeleting(true)
+    try {
+      const response = await fetch('/api/users/me/sessions/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ids: Array.from(checked) }),
+      })
+      if (!response.ok) throw new Error('delete failed')
+
+      const remaining = sessions.filter(s => !checked.has(s.id))
+      setSessions(remaining)
+      setChecked(new Set())
+      setSelecting(false)
+      // The open session may be one of those just removed: move to the first
+      // that is left, or clear the panel when nothing is.
+      if (selectedSession !== null && checked.has(selectedSession)) {
+        const next = remaining[0]?.id ?? null
+        setSelectedSession(next)
+        setAnalytics(null)
+        if (next !== null) fetchAnalytics(next)
+      }
+    } catch {
+      alert(t.dashboard.deleteFailed)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   async function handleDeleteAccount() {
     if (!confirm('Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.')) return
     try {
@@ -133,23 +183,58 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <Card title={t.dashboard.previousSessions}>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={toggleSelecting}
+                  className="text-sm text-primary-600 hover:underline"
+                >
+                  {selecting ? t.dashboard.cancelSelection : t.dashboard.selectSessions}
+                </button>
+                {selecting && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    disabled={checked.size === 0 || isDeleting}
+                    className="px-3 py-1 text-sm font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t.dashboard.deleteSelected.replace('{n}', String(checked.size))}
+                  </button>
+                )}
+              </div>
               <div className="space-y-2">
                 {sessions.map(session => (
                   <button
                     key={session.id}
-                    onClick={() => handleSessionSelect(session.id)}
-                    className={`w-full text-right p-3 rounded-lg transition-colors ${
-                      selectedSession === session.id
-                        ? 'bg-primary-50 border-2 border-primary-500'
-                        : 'bg-calm-bg hover:bg-calm-border'
+                    onClick={() => (selecting ? toggleChecked(session.id) : handleSessionSelect(session.id))}
+                    aria-pressed={selecting ? checked.has(session.id) : undefined}
+                    className={`w-full text-right p-3 rounded-lg transition-colors flex items-center gap-3 ${
+                      selecting
+                        ? checked.has(session.id)
+                          ? 'bg-red-50 border-2 border-red-400'
+                          : 'bg-calm-bg hover:bg-calm-border'
+                        : selectedSession === session.id
+                          ? 'bg-primary-50 border-2 border-primary-500'
+                          : 'bg-calm-bg hover:bg-calm-border'
                     }`}
                   >
-                    <div className="font-medium text-calm-text">
-                      {t.dashboard.session} #{session.id}
-                    </div>
-                    <div className="text-sm text-calm-muted">{formatDate(session.started_at)}</div>
-                    <div className="text-xs text-calm-muted mt-1">
-                      {t.dashboard.duration}: {formatDuration(session.duration_seconds, t)}
+                    {selecting && (
+                      <input
+                        type="checkbox"
+                        readOnly
+                        tabIndex={-1}
+                        checked={checked.has(session.id)}
+                        className="h-4 w-4 shrink-0 pointer-events-none"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-calm-text">
+                        {t.dashboard.session} #{session.id}
+                      </div>
+                      <div className="text-sm text-calm-muted">{formatDate(session.started_at)}</div>
+                      <div className="text-xs text-calm-muted mt-1">
+                        {t.dashboard.duration}: {formatDuration(session.duration_seconds, t)}
+                      </div>
                     </div>
                   </button>
                 ))}

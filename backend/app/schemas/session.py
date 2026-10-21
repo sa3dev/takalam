@@ -52,6 +52,12 @@ class SessionCreate(BaseModel):
     user_id: int
 
 
+class SessionDeleteRequest(BaseModel):
+    """Sessions to delete in one go. Bounded so a request cannot ask for an
+    unbounded IN clause."""
+    ids: List[int] = Field(..., min_length=1, max_length=100)
+
+
 class SessionResponse(BaseModel):
     """Schema for session response."""
     id: int
