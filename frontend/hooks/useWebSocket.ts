@@ -170,8 +170,10 @@ export function useWebSocket({
     sendMessage({ type: 'audio_chunk', audio_data: audioData, mime_type: mimeType, target_lang: targetLang })
   }, [sendMessage])
 
-  const startSession = useCallback(() => {
-    sendMessage({ type: 'start_session' })
+  // `scenarioId` picks a role-play situation (omitted for free conversation);
+  // `targetLang` lets the server translate the assistant's opening line.
+  const startSession = useCallback((scenarioId?: string, targetLang?: string) => {
+    sendMessage({ type: 'start_session', scenario_id: scenarioId, target_lang: targetLang })
   }, [sendMessage])
 
   const endSession = useCallback(() => {

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import base64
@@ -6,6 +7,7 @@ from fastapi import WebSocket
 from fastapi.concurrency import run_in_threadpool
 from datetime import datetime
 from app.services.speech_manager import speech_manager, TurnFailedAfterTranscription
+from app.services.scenarios import get_scenario
 from app.models.database import SessionLocal, Session, Transcription
 from app.core.redis_client import client as _redis
 
@@ -79,6 +81,57 @@ class ConnectionManager:
 
     def remember_db_session(self, session_id: str, db_session_id: int) -> None:
         _redis.setex(f"conv_session:{session_id}", _HISTORY_TTL, db_session_id)
+
+    def remember_scenario(self, session_id: str, scenario_id: str) -> None:
+        """Kept beside the history, so a reconnect resumes the same situation."""
+        _redis.setex(f"conv_scenario:{session_id}", _HISTORY_TTL, scenario_id)
+
+    def recall_scenario(self, session_id: str) -> str | None:
+        raw = _redis.get(f"conv_scenario:{session_id}")
+        if raw is None:
+            return None
+        return raw.decode() if isinstance(raw, bytes) else str(raw)
+
+    async def open_scenario(self, session_id: str, scenario_id: str, target_lang: str | None = None) -> None:
+        """The assistant speaks first: a fixed opening line, written and voiced
+        before the learner has said a word. Skipped when the conversation already
+        has a history, so a reconnect never repeats it."""
+        scenario = get_scenario(scenario_id)
+        session = self.session_data.get(session_id)
+        if not scenario or not session or self._get_history(session_id):
+            return
+
+        # Voice and translation run side by side, as in a normal turn.
+        voice = asyncio.create_task(speech_manager.synthesize_opening(scenario))
+        translation = ""
+        if target_lang and target_lang != "ar":
+            try:
+                translation = await speech_manager.translate(scenario.opening, target_lang)
+            except Exception as e:
+                logger.warning("Opening translation failed: %s", e)
+
+        try:
+            session["transcriptions"].append({"speaker": "assistant", "text": scenario.opening})
+            self._save_history(session_id, [{"role": "assistant", "content": scenario.opening}])
+            await self.send_message(session_id, {
+                "type": "transcription",
+                "speaker": "assistant",
+                "text": scenario.opening,
+                "translation": translation,
+                "is_final": True,
+            })
+            audio = await voice
+            await self.send_message(session_id, {
+                "type": "audio_response",
+                "audio_data": base64.b64encode(audio).decode("utf-8"),
+                "format": "mp3",
+                "index": 0,
+                "total": 1,
+            })
+        except Exception as e:
+            # The opening is a courtesy: without its voice the text is still there.
+            logger.warning("Scenario opening incomplete (%s): %s", type(e).__name__, e)
+            voice.cancel()
 
     async def handle_audio_chunk(
         self, session_id: str, audio_data: str, mime_type: str = "audio/webm", target_lang: str = None
@@ -163,6 +216,7 @@ class ConnectionManager:
                     on_transcribed=announce_speech,
                     on_answer=announce_answer,
                     on_audio=announce_audio,
+                    scenario_id=self.recall_scenario(session_id),
                 )
             except TurnFailedAfterTranscription as e:
                 spoken_seconds = e.spoken_seconds

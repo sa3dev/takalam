@@ -54,6 +54,21 @@ export const translations = {
       tagline: "Takalam - Apprenez l'arabe avec confiance et sans peur"
     },
     // Daily speaking allowance + upgrade screen
+    scenarios: {
+      heading: "Choisissez une situation",
+      subheading: "Entraînez-vous dans une scène réelle, ou parlez librement.",
+      free: "Conversation libre",
+      freeBody: "Parlez de ce que vous voulez.",
+      goalLabel: "Objectif",
+      beginner: "Débutant",
+      intermediate: "Intermédiaire",
+      restaurant: { title: "Au restaurant", body: "Commandez un repas auprès du serveur.", goal: "Commander un plat et une boisson, puis demander l'addition." },
+      taxi: { title: "Dans un taxi", body: "Dites au chauffeur où vous allez.", goal: "Indiquer votre destination, demander la durée et le prix." },
+      introduce: { title: "Se présenter", body: "Faites connaissance avec un nouveau voisin.", goal: "Dire votre nom, d'où vous venez, ce que vous faites." },
+      hotel: { title: "À l'hôtel", body: "Arrivez à la réception.", goal: "S'enregistrer, demander le petit-déjeuner et le wifi." },
+      market: { title: "Au marché", body: "Marchandez chez un vendeur de fruits.", goal: "Demander les prix, marchander poliment, acheter." },
+      family: { title: "Dîner en famille", body: "Vous êtes invité chez des amis.", goal: "Saluer, complimenter le repas, parler de vous, remercier." }
+    },
     quota: {
       label: "Temps de parole aujourd'hui",
       remaining: "restantes",
@@ -124,6 +139,21 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
+    },
+    scenarios: {
+      heading: "Choose a situation",
+      subheading: "Practise in a real-life scene, or just talk freely.",
+      free: "Free conversation",
+      freeBody: "Talk about whatever you like.",
+      goalLabel: "Goal",
+      beginner: "Beginner",
+      intermediate: "Intermediate",
+      restaurant: { title: "At the restaurant", body: "Order a meal from the waiter.", goal: "Order a dish and a drink, then ask for the bill." },
+      taxi: { title: "In a taxi", body: "Tell the driver where you are going.", goal: "Give your destination, ask how long it takes and the price." },
+      introduce: { title: "Introducing yourself", body: "Meet a new neighbour.", goal: "Say your name, where you are from and what you do." },
+      hotel: { title: "At the hotel", body: "Arrive at the front desk.", goal: "Check in, ask about breakfast and wifi." },
+      market: { title: "At the market", body: "Haggle with a fruit seller.", goal: "Ask prices, bargain politely, buy." },
+      family: { title: "Family dinner", body: "You are invited to a friend's home.", goal: "Greet everyone, compliment the food, talk about yourself, say thanks." }
     },
     quota: {
       label: "Speaking time today",
@@ -196,6 +226,21 @@ export const translations = {
     footer: {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
     },
+    scenarios: {
+      heading: "Elige una situación",
+      subheading: "Practica en una escena real o habla libremente.",
+      free: "Conversación libre",
+      freeBody: "Habla de lo que quieras.",
+      goalLabel: "Objetivo",
+      beginner: "Principiante",
+      intermediate: "Intermedio",
+      restaurant: { title: "En el restaurante", body: "Pide una comida al camarero.", goal: "Pedir un plato y una bebida, y luego la cuenta." },
+      taxi: { title: "En un taxi", body: "Dile al conductor adónde vas.", goal: "Indicar el destino, preguntar cuánto tarda y cuánto cuesta." },
+      introduce: { title: "Presentarse", body: "Conoce a un vecino nuevo.", goal: "Decir tu nombre, de dónde eres y a qué te dedicas." },
+      hotel: { title: "En el hotel", body: "Llega a la recepción.", goal: "Registrarte, preguntar por el desayuno y el wifi." },
+      market: { title: "En el mercado", body: "Regatea con un vendedor de fruta.", goal: "Preguntar precios, regatear con cortesía y comprar." },
+      family: { title: "Cena en familia", body: "Te invitan a casa de unos amigos.", goal: "Saludar, elogiar la comida, hablar de ti y dar las gracias." }
+    },
     quota: {
       label: "Tiempo de habla de hoy",
       remaining: "restantes",
@@ -266,6 +311,21 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
+    },
+    scenarios: {
+      heading: "Scegli una situazione",
+      subheading: "Esercitati in una scena reale o parla liberamente.",
+      free: "Conversazione libera",
+      freeBody: "Parla di ciò che vuoi.",
+      goalLabel: "Obiettivo",
+      beginner: "Principiante",
+      intermediate: "Intermedio",
+      restaurant: { title: "Al ristorante", body: "Ordina un pasto al cameriere.", goal: "Ordinare un piatto e una bevanda, poi chiedere il conto." },
+      taxi: { title: "In taxi", body: "Di' all'autista dove stai andando.", goal: "Indicare la destinazione, chiedere quanto ci vuole e il prezzo." },
+      introduce: { title: "Presentarsi", body: "Conosci un nuovo vicino.", goal: "Dire il tuo nome, da dove vieni e che lavoro fai." },
+      hotel: { title: "In hotel", body: "Arrivi alla reception.", goal: "Fare il check-in, chiedere della colazione e del wifi." },
+      market: { title: "Al mercato", body: "Contratta con un venditore di frutta.", goal: "Chiedere i prezzi, contrattare con cortesia e comprare." },
+      family: { title: "Cena in famiglia", body: "Sei invitato a casa di amici.", goal: "Salutare, fare i complimenti per il cibo, parlare di te e ringraziare." }
     },
     quota: {
       label: "Tempo di parlato oggi",
@@ -338,6 +398,21 @@ export const translations = {
     footer: {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
     },
+    scenarios: {
+      heading: "Выберите ситуацию",
+      subheading: "Тренируйтесь в реальной сцене или говорите свободно.",
+      free: "Свободный разговор",
+      freeBody: "Говорите о чём хотите.",
+      goalLabel: "Цель",
+      beginner: "Начальный",
+      intermediate: "Средний",
+      restaurant: { title: "В ресторане", body: "Закажите еду у официанта.", goal: "Заказать блюдо и напиток, затем попросить счёт." },
+      taxi: { title: "В такси", body: "Скажите водителю, куда ехать.", goal: "Назвать пункт назначения, спросить о времени в пути и цене." },
+      introduce: { title: "Знакомство", body: "Познакомьтесь с новым соседом.", goal: "Назвать своё имя, откуда вы и чем занимаетесь." },
+      hotel: { title: "В отеле", body: "Вы пришли на ресепшен.", goal: "Заселиться, спросить о завтраке и Wi-Fi." },
+      market: { title: "На рынке", body: "Поторгуйтесь с продавцом фруктов.", goal: "Узнать цены, вежливо поторговаться и купить." },
+      family: { title: "Семейный ужин", body: "Вас пригласили в дом друзей.", goal: "Поздороваться, похвалить еду, рассказать о себе и поблагодарить." }
+    },
     quota: {
       label: "Время речи сегодня",
       remaining: "осталось",
@@ -408,6 +483,21 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
+    },
+    scenarios: {
+      heading: "选择一个情景",
+      subheading: "在真实场景中练习，或自由交谈。",
+      free: "自由对话",
+      freeBody: "想聊什么就聊什么。",
+      goalLabel: "目标",
+      beginner: "初级",
+      intermediate: "中级",
+      restaurant: { title: "在餐厅", body: "向服务员点餐。", goal: "点一道菜和一杯饮料，然后结账。" },
+      taxi: { title: "在出租车上", body: "告诉司机你要去哪里。", goal: "说出目的地，询问所需时间和价格。" },
+      introduce: { title: "自我介绍", body: "认识一位新邻居。", goal: "说出你的名字、来自哪里以及从事什么工作。" },
+      hotel: { title: "在酒店", body: "来到前台。", goal: "办理入住，询问早餐和无线网络。" },
+      market: { title: "在市场", body: "和水果摊主讲价。", goal: "询问价格，礼貌地讲价并购买。" },
+      family: { title: "家庭晚餐", body: "你受邀到朋友家做客。", goal: "问候大家，称赞饭菜，介绍自己并表示感谢。" }
     },
     quota: {
       label: "今日口语时间",
@@ -482,6 +572,21 @@ export const translations = {
     },
     footer: {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
+    },
+    scenarios: {
+      heading: "اختر موقفًا",
+      subheading: "تدرّب في مشهد حقيقي، أو تحدّث بحرية.",
+      free: "محادثة حرة",
+      freeBody: "تحدّث عمّا تشاء.",
+      goalLabel: "الهدف",
+      beginner: "مبتدئ",
+      intermediate: "متوسط",
+      restaurant: { title: "في المطعم", body: "اطلب وجبة من النادل.", goal: "اطلب طبقًا ومشروبًا ثم اطلب الحساب." },
+      taxi: { title: "في سيارة الأجرة", body: "أخبر السائق إلى أين تذهب.", goal: "حدّد وجهتك واسأل عن المدة والسعر." },
+      introduce: { title: "التعريف بنفسك", body: "تعرّف على جار جديد.", goal: "قل اسمك ومن أين أنت وماذا تعمل." },
+      hotel: { title: "في الفندق", body: "وصلت إلى مكتب الاستقبال.", goal: "سجّل دخولك واسأل عن الفطور والإنترنت." },
+      market: { title: "في السوق", body: "تفاوض مع بائع فواكه.", goal: "اسأل عن الأسعار وتفاوض بأدب واشترِ." },
+      family: { title: "عشاء عائلي", body: "أنت مدعو إلى بيت أصدقاء.", goal: "ألقِ التحية وامدح الطعام وتحدّث عن نفسك واشكرهم." }
     },
     quota: {
       label: "وقت التحدث اليوم",
