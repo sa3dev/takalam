@@ -14,6 +14,7 @@ from app.models.database import (
 )
 from app.schemas.session import (
     SessionCreate,
+    SessionDeleteRequest,
     SessionResponse,
     AnalyticsResponse,
     TranscriptionResponse,
@@ -71,6 +72,31 @@ def get_my_sessions(
         .limit(limit)
         .all()
     )
+
+
+@router.post("/users/me/sessions/delete")
+def delete_my_sessions(
+    payload: SessionDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete some of the caller's own sessions, with their transcriptions and
+    analytics. Ids that are not theirs are ignored rather than reported, so the
+    endpoint cannot be used to find out which ids exist."""
+    owned = [
+        row.id
+        for row in db.query(DBSession.id).filter(
+            DBSession.user_id == current_user.id,
+            DBSession.id.in_(payload.ids),
+        )
+    ]
+    if owned:
+        db.query(SessionAnalytics).filter(SessionAnalytics.session_id.in_(owned)).delete(synchronize_session=False)
+        db.query(Transcription).filter(Transcription.session_id.in_(owned)).delete(synchronize_session=False)
+        db.query(DBSession).filter(DBSession.id.in_(owned)).delete(synchronize_session=False)
+        db.commit()
+    logger.info("Deleted %d session(s) for user_id=%d", len(owned), current_user.id)
+    return {"deleted": len(owned)}
 
 
 @router.get("/sessions/{session_id}/transcriptions", response_model=List[TranscriptionResponse])
