@@ -130,4 +130,6 @@ def init_db():
     from alembic.config import Config
     from alembic import command
     alembic_cfg = Config("/app/alembic.ini")
+    # Keep the logging app.main set up; see migrations/env.py.
+    alembic_cfg.attributes["configure_logger"] = False
     command.upgrade(alembic_cfg, "head")
