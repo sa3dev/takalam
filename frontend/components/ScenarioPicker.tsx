@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Card } from '@/components/Card'
 import type { TranslationKeys } from '@/lib/i18n/translations'
 
+/** The ordinary chat, as opposed to a role-play situation. */
 export const FREE_CONVERSATION = 'free'
 
 type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
@@ -33,20 +33,9 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
   }, [])
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-calm-text mb-2">{t.scenarios.heading}</h2>
-        <p className="text-calm-muted">{t.scenarios.subheading}</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <button type="button" onClick={() => onPick(FREE_CONVERSATION)} className="text-left">
-          <Card className="h-full hover:border-primary-500 transition-colors">
-            <div className="font-semibold text-calm-text mb-1">{t.scenarios.free}</div>
-            <p className="text-sm text-calm-muted">{t.scenarios.freeBody}</p>
-          </Card>
-        </button>
-
+    <div className="mt-5 text-center">
+      <p className="text-sm font-medium text-calm-text mb-2">{t.scenarios.heading}</p>
+      <div className="flex flex-wrap justify-center gap-2">
         {scenarios.map(scenario => {
           const copy = t.scenarios[scenario.id as ScenarioId]
           if (!copy) return null
@@ -55,20 +44,10 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
               key={scenario.id}
               type="button"
               onClick={() => onPick(scenario.id)}
-              className="text-left"
+              title={`${t.scenarios.goalLabel} : ${copy.goal}`}
+              className="px-3 py-1.5 text-sm rounded-full border border-calm-border bg-calm-bg text-calm-text hover:border-primary-500 hover:bg-primary-50 transition-colors"
             >
-              <Card className="h-full hover:border-primary-500 transition-colors">
-                <div className="flex items-start justify-between gap-3 mb-1">
-                  <div className="font-semibold text-calm-text">{copy.title}</div>
-                  <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-primary-50 text-primary-700">
-                    {t.scenarios[scenario.level]}
-                  </span>
-                </div>
-                <p className="text-sm text-calm-muted mb-2">{copy.body}</p>
-                <p className="text-xs text-calm-muted">
-                  <span className="font-medium">{t.scenarios.goalLabel} :</span> {copy.goal}
-                </p>
-              </Card>
+              {copy.title}
             </button>
           )
         })}

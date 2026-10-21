@@ -316,6 +316,12 @@ export default function ConversationPage() {
 
   function handleRecordButtonClick() {
     unlockAudio()
+    // Speaking without choosing anything is the ordinary conversation: the
+    // session starts now, free, and the situations are no longer offered.
+    if (!scenarioChoice) {
+      try { window.sessionStorage.setItem(SCENARIO_KEY, FREE_CONVERSATION) } catch { /* not kept across a reload */ }
+      setScenarioChoice(FREE_CONVERSATION)
+    }
     if (isRecording) stopRecording()
     else startRecording()
   }
@@ -335,15 +341,7 @@ export default function ConversationPage() {
 
   if (isLoading || !user) return null
 
-  if (!scenarioChoice) {
-    return (
-      <AppLayout>
-        <ScenarioPicker onPick={handleScenarioPick} />
-      </AppLayout>
-    )
-  }
-
-  const scenarioCopy = scenarioChoice === FREE_CONVERSATION
+  const scenarioCopy = !scenarioChoice || scenarioChoice === FREE_CONVERSATION
     ? null
     : (t.scenarios as Record<string, { title: string; goal: string } | string>)[scenarioChoice]
 
@@ -394,10 +392,15 @@ export default function ConversationPage() {
         <Card className={clsx('flex-1 min-h-0 overflow-y-auto scrollbar-thin', started ? 'mb-3' : 'mb-4')}>
           {transcripts.length === 0 ? (
             <div className="flex items-center justify-center h-full text-calm-muted">
-              <p className="text-center">
-                {t.home.noConversation}<br />
-                {t.home.clickToStart}
-              </p>
+              <div className="w-full">
+                <p className="text-center">
+                  {t.home.noConversation}<br />
+                  {t.home.clickToStart}
+                </p>
+                {/* Offered only until the conversation begins; the ordinary
+                    chat stays one click away on the microphone. */}
+                {!scenarioChoice && <ScenarioPicker onPick={handleScenarioPick} />}
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
