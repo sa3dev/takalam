@@ -54,7 +54,7 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
               title={`${t.scenarios.goalLabel} : ${copy.goal}`}
               className="group overflow-hidden rounded-xl border border-calm-border bg-calm-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-500 hover:shadow-md"
             >
-              <div className="h-20 sm:h-24 overflow-hidden">
+              <div className="aspect-[3/2] overflow-hidden">
                 <ScenarioArt id={scenario.id} />
               </div>
               <div className="px-3 py-2">
