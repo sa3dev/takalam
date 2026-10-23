@@ -391,7 +391,7 @@ export default function ConversationPage() {
             it the card grows to fit the transcript and pushes the controls off. */}
         <Card className={clsx('flex-1 min-h-0 overflow-y-auto scrollbar-thin', started ? 'mb-3' : 'mb-4')}>
           {transcripts.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-calm-muted">
+            <div className="flex flex-col justify-center min-h-full text-calm-muted">
               <div className="w-full">
                 <p className="text-center">
                   {t.home.noConversation}<br />

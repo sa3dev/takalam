@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { ScenarioArt } from '@/components/ScenarioArt'
 import type { TranslationKeys } from '@/lib/i18n/translations'
 
 /** The ordinary chat, as opposed to a role-play situation. */
@@ -33,9 +34,9 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
   }, [])
 
   return (
-    <div className="mt-5 text-center">
-      <p className="text-sm font-medium text-calm-text mb-2">{t.scenarios.heading}</p>
-      <div className="flex flex-wrap justify-center gap-2">
+    <div className="mt-5">
+      <p className="text-sm font-medium text-calm-text mb-3 text-center">{t.scenarios.heading}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {scenarios.map(scenario => {
           const copy = t.scenarios[scenario.id as ScenarioId]
           if (!copy) return null
@@ -45,9 +46,15 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
               type="button"
               onClick={() => onPick(scenario.id)}
               title={`${t.scenarios.goalLabel} : ${copy.goal}`}
-              className="px-3 py-1.5 text-sm rounded-full border border-calm-border bg-calm-bg text-calm-text hover:border-primary-500 hover:bg-primary-50 transition-colors"
+              className="group overflow-hidden rounded-xl border border-calm-border bg-calm-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-500 hover:shadow-md"
             >
-              {copy.title}
+              <div className="h-20 sm:h-24 overflow-hidden">
+                <ScenarioArt id={scenario.id} />
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-sm font-semibold text-calm-text leading-tight">{copy.title}</div>
+                <div className="mt-0.5 text-xs text-calm-muted leading-snug line-clamp-2">{copy.body}</div>
+              </div>
             </button>
           )
         })}
