@@ -346,9 +346,16 @@ export default function ConversationPage() {
     audioUrlsRef.current = []
   }
 
-  function discardConversation(action: 'cancel' | 'restart') {
-    if (!isConnected || isProcessing) return
-    if (!confirm(action === 'cancel' ? t.home.cancelConfirm : t.home.restartConfirm)) return
+  function discardConversation(action: 'cancel' | 'restart', confirmFirst = true) {
+    if (isProcessing) return
+    if (confirmFirst && !confirm(action === 'cancel' ? t.home.cancelConfirm : t.home.restartConfirm)) return
+    if (!isConnected) {
+      // Nothing is running on the server to discard: just leave the screen.
+      resetConversation()
+      try { window.sessionStorage.removeItem(SCENARIO_KEY) } catch { /* nothing to clear */ }
+      setScenarioChoice(null)
+      return
+    }
     track(action === 'cancel' ? 'session-cancel' : 'session-restart')
     pendingActionRef.current = action
     cancelSession()
@@ -387,6 +394,10 @@ export default function ConversationPage() {
 
   if (isLoading || !user) return null
 
+  // Leaving a scene you only just entered (the assistant spoke, you did not)
+  // costs nothing, so it asks nothing; once you have spoken, it confirms.
+  const hasSpoken = transcripts.some(item => item.speaker === 'user')
+
   const scenarioCopy = !scenarioChoice || scenarioChoice === FREE_CONVERSATION
     ? null
     : (t.scenarios as Record<string, { title: string; goal: string } | string>)[scenarioChoice]
@@ -409,8 +420,20 @@ export default function ConversationPage() {
       <div className={clsx('max-w-4xl mx-auto px-4 h-full flex flex-col', started ? 'py-3' : 'py-6')}>
         {scenarioCopy && typeof scenarioCopy !== 'string' && (
           <div className="mb-2 shrink-0 rounded-lg bg-primary-50 px-3 py-2 text-sm text-primary-700">
-            <span className="font-semibold">{scenarioCopy.title}</span>
-            <span className="opacity-80"> — {t.scenarios.goalLabel} : {scenarioCopy.goal}</span>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="font-semibold">{scenarioCopy.title}</span>
+                <span className="opacity-80"> — {t.scenarios.goalLabel} : {scenarioCopy.goal}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => discardConversation('cancel', hasSpoken)}
+                disabled={isProcessing}
+                className="shrink-0 font-medium underline underline-offset-2 hover:no-underline disabled:opacity-50"
+              >
+                ← {t.scenarios.backToScenarios}
+              </button>
+            </div>
           </div>
         )}
         {started ? (

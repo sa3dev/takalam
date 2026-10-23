@@ -59,6 +59,7 @@ export const translations = {
     },
     // Daily speaking allowance + upgrade screen
     scenarios: {
+      backToScenarios: "Retour aux situations",
       or: "ou",
       heading: "Choisissez une situation",
       subheading: "Entraînez-vous dans une scène réelle, ou parlez librement.",
@@ -150,6 +151,7 @@ export const translations = {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
     },
     scenarios: {
+      backToScenarios: "Back to situations",
       or: "or",
       heading: "Choose a situation",
       subheading: "Practise in a real-life scene, or just talk freely.",
@@ -241,6 +243,7 @@ export const translations = {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
     },
     scenarios: {
+      backToScenarios: "Volver a las situaciones",
       or: "o",
       heading: "Elige una situación",
       subheading: "Practica en una escena real o habla libremente.",
@@ -332,6 +335,7 @@ export const translations = {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
     },
     scenarios: {
+      backToScenarios: "Torna alle situazioni",
       or: "o",
       heading: "Scegli una situazione",
       subheading: "Esercitati in una scena reale o parla liberamente.",
@@ -423,6 +427,7 @@ export const translations = {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
     },
     scenarios: {
+      backToScenarios: "К ситуациям",
       or: "или",
       heading: "Выберите ситуацию",
       subheading: "Тренируйтесь в реальной сцене или говорите свободно.",
@@ -514,6 +519,7 @@ export const translations = {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
     },
     scenarios: {
+      backToScenarios: "返回情景列表",
       or: "或",
       heading: "选择一个情景",
       subheading: "在真实场景中练习，或自由交谈。",
@@ -608,6 +614,7 @@ export const translations = {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
     },
     scenarios: {
+      backToScenarios: "العودة إلى المواقف",
       or: "أو",
       heading: "اختر موقفًا",
       subheading: "تدرّب في مشهد حقيقي، أو تحدّث بحرية.",

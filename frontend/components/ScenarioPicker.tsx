@@ -8,7 +8,7 @@ import type { TranslationKeys } from '@/lib/i18n/translations'
 /** The ordinary chat, as opposed to a role-play situation. */
 export const FREE_CONVERSATION = 'free'
 
-type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'or' | 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
+type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'or' | 'backToScenarios' | 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
 
 interface ScenarioInfo {
   id: string
