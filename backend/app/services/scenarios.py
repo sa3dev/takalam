@@ -23,6 +23,13 @@ class Scenario:
 
 SCENARIOS: tuple[Scenario, ...] = (
     Scenario(
+        id="introduce",
+        level="beginner",
+        role="Sami, a friendly new neighbour meeting the learner for the first time",
+        goal="introduce themselves: name, where they come from, what they do, why they are learning Arabic",
+        opening="مَرْحَبًا! أَظُنُّ أَنَّنَا جَارَانِ جَدِيدَانِ. أَنَا سَامِي، وَمَا اسْمُكَ؟",
+    ),
+    Scenario(
         id="restaurant",
         level="beginner",
         role="a friendly waiter in an Arabic restaurant",
@@ -35,13 +42,6 @@ SCENARIOS: tuple[Scenario, ...] = (
         role="a taxi driver who has just picked the learner up",
         goal="say where they want to go, ask roughly how long it takes and how much it costs",
         opening="مَرْحَبًا! تَفَضَّلْ بِالرُّكُوبِ. إِلَى أَيْنَ تُرِيدُ أَنْ تَذْهَبَ؟",
-    ),
-    Scenario(
-        id="introduce",
-        level="beginner",
-        role="Sami, a friendly new neighbour meeting the learner for the first time",
-        goal="introduce themselves: name, where they come from, what they do, why they are learning Arabic",
-        opening="مَرْحَبًا! أَظُنُّ أَنَّنَا جَارَانِ جَدِيدَانِ. أَنَا سَامِي، وَمَا اسْمُكَ؟",
     ),
     Scenario(
         id="hotel",
