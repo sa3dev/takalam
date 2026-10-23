@@ -65,6 +65,7 @@ class SessionResponse(BaseModel):
     started_at: datetime
     ended_at: Optional[datetime] = None
     duration_seconds: int
+    scenario_id: Optional[str] = None
 
     class Config:
         from_attributes = True

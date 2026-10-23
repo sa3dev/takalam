@@ -22,6 +22,7 @@ from app.schemas.session import (
 from app.schemas.billing import QuotaResponse, UpgradeInterestRequest
 from app.services.shadow_feedback import ShadowFeedbackAnalyzer
 from app.services.paywall import record_interest
+from app.services.scenarios import SCENARIOS
 from app.core.auth_deps import get_current_user
 from app.core.rate_limit import get_spoken_seconds_today, quota_resets_at, limiter
 
@@ -40,6 +41,13 @@ def create_session(
     db.commit()
     db.refresh(db_session)
     return db_session
+
+
+@router.get("/scenarios")
+def list_scenarios(current_user: User = Depends(get_current_user)):
+    """The situations on offer. Titles and goals are translated by the client,
+    keyed by id; only what the picker needs to order and badge them is sent."""
+    return [{"id": s.id, "level": s.level} for s in SCENARIOS]
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)

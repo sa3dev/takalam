@@ -9,6 +9,7 @@ import edge_tts
 import httpx
 from groq import AsyncGroq
 from app.config.settings import settings
+from app.services.scenarios import Scenario, get_scenario, scenario_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -282,12 +283,30 @@ class SpeechManager:
         # Azure est facturé au caractère. Ne payer que les tours où le gratuit
         # renonce garde le coût proche de zéro tout en bornant l'attente.
         self.fallback_tts = AzureTTS()
+        self._opening_audio: dict[str, bytes] = {}
 
     async def transcribe_audio(self, audio_data: bytes, language: str = "ar", mime_type: str = "audio/webm") -> tuple[str, float]:
         return await self.stt.transcribe(audio_data, language, mime_type)
 
-    async def generate_response(self, conversation_history: list) -> str:
-        return await self.llm.generate_response(conversation_history, self.SYSTEM_PROMPT)
+    def system_prompt(self, scenario_id: Optional[str] = None) -> str:
+        """The standing rules, plus the role-play block when a situation is set."""
+        scenario = get_scenario(scenario_id)
+        if not scenario:
+            return self.SYSTEM_PROMPT
+        return self.SYSTEM_PROMPT + scenario_prompt(scenario)
+
+    async def generate_response(self, conversation_history: list, scenario_id: Optional[str] = None) -> str:
+        return await self.llm.generate_response(conversation_history, self.system_prompt(scenario_id))
+
+    async def synthesize_opening(self, scenario: Scenario) -> bytes:
+        """The fixed first line of a situation, voiced once and kept: the text
+        never changes, so every later conversation starts with no synthesis wait."""
+        cached = self._opening_audio.get(scenario.id)
+        if cached:
+            return cached
+        audio = await self.synthesize_speech(clean_for_speech(scenario.opening))
+        self._opening_audio[scenario.id] = audio
+        return audio
 
     async def synthesize_speech(self, text: str, voice: Optional[str] = None) -> bytes:
         """Edge d'abord, et quelque chose d'autre quand Edge ne répond pas.
@@ -381,6 +400,7 @@ class SpeechManager:
         on_transcribed: Optional[Callable[[str], Awaitable[None]]] = None,
         on_answer: Optional[Callable[[str, str], Awaitable[None]]] = None,
         on_audio: Optional[Callable[[int, int, bytes], Awaitable[None]]] = None,
+        scenario_id: Optional[str] = None,
     ) -> tuple[str, str, str, bytes, float]:
         """Run one turn, announcing each stage as it completes.
 
@@ -407,7 +427,7 @@ class SpeechManager:
 
             safe_user_text = self._sanitize_input(user_text)
             conversation_history.append({"role": "user", "content": safe_user_text})
-            ai_response = self._sanitize_response(await self.generate_response(conversation_history))
+            ai_response = self._sanitize_response(await self.generate_response(conversation_history, scenario_id))
             t2 = time.perf_counter()
 
             conversation_history.append({"role": "assistant", "content": ai_response})

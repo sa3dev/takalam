@@ -14,6 +14,7 @@ from app.core.rate_limit import (
 from app.config.settings import settings
 from app.models.database import User
 from app.services.paywall import record_wall_hit
+from app.services.scenarios import get_scenario
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -104,19 +105,33 @@ async def websocket_endpoint(
                 # conversation reaches the dashboard cut into pieces, each with
                 # its own duration and its own analysis.
                 db_session_id = manager.recall_db_session(scoped_session_id)
+                scenario = None
                 if db_session_id is None:
-                    db_session = DBSession(user_id=current_user.id)
+                    # Unknown or forged ids resolve to None: free conversation.
+                    scenario = get_scenario(data.get("scenario_id"))
+                    db_session = DBSession(
+                        user_id=current_user.id,
+                        scenario_id=scenario.id if scenario else None,
+                    )
                     db.add(db_session)
                     db.commit()
                     db.refresh(db_session)
                     db_session_id = db_session.id
                     manager.remember_db_session(scoped_session_id, db_session_id)
+                    if scenario:
+                        manager.remember_scenario(scoped_session_id, scenario.id)
                 # Carries the row id back so the client can fetch what was
                 # already said and rebuild the conversation it lost.
                 await manager.send_message(scoped_session_id, {
                     "type": "session_started",
                     "db_session_id": db_session_id,
                 })
+                # Only for a conversation that has just begun, and counted
+                # against the same turn cap as everything that calls a provider.
+                if scenario and check_ws_turn_limit(current_user.id):
+                    await manager.open_scenario(
+                        scoped_session_id, scenario.id, data.get("target_lang")
+                    )
 
             elif message_type == "end_session":
                 if db_session_id:

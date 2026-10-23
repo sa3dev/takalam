@@ -21,6 +21,7 @@ import { TranscriptItem } from '@/components/TranscriptItem'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { QuotaGauge } from '@/components/QuotaGauge'
 import { PaywallModal } from '@/components/PaywallModal'
+import { ScenarioPicker, FREE_CONVERSATION } from '@/components/ScenarioPicker'
 import { Card } from '@/components/Card'
 import { track } from '@/lib/analytics'
 
@@ -42,6 +43,8 @@ interface StoredTranscription {
 }
 
 const SESSION_ID_KEY = 'takalam:session-id'
+// The situation chosen for this tab's conversation: a scenario id, or 'free'.
+const SCENARIO_KEY = 'takalam:scenario'
 
 function formatTimestamp(value: string): string {
   // The API serialises naive UTC. Without the marker a browser reads it as
@@ -72,6 +75,12 @@ export default function ConversationPage() {
       // reload is still better than a page that will not load at all.
       return fresh()
     }
+  })
+  // Null until the learner picks a situation (or free conversation); the
+  // choice survives a reload with the session it belongs to.
+  const [scenarioChoice, setScenarioChoice] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    try { return window.sessionStorage.getItem(SCENARIO_KEY) } catch { return null }
   })
   // Keep the current UI language in a ref so the recorder callback never sends a stale value
   const languageRef = useRef(language)
@@ -282,9 +291,18 @@ export default function ConversationPage() {
     onAudioData: handleAudioRecorded,
   })
 
+  // Held back until a situation is chosen: the server opens the scene (for a
+  // role-play) the moment the session starts, so it must know which one.
   useEffect(() => {
-    if (isConnected) startSession()
-  }, [isConnected, startSession])
+    if (!isConnected || !scenarioChoice) return
+    startSession(scenarioChoice === FREE_CONVERSATION ? undefined : scenarioChoice, languageRef.current)
+  }, [isConnected, scenarioChoice, startSession])
+
+  function handleScenarioPick(choice: string) {
+    try { window.sessionStorage.setItem(SCENARIO_KEY, choice) } catch { /* the choice just will not survive a reload */ }
+    track('scenario-start', { scenario: choice })
+    setScenarioChoice(choice)
+  }
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -298,6 +316,12 @@ export default function ConversationPage() {
 
   function handleRecordButtonClick() {
     unlockAudio()
+    // Speaking without choosing anything is the ordinary conversation: the
+    // session starts now, free, and the situations are no longer offered.
+    if (!scenarioChoice) {
+      try { window.sessionStorage.setItem(SCENARIO_KEY, FREE_CONVERSATION) } catch { /* not kept across a reload */ }
+      setScenarioChoice(FREE_CONVERSATION)
+    }
     if (isRecording) stopRecording()
     else startRecording()
   }
@@ -307,12 +331,19 @@ export default function ConversationPage() {
       endSession()
       // Deliberately ended, so the id must not be inherited by the next
       // conversation — that is the one case where starting over is the point.
-      try { window.sessionStorage.removeItem(SESSION_ID_KEY) } catch { /* nothing to clear */ }
+      try {
+        window.sessionStorage.removeItem(SESSION_ID_KEY)
+        window.sessionStorage.removeItem(SCENARIO_KEY)
+      } catch { /* nothing to clear */ }
       router.push('/dashboard')
     }
   }
 
   if (isLoading || !user) return null
+
+  const scenarioCopy = !scenarioChoice || scenarioChoice === FREE_CONVERSATION
+    ? null
+    : (t.scenarios as Record<string, { title: string; goal: string } | string>)[scenarioChoice]
 
   // Everything above the transcript is introduction, and an introduction has
   // done its job once the conversation exists. From the first exchange the page
@@ -330,6 +361,12 @@ export default function ConversationPage() {
   return (
     <AppLayout>
       <div className={clsx('max-w-4xl mx-auto px-4 h-full flex flex-col', started ? 'py-3' : 'py-6')}>
+        {scenarioCopy && typeof scenarioCopy !== 'string' && (
+          <div className="mb-2 shrink-0 rounded-lg bg-primary-50 px-3 py-2 text-sm text-primary-700">
+            <span className="font-semibold">{scenarioCopy.title}</span>
+            <span className="opacity-80"> — {t.scenarios.goalLabel} : {scenarioCopy.goal}</span>
+          </div>
+        )}
         {started ? (
           <div className="flex items-center gap-4 mb-2 shrink-0">
             <ConnectionStatus isConnected={isConnected} error={connectionError} />
@@ -354,11 +391,16 @@ export default function ConversationPage() {
             it the card grows to fit the transcript and pushes the controls off. */}
         <Card className={clsx('flex-1 min-h-0 overflow-y-auto scrollbar-thin', started ? 'mb-3' : 'mb-4')}>
           {transcripts.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-calm-muted">
-              <p className="text-center">
-                {t.home.noConversation}<br />
-                {t.home.clickToStart}
-              </p>
+            <div className="flex flex-col justify-center min-h-full text-calm-muted">
+              <div className="w-full">
+                <p className="text-center">
+                  {t.home.noConversation}<br />
+                  {t.home.clickToStart}
+                </p>
+                {/* Offered only until the conversation begins; the ordinary
+                    chat stays one click away on the microphone. */}
+                {!scenarioChoice && <ScenarioPicker onPick={handleScenarioPick} />}
+              </div>
             </div>
           ) : (
             <div className="space-y-2">

@@ -13,6 +13,7 @@ interface Session {
   started_at: string
   ended_at: string | null
   duration_seconds: number
+  scenario_id?: string | null
 }
 
 interface Analytics {
@@ -90,6 +91,12 @@ export default function DashboardPage() {
   function handleSessionSelect(sessionId: number) {
     setSelectedSession(sessionId)
     fetchAnalytics(sessionId)
+  }
+
+  function scenarioTitle(scenarioId?: string | null): string | null {
+    if (!scenarioId) return null
+    const copy = (t.scenarios as Record<string, unknown>)[scenarioId]
+    return copy && typeof copy === 'object' ? (copy as { title: string }).title : null
   }
 
   function toggleSelecting() {
@@ -230,6 +237,9 @@ export default function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-calm-text">
                         {t.dashboard.session} #{session.id}
+                        {scenarioTitle(session.scenario_id) && (
+                          <span className="font-normal text-calm-muted"> · {scenarioTitle(session.scenario_id)}</span>
+                        )}
                       </div>
                       <div className="text-sm text-calm-muted">{formatDate(session.started_at)}</div>
                       <div className="text-xs text-calm-muted mt-1">

@@ -55,6 +55,8 @@ class Session(Base):
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
     duration_seconds = Column(Integer, default=0)
+    # Role-play situation this conversation was started from; None is free talk.
+    scenario_id = Column(String, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="sessions")
