@@ -20,6 +20,10 @@ export const translations = {
       clickToRecord: "Cliquez pour enregistrer",
       endSession: "Terminer la session",
       replay: "Réécouter",
+      restart: "Recommencer",
+      cancel: "Annuler",
+      cancelConfirm: "Annuler cette conversation ? Elle sera supprimée et ne sera pas enregistrée.",
+      restartConfirm: "Recommencer depuis le début ? La conversation en cours sera supprimée.",
       endSessionConfirm: "Voulez-vous terminer la session ?",
       you: "Vous",
       assistant: "Takalam"
@@ -55,6 +59,7 @@ export const translations = {
     },
     // Daily speaking allowance + upgrade screen
     scenarios: {
+      backToScenarios: "Retour aux situations",
       or: "ou",
       heading: "Choisissez une situation",
       subheading: "Entraînez-vous dans une scène réelle, ou parlez librement.",
@@ -110,6 +115,10 @@ export const translations = {
       clickToRecord: "Click to record",
       endSession: "End Session",
       replay: "Listen again",
+      restart: "Start over",
+      cancel: "Cancel",
+      cancelConfirm: "Cancel this conversation? It will be deleted and not saved.",
+      restartConfirm: "Start over from the beginning? The current conversation will be deleted.",
       endSessionConfirm: "Do you want to end the session?",
       you: "You",
       assistant: "Takalam"
@@ -142,6 +151,7 @@ export const translations = {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
     },
     scenarios: {
+      backToScenarios: "Back to situations",
       or: "or",
       heading: "Choose a situation",
       subheading: "Practise in a real-life scene, or just talk freely.",
@@ -197,6 +207,10 @@ export const translations = {
       clickToRecord: "Haz clic para grabar",
       endSession: "Terminar sesión",
       replay: "Escuchar de nuevo",
+      restart: "Reiniciar",
+      cancel: "Cancelar",
+      cancelConfirm: "¿Cancelar esta conversación? Se eliminará y no se guardará.",
+      restartConfirm: "¿Empezar desde el principio? Se eliminará la conversación actual.",
       endSessionConfirm: "¿Quieres terminar la sesión?",
       you: "Tú",
       assistant: "Takalam"
@@ -229,6 +243,7 @@ export const translations = {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
     },
     scenarios: {
+      backToScenarios: "Volver a las situaciones",
       or: "o",
       heading: "Elige una situación",
       subheading: "Practica en una escena real o habla libremente.",
@@ -284,6 +299,10 @@ export const translations = {
       clickToRecord: "Clicca per registrare",
       endSession: "Termina Sessione",
       replay: "Riascolta",
+      restart: "Ricomincia",
+      cancel: "Annulla",
+      cancelConfirm: "Annullare questa conversazione? Verrà eliminata e non sarà salvata.",
+      restartConfirm: "Ricominciare dall'inizio? La conversazione in corso verrà eliminata.",
       endSessionConfirm: "Vuoi terminare la sessione?",
       you: "Tu",
       assistant: "Takalam"
@@ -316,6 +335,7 @@ export const translations = {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
     },
     scenarios: {
+      backToScenarios: "Torna alle situazioni",
       or: "o",
       heading: "Scegli una situazione",
       subheading: "Esercitati in una scena reale o parla liberamente.",
@@ -371,6 +391,10 @@ export const translations = {
       clickToRecord: "Нажмите для записи",
       endSession: "Завершить сеанс",
       replay: "Прослушать ещё раз",
+      restart: "Начать заново",
+      cancel: "Отменить",
+      cancelConfirm: "Отменить этот разговор? Он будет удалён и не сохранится.",
+      restartConfirm: "Начать с начала? Текущий разговор будет удалён.",
       endSessionConfirm: "Вы хотите завершить сеанс?",
       you: "Вы",
       assistant: "Такалам"
@@ -403,6 +427,7 @@ export const translations = {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
     },
     scenarios: {
+      backToScenarios: "К ситуациям",
       or: "или",
       heading: "Выберите ситуацию",
       subheading: "Тренируйтесь в реальной сцене или говорите свободно.",
@@ -458,6 +483,10 @@ export const translations = {
       clickToRecord: "点击录音",
       endSession: "结束会话",
       replay: "再听一遍",
+      restart: "重新开始",
+      cancel: "取消",
+      cancelConfirm: "取消此对话？对话将被删除且不会保存。",
+      restartConfirm: "从头开始？当前对话将被删除。",
       endSessionConfirm: "您想结束会话吗？",
       you: "您",
       assistant: "Takalam"
@@ -490,6 +519,7 @@ export const translations = {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
     },
     scenarios: {
+      backToScenarios: "返回情景列表",
       or: "或",
       heading: "选择一个情景",
       subheading: "在真实场景中练习，或自由交谈。",
@@ -548,6 +578,10 @@ export const translations = {
       clickToRecord: "اضغط للتسجيل",
       endSession: "إنهاء الجلسة",
       replay: "استمع مرة أخرى",
+      restart: "البدء من جديد",
+      cancel: "إلغاء",
+      cancelConfirm: "هل تريد إلغاء هذه المحادثة؟ ستُحذف ولن تُحفظ.",
+      restartConfirm: "هل تريد البدء من الصفر؟ ستُحذف المحادثة الحالية.",
       endSessionConfirm: "هل تريد إنهاء الجلسة؟",
       you: "أنت",
       assistant: "تكلم"
@@ -580,6 +614,7 @@ export const translations = {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
     },
     scenarios: {
+      backToScenarios: "العودة إلى المواقف",
       or: "أو",
       heading: "اختر موقفًا",
       subheading: "تدرّب في مشهد حقيقي، أو تحدّث بحرية.",

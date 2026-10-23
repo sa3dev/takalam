@@ -8,7 +8,7 @@ import type { TranslationKeys } from '@/lib/i18n/translations'
 /** The ordinary chat, as opposed to a role-play situation. */
 export const FREE_CONVERSATION = 'free'
 
-type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'or' | 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
+type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'or' | 'backToScenarios' | 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
 
 interface ScenarioInfo {
   id: string
@@ -54,7 +54,7 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
               title={`${t.scenarios.goalLabel} : ${copy.goal}`}
               className="group overflow-hidden rounded-xl border border-calm-border bg-calm-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary-500 hover:shadow-md"
             >
-              <div className="h-20 sm:h-24 overflow-hidden">
+              <div className="aspect-[3/2] overflow-hidden">
                 <ScenarioArt id={scenario.id} />
               </div>
               <div className="px-3 py-2">

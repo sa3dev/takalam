@@ -23,6 +23,7 @@ from app.schemas.billing import QuotaResponse, UpgradeInterestRequest
 from app.services.shadow_feedback import ShadowFeedbackAnalyzer
 from app.services.paywall import record_interest
 from app.services.scenarios import SCENARIOS
+from app.services.session_cleanup import delete_user_sessions
 from app.core.auth_deps import get_current_user
 from app.core.rate_limit import get_spoken_seconds_today, quota_resets_at, limiter
 
@@ -91,20 +92,9 @@ def delete_my_sessions(
     """Delete some of the caller's own sessions, with their transcriptions and
     analytics. Ids that are not theirs are ignored rather than reported, so the
     endpoint cannot be used to find out which ids exist."""
-    owned = [
-        row.id
-        for row in db.query(DBSession.id).filter(
-            DBSession.user_id == current_user.id,
-            DBSession.id.in_(payload.ids),
-        )
-    ]
-    if owned:
-        db.query(SessionAnalytics).filter(SessionAnalytics.session_id.in_(owned)).delete(synchronize_session=False)
-        db.query(Transcription).filter(Transcription.session_id.in_(owned)).delete(synchronize_session=False)
-        db.query(DBSession).filter(DBSession.id.in_(owned)).delete(synchronize_session=False)
-        db.commit()
-    logger.info("Deleted %d session(s) for user_id=%d", len(owned), current_user.id)
-    return {"deleted": len(owned)}
+    deleted = delete_user_sessions(db, current_user.id, payload.ids)
+    logger.info("Deleted %d session(s) for user_id=%d", deleted, current_user.id)
+    return {"deleted": deleted}
 
 
 @router.get("/sessions/{session_id}/transcriptions", response_model=List[TranscriptionResponse])
