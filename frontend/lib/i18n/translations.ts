@@ -55,6 +55,7 @@ export const translations = {
     },
     // Daily speaking allowance + upgrade screen
     scenarios: {
+      or: "ou",
       heading: "Choisissez une situation",
       subheading: "Entraînez-vous dans une scène réelle, ou parlez librement.",
       free: "Conversation libre",
@@ -141,6 +142,7 @@ export const translations = {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
     },
     scenarios: {
+      or: "or",
       heading: "Choose a situation",
       subheading: "Practise in a real-life scene, or just talk freely.",
       free: "Free conversation",
@@ -227,6 +229,7 @@ export const translations = {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
     },
     scenarios: {
+      or: "o",
       heading: "Elige una situación",
       subheading: "Practica en una escena real o habla libremente.",
       free: "Conversación libre",
@@ -313,6 +316,7 @@ export const translations = {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
     },
     scenarios: {
+      or: "o",
       heading: "Scegli una situazione",
       subheading: "Esercitati in una scena reale o parla liberamente.",
       free: "Conversazione libera",
@@ -399,6 +403,7 @@ export const translations = {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
     },
     scenarios: {
+      or: "или",
       heading: "Выберите ситуацию",
       subheading: "Тренируйтесь в реальной сцене или говорите свободно.",
       free: "Свободный разговор",
@@ -485,6 +490,7 @@ export const translations = {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
     },
     scenarios: {
+      or: "或",
       heading: "选择一个情景",
       subheading: "在真实场景中练习，或自由交谈。",
       free: "自由对话",
@@ -574,6 +580,7 @@ export const translations = {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
     },
     scenarios: {
+      or: "أو",
       heading: "اختر موقفًا",
       subheading: "تدرّب في مشهد حقيقي، أو تحدّث بحرية.",
       free: "محادثة حرة",

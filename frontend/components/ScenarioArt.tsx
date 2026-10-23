@@ -1,3 +1,7 @@
+'use client'
+
+import { useState } from 'react'
+
 // Small flat illustrations, one per situation, drawn in the app's own palette so
 // they read at a glance and follow the theme. They are meant to be understood
 // before the label is read: a plate under a dome, a car with a roof sign.
@@ -108,7 +112,24 @@ const art: Record<string, () => React.ReactElement> = {
   ),
 }
 
+// A photo or picture dropped in public/scenarios/<id>.(webp|jpg|png) replaces the
+// drawing; until one exists (or if it fails to load) the drawing is what shows.
+const EXTENSIONS = ['webp', 'jpg', 'png']
+
 export function ScenarioArt({ id }: { id: string }) {
+  const [attempt, setAttempt] = useState(0)
+
+  if (attempt < EXTENSIONS.length) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/scenarios/${id}.${EXTENSIONS[attempt]}`}
+        alt=""
+        className="w-full h-full object-cover"
+        onError={() => setAttempt(a => a + 1)}
+      />
+    )
+  }
   const draw = art[id]
   return draw ? draw() : null
 }

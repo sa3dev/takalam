@@ -8,7 +8,7 @@ import type { TranslationKeys } from '@/lib/i18n/translations'
 /** The ordinary chat, as opposed to a role-play situation. */
 export const FREE_CONVERSATION = 'free'
 
-type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
+type ScenarioId = Exclude<keyof TranslationKeys['scenarios'], 'or' | 'heading' | 'subheading' | 'free' | 'freeBody' | 'goalLabel' | 'beginner' | 'intermediate'>
 
 interface ScenarioInfo {
   id: string
@@ -35,6 +35,12 @@ export function ScenarioPicker({ onPick }: ScenarioPickerProps) {
 
   return (
     <div className="mt-5">
+      {/* Two ways in, kept visibly apart: the ordinary chat above, a situation below. */}
+      <div className="flex items-center gap-3 my-5" role="separator">
+        <hr className="flex-1 border-calm-border" />
+        <span className="text-xs uppercase tracking-wider text-calm-muted">{t.scenarios.or}</span>
+        <hr className="flex-1 border-calm-border" />
+      </div>
       <p className="text-sm font-medium text-calm-text mb-3 text-center">{t.scenarios.heading}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {scenarios.map(scenario => {
