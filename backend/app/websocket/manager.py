@@ -8,6 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 from datetime import datetime
 from app.services.speech_manager import speech_manager, TurnFailedAfterTranscription
 from app.services.scenarios import get_scenario
+from app.services.session_cleanup import delete_user_sessions
 from app.models.database import SessionLocal, Session, Transcription
 from app.core.redis_client import client as _redis
 
@@ -286,6 +287,38 @@ class ConnectionManager:
         session["transcriptions"] = []
         session["started_at"] = ended_at
         return total
+
+    async def cancel_session(self, session_id: str, db_session_id: int | None) -> bool:
+        """Throw the conversation away: nothing is saved, the row and everything
+        written to it are deleted, and its memory is cleared, so the next
+        start_session on this connection begins from nothing.
+
+        Refused while a turn is in flight: the turn would finish into a session
+        that no longer exists and leave its lines behind for the next one."""
+        session = self.session_data.get(session_id)
+        if session and session["is_processing"]:
+            return False
+
+        if db_session_id is not None and session:
+            await run_in_threadpool(self._delete_session_rows, session["user_id"], db_session_id)
+
+        _redis.delete(f"conv_history:{session_id}")
+        _redis.delete(f"conv_session:{session_id}")
+        _redis.delete(f"conv_scenario:{session_id}")
+        if session:
+            session["transcriptions"] = []
+            session["started_at"] = datetime.utcnow()
+        return True
+
+    def _delete_session_rows(self, user_id: int, db_session_id: int) -> None:
+        db = SessionLocal()
+        try:
+            delete_user_sessions(db, user_id, [db_session_id])
+        except Exception as e:
+            logger.error("Error cancelling session %s: %s", db_session_id, e)
+            db.rollback()
+        finally:
+            db.close()
 
     async def end_session(self, session_id: str, db_session_id: int):
         """The deliberate ending, and the only thing that discards the

@@ -90,6 +90,9 @@ export default function ConversationPage() {
   const [isPaywallOpen, setIsPaywallOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const audioUnlockedRef = useRef(false)
+  const pendingActionRef = useRef<'cancel' | 'restart' | null>(null)
+  const scenarioChoiceRef = useRef<string | null>(null)
+  const startSessionRef = useRef<((scenarioId?: string, targetLang?: string) => void) | null>(null)
   const silentUrlRef = useRef<string | null>(null)
   const audioUrlsRef = useRef<string[]>([])
   const queueRef = useRef<string[]>([])
@@ -207,6 +210,27 @@ export default function ConversationPage() {
   /** Rebuild the conversation the backend already holds. Reached after a
    *  reload, where the screen is empty but the session is not. */
   const handleSessionStarted = useCallback(async (message: WebSocketMessage) => {
+    if (message.type === 'session_cancelled') {
+      const action = pendingActionRef.current
+      pendingActionRef.current = null
+      resetConversation()
+      if (action === 'restart') {
+        // Same situation, from the first line: the server opens it again.
+        const choice = scenarioChoiceRef.current
+        startSessionRef.current?.(choice && choice !== FREE_CONVERSATION ? choice : undefined, languageRef.current)
+      } else {
+        // Back to the beginning: the choice screen, nothing remembered.
+        try {
+          window.sessionStorage.removeItem(SCENARIO_KEY)
+        } catch { /* nothing to clear */ }
+        setScenarioChoice(null)
+      }
+      return
+    }
+    if (message.type === 'busy') {
+      pendingActionRef.current = null
+      return
+    }
     if (message.type !== 'session_started' || hasRestoredRef.current) return
     hasRestoredRef.current = true
     track('session-started')
@@ -266,7 +290,7 @@ export default function ConversationPage() {
     setIsPaywallOpen(true)
   }, [applyUsage])
 
-  const { isConnected, connectionError, sendAudioChunk, startSession, endSession } = useWebSocket({
+  const { isConnected, connectionError, sendAudioChunk, startSession, endSession, cancelSession } = useWebSocket({
     sessionId,
     isAuthenticated: !!user,
     onMessage: handleSessionStarted,
@@ -291,6 +315,9 @@ export default function ConversationPage() {
     onAudioData: handleAudioRecorded,
   })
 
+  useEffect(() => { scenarioChoiceRef.current = scenarioChoice }, [scenarioChoice])
+  useEffect(() => { startSessionRef.current = startSession }, [startSession])
+
   // Held back until a situation is chosen: the server opens the scene (for a
   // role-play) the moment the session starts, so it must know which one.
   useEffect(() => {
@@ -307,6 +334,25 @@ export default function ConversationPage() {
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [transcripts])
+
+  /** Empty the screen and the sound: what is left of a conversation that is gone. */
+  function resetConversation() {
+    setTranscripts([])
+    setIsProcessing(false)
+    queueRef.current = []
+    isPlayingRef.current = false
+    audioRef.current?.pause()
+    audioUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
+    audioUrlsRef.current = []
+  }
+
+  function discardConversation(action: 'cancel' | 'restart') {
+    if (!isConnected || isProcessing) return
+    if (!confirm(action === 'cancel' ? t.home.cancelConfirm : t.home.restartConfirm)) return
+    track(action === 'cancel' ? 'session-cancel' : 'session-restart')
+    pendingActionRef.current = action
+    cancelSession()
+  }
 
   // Blob URLs are kept so a reply can be replayed; release them with the page.
   useEffect(() => {
@@ -435,9 +481,23 @@ export default function ConversationPage() {
              right, and nothing in between. The invitation to press a microphone
              is carried by the microphone. */
           <div className="flex items-center justify-between gap-4 shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <button onClick={handleEndSession} className="btn btn-secondary">
                 {t.home.endSession}
+              </button>
+              <button
+                onClick={() => discardConversation('restart')}
+                disabled={isProcessing}
+                className="btn btn-secondary disabled:opacity-50"
+              >
+                {t.home.restart}
+              </button>
+              <button
+                onClick={() => discardConversation('cancel')}
+                disabled={isProcessing}
+                className="px-3 py-2 text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
+              >
+                {t.home.cancel}
               </button>
               {/* The wall is a dead end without this: the modal is only pushed
                   by the server when a turn is refused, and turns are now

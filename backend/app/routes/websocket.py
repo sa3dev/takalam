@@ -133,6 +133,16 @@ async def websocket_endpoint(
                         scoped_session_id, scenario.id, data.get("target_lang")
                     )
 
+            elif message_type == "cancel_session":
+                # Discard the conversation: used by both "cancel" and "start
+                # over". The connection stays open; the client decides whether
+                # to start a fresh session on it.
+                if await manager.cancel_session(scoped_session_id, db_session_id):
+                    db_session_id = None
+                    await manager.send_message(scoped_session_id, {"type": "session_cancelled"})
+                else:
+                    await manager.send_message(scoped_session_id, {"type": "busy", "message": "Still processing previous audio"})
+
             elif message_type == "end_session":
                 if db_session_id:
                     await manager.end_session(scoped_session_id, db_session_id)
