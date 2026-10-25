@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 
+/** The ordinary chat, as opposed to a role-play situation. */
+export const FREE_CONVERSATION = 'free'
+
 export interface ScenarioInfo {
   id: string
   level: 'beginner' | 'intermediate'

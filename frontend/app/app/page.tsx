@@ -104,7 +104,12 @@ export default function HomePage() {
               <p className="text-sm text-calm-muted">{t.mobile.freeBody}</p>
             </div>
           </div>
-          <Link href="/conversation?scenario=free" className="btn btn-primary mt-4 w-full no-underline">
+          <Link
+            href="/conversation?scenario=free"
+            data-umami-event="scenario-start"
+            data-umami-event-scenario="free"
+            className="btn btn-primary mt-4 w-full no-underline"
+          >
             {t.mobile.start}
           </Link>
         </div>

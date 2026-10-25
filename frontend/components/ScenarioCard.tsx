@@ -26,6 +26,8 @@ export function ScenarioCard({ id, strip = false }: ScenarioCardProps) {
   return (
     <Link
       href={`/conversation?scenario=${encodeURIComponent(id)}`}
+      data-umami-event="scenario-start"
+      data-umami-event-scenario={id}
       className={`group block overflow-hidden rounded-2xl border border-calm-border bg-calm-surface shadow-sm no-underline transition active:scale-[0.98] hover:shadow-md ${
         strip ? 'w-40 shrink-0' : ''
       }`}

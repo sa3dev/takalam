@@ -22,7 +22,7 @@ import { TranscriptItem } from '@/components/TranscriptItem'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { QuotaPill } from '@/components/QuotaPill'
 import { PaywallModal } from '@/components/PaywallModal'
-import { ScenarioPicker, FREE_CONVERSATION } from '@/components/ScenarioPicker'
+import { FREE_CONVERSATION } from '@/hooks/useScenarios'
 import { track } from '@/lib/analytics'
 
 interface Transcript {
@@ -351,11 +351,6 @@ export default function ConversationPage() {
     startSession(scenarioChoice === FREE_CONVERSATION ? undefined : scenarioChoice, languageRef.current)
   }, [isConnected, scenarioChoice, startSession])
 
-  function handleScenarioPick(choice: string) {
-    try { window.sessionStorage.setItem(SCENARIO_KEY, choice) } catch { /* the choice just will not survive a reload */ }
-    track('scenario-start', { scenario: choice })
-    setScenarioChoice(choice)
-  }
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -567,9 +562,6 @@ export default function ConversationPage() {
               </div>
             )}
             {paywallCta}
-            {/* Offered only until the conversation begins; the ordinary chat is
-                the microphone above. */}
-            {!scenarioChoice && <ScenarioPicker onPick={handleScenarioPick} />}
           </div>
         ) : (
           <>
