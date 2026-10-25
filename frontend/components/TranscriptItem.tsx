@@ -47,7 +47,7 @@ export function TranscriptItem({ speaker, text, translation, timestamp, onReplay
         </div>
 
         {/* Message text */}
-        <p className="text-lg arabic">{renderEmphasis(text)}</p>
+        <p className="text-xl arabic">{renderEmphasis(text)}</p>
 
         {/* Translation of the assistant's Arabic reply, in the user's UI language */}
         {translation && (
