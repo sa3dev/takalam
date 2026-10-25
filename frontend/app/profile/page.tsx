@@ -56,7 +56,7 @@ export default function ProfilePage() {
         <div className="card mb-4 !p-4">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-calm-text">{t.mobile.interfaceLanguage}</span>
-            <LanguageSwitcher />
+            <LanguageSwitcher tone="light" />
           </div>
         </div>
 

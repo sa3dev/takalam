@@ -68,6 +68,8 @@ export const translations = {
       ok: "OK"
     },
     mobile: {
+      speakNow: "Parler maintenant",
+      chooseSituation: "Choisir une situation",
       hello: "Bonjour",
       askPractice: "Prêt à parler arabe aujourd'hui ?",
       freeTitle: "Parler librement",
@@ -197,6 +199,8 @@ export const translations = {
       ok: "OK"
     },
     mobile: {
+      speakNow: "Speak now",
+      chooseSituation: "Choose a situation",
       hello: "Hello",
       askPractice: "Ready to speak Arabic today?",
       freeTitle: "Speak freely",
@@ -326,6 +330,8 @@ export const translations = {
       ok: "OK"
     },
     mobile: {
+      speakNow: "Hablar ahora",
+      chooseSituation: "Elegir una situación",
       hello: "Hola",
       askPractice: "¿Listo para hablar árabe hoy?",
       freeTitle: "Hablar libremente",
@@ -455,6 +461,8 @@ export const translations = {
       ok: "OK"
     },
     mobile: {
+      speakNow: "Parla ora",
+      chooseSituation: "Scegli una situazione",
       hello: "Ciao",
       askPractice: "Pronto a parlare arabo oggi?",
       freeTitle: "Parla liberamente",
@@ -584,6 +592,8 @@ export const translations = {
       ok: "ОК"
     },
     mobile: {
+      speakNow: "Говорить сейчас",
+      chooseSituation: "Выбрать ситуацию",
       hello: "Здравствуйте",
       askPractice: "Готовы говорить по-арабски сегодня?",
       freeTitle: "Свободный разговор",
@@ -713,6 +723,8 @@ export const translations = {
       ok: "好"
     },
     mobile: {
+      speakNow: "现在开口",
+      chooseSituation: "选择情景",
       hello: "你好",
       askPractice: "今天准备好说阿拉伯语了吗？",
       freeTitle: "自由交谈",
@@ -845,6 +857,8 @@ export const translations = {
       ok: "حسنًا"
     },
     mobile: {
+      speakNow: "تحدّث الآن",
+      chooseSituation: "اختر موقفًا",
       hello: "مرحبًا",
       askPractice: "هل أنت مستعد للتحدث بالعربية اليوم؟",
       freeTitle: "تحدّث بحرية",
