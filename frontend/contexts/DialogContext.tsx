@@ -70,7 +70,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
       {children}
       {dialog && (
         <div
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
           onClick={() => close(false)}
         >
           <div
@@ -78,8 +78,8 @@ export function DialogProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             aria-labelledby={dialog.title ? 'dialog-title' : undefined}
             aria-describedby="dialog-message"
-            className="card w-full max-w-sm"
-            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+            className="card w-fit max-w-[min(22rem,calc(100vw-2rem))] !p-5"
+            style={{ minWidth: 'min(16rem, calc(100vw - 2rem))' }}
             onClick={e => e.stopPropagation()}
           >
             {dialog.title && (
@@ -87,12 +87,12 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                 {dialog.title}
               </h3>
             )}
-            <p id="dialog-message" className="mb-6 text-calm-muted">
+            <p id="dialog-message" className="mb-5 text-calm-muted">
               {dialog.message}
             </p>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex justify-end gap-2">
               {!dialog.hideCancel && (
-                <button type="button" onClick={() => close(false)} className="btn btn-secondary sm:min-w-28">
+                <button type="button" onClick={() => close(false)} className="btn btn-secondary !px-4 !py-2 text-sm">
                   {dialog.cancelLabel ?? t.dialog.cancel}
                 </button>
               )}
@@ -100,7 +100,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                 ref={confirmRef}
                 type="button"
                 onClick={() => close(true)}
-                className={dialog.danger ? 'btn text-white sm:min-w-28' : 'btn btn-primary sm:min-w-28'}
+                className={dialog.danger ? 'btn text-white !px-4 !py-2 text-sm' : 'btn btn-primary !px-4 !py-2 text-sm'}
                 style={dialog.danger ? { background: 'var(--danger)' } : undefined}
               >
                 {dialog.confirmLabel ?? (dialog.hideCancel ? t.dialog.ok : t.dialog.confirm)}
