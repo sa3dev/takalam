@@ -42,11 +42,11 @@ export default function HomePage() {
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto px-4 pb-8">
+      <div className="max-w-3xl mx-auto px-4 pb-10">
         {/* Greeting over a picture. The cream veil runs from the left, where the
             words sit, so they stay readable on whatever the picture turns out to be. */}
         <div
-          className="relative -mx-4 mb-5 overflow-hidden px-4 pb-8 pt-8 sm:mx-0 sm:mt-4 sm:rounded-2xl"
+          className="relative -mx-4 mb-8 overflow-hidden px-4 pb-12 pt-12 sm:mx-0 sm:mt-4 sm:rounded-2xl"
           style={{ background: 'linear-gradient(135deg, var(--terra-soft), var(--cream))' }}
         >
           {heroAttempt < HERO_EXTENSIONS.length && (
@@ -70,14 +70,14 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold text-calm-text">
               {t.mobile.hello}, {user.username} !
             </h1>
-            <p className="text-sm text-calm-muted">{t.mobile.askPractice}</p>
+            <p className="mt-1 text-sm text-calm-muted">{t.mobile.askPractice}</p>
           </div>
         </div>
 
         {hasOngoing && (
           <Link
             href="/conversation"
-            className="mb-4 flex items-center justify-between rounded-2xl border border-primary-500 bg-primary-50 px-4 py-3 no-underline"
+            className="mb-6 flex items-center justify-between rounded-2xl border border-primary-500 bg-primary-50 px-4 py-3 no-underline"
           >
             <div>
               <div className="text-sm font-semibold text-primary-700">{t.mobile.resume}</div>
@@ -88,7 +88,7 @@ export default function HomePage() {
         )}
 
         {/* The ordinary conversation, first and biggest. */}
-        <div className="card mb-6 !p-5">
+        <div className="card mb-10 !p-5">
           <div className="flex items-center gap-4">
             <div
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white"
@@ -116,13 +116,13 @@ export default function HomePage() {
 
         {scenarios.length > 0 && (
           <section>
-            <div className="mb-3 flex items-baseline justify-between">
+            <div className="mb-4 flex items-baseline justify-between">
               <h2 className="text-base font-semibold text-calm-text">{t.mobile.popular}</h2>
               <Link href="/situations" className="text-sm font-medium text-primary-600 no-underline">
                 {t.mobile.seeAll}
               </Link>
             </div>
-            <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-thin">
+            <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-3 scrollbar-thin">
               {scenarios.slice(0, 4).map(scenario => (
                 <ScenarioCard key={scenario.id} id={scenario.id} strip />
               ))}
