@@ -9,6 +9,10 @@ import { useScenarios } from '@/hooks/useScenarios'
 import { AppLayout } from '@/components/AppLayout'
 import { ScenarioCard } from '@/components/ScenarioCard'
 
+// A picture dropped in public/home/hero.(webp|jpg|png) sits behind the greeting;
+// until one exists the soft gradient below stands in.
+const HERO_EXTENSIONS = ['webp', 'jpg', 'png']
+
 // Same keys the conversation page keeps in the tab.
 const SESSION_ID_KEY = 'takalam:session-id'
 const SCENARIO_KEY = 'takalam:scenario'
@@ -19,6 +23,7 @@ export default function HomePage() {
   const { user, isLoading } = useAuth()
   const scenarios = useScenarios()
   const [hasOngoing, setHasOngoing] = useState(false)
+  const [heroAttempt, setHeroAttempt] = useState(0)
 
   useEffect(() => {
     if (!isLoading && !user) router.push('/login')
@@ -37,12 +42,36 @@ export default function HomePage() {
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto px-4 py-5 pb-8">
-        <div className="mb-5">
-          <h1 className="text-2xl font-bold text-calm-text">
-            {t.mobile.hello}, {user.username} !
-          </h1>
-          <p className="text-sm text-calm-muted">{t.mobile.askPractice}</p>
+      <div className="max-w-3xl mx-auto px-4 pb-8">
+        {/* Greeting over a picture. The cream veil runs from the left, where the
+            words sit, so they stay readable on whatever the picture turns out to be. */}
+        <div
+          className="relative -mx-4 mb-5 overflow-hidden px-4 pb-8 pt-8 sm:mx-0 sm:mt-4 sm:rounded-2xl"
+          style={{ background: 'linear-gradient(135deg, var(--terra-soft), var(--cream))' }}
+        >
+          {heroAttempt < HERO_EXTENSIONS.length && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/home/hero.${HERO_EXTENSIONS[heroAttempt]}`}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setHeroAttempt(a => a + 1)}
+            />
+          )}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(90deg, color-mix(in oklch, var(--cream) 92%, transparent) 0%, color-mix(in oklch, var(--cream) 70%, transparent) 45%, transparent 100%)',
+            }}
+          />
+          <div className="relative">
+            <h1 className="text-2xl font-bold text-calm-text">
+              {t.mobile.hello}, {user.username} !
+            </h1>
+            <p className="text-sm text-calm-muted">{t.mobile.askPractice}</p>
+          </div>
         </div>
 
         {hasOngoing && (
