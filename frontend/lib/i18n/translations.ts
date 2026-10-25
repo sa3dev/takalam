@@ -61,6 +61,12 @@ export const translations = {
       tagline: "Takalam - Apprenez l'arabe avec confiance et sans peur"
     },
     // Daily speaking allowance + upgrade screen
+    dialog: {
+      cancel: "Retour",
+      confirm: "Confirmer",
+      delete: "Supprimer",
+      ok: "OK"
+    },
     mobile: {
       hello: "Bonjour",
       askPractice: "Prêt à parler arabe aujourd'hui ?",
@@ -183,6 +189,12 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
+    },
+    dialog: {
+      cancel: "Back",
+      confirm: "Confirm",
+      delete: "Delete",
+      ok: "OK"
     },
     mobile: {
       hello: "Hello",
@@ -307,6 +319,12 @@ export const translations = {
     footer: {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
     },
+    dialog: {
+      cancel: "Volver",
+      confirm: "Confirmar",
+      delete: "Eliminar",
+      ok: "OK"
+    },
     mobile: {
       hello: "Hola",
       askPractice: "¿Listo para hablar árabe hoy?",
@@ -429,6 +447,12 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
+    },
+    dialog: {
+      cancel: "Indietro",
+      confirm: "Conferma",
+      delete: "Elimina",
+      ok: "OK"
     },
     mobile: {
       hello: "Ciao",
@@ -553,6 +577,12 @@ export const translations = {
     footer: {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
     },
+    dialog: {
+      cancel: "Назад",
+      confirm: "Подтвердить",
+      delete: "Удалить",
+      ok: "ОК"
+    },
     mobile: {
       hello: "Здравствуйте",
       askPractice: "Готовы говорить по-арабски сегодня?",
@@ -675,6 +705,12 @@ export const translations = {
     },
     footer: {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
+    },
+    dialog: {
+      cancel: "返回",
+      confirm: "确认",
+      delete: "删除",
+      ok: "好"
     },
     mobile: {
       hello: "你好",
@@ -801,6 +837,12 @@ export const translations = {
     },
     footer: {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
+    },
+    dialog: {
+      cancel: "رجوع",
+      confirm: "تأكيد",
+      delete: "حذف",
+      ok: "حسنًا"
     },
     mobile: {
       hello: "مرحبًا",

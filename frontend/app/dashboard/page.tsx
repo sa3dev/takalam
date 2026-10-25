@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { AppLayout } from '@/components/AppLayout'
 import { Card } from '@/components/Card'
 import type { TranslationKeys } from '@/lib/i18n/translations'
@@ -26,6 +27,7 @@ interface Analytics {
 export default function DashboardPage() {
   const router = useRouter()
   const { t } = useLanguage()
+  const { confirm, alert } = useDialog()
   const { user, isLoading } = useAuth()
 
   const [sessions, setSessions] = useState<Session[]>([])
@@ -115,7 +117,12 @@ export default function DashboardPage() {
 
   async function handleDeleteSelected() {
     if (checked.size === 0) return
-    if (!confirm(t.dashboard.confirmDeleteSessions.replace('{n}', String(checked.size)))) return
+    const confirmed = await confirm({
+      message: t.dashboard.confirmDeleteSessions.replace('{n}', String(checked.size)),
+      confirmLabel: t.dialog.delete,
+      danger: true,
+    })
+    if (!confirmed) return
     setIsDeleting(true)
     try {
       const response = await fetch('/api/users/me/sessions/delete', {
@@ -139,7 +146,7 @@ export default function DashboardPage() {
         if (next !== null) fetchAnalytics(next)
       }
     } catch {
-      alert(t.dashboard.deleteFailed)
+      await alert(t.dashboard.deleteFailed)
     } finally {
       setIsDeleting(false)
     }

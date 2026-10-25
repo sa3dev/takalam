@@ -16,6 +16,7 @@ import { useAudioRecorder, blobToBase64, formatRecordingTime } from '@/hooks/use
 import { useQuota, isOutOfQuota, formatResetTime } from '@/hooks/useQuota'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { AppLayout } from '@/components/AppLayout'
 import { RecordButton } from '@/components/RecordButton'
 import { TranscriptItem } from '@/components/TranscriptItem'
@@ -76,6 +77,7 @@ function ConversationScreen() {
     return value && value.length <= 40 ? value : null
   })()
   const { t, language } = useLanguage()
+  const { confirm } = useDialog()
   const { user, isLoading } = useAuth()
   // Kept in sessionStorage, not minted per mount: a reload used to hand the
   // backend a brand new id, which meant a blank screen, a second row in the
@@ -389,9 +391,16 @@ function ConversationScreen() {
     audioUrlsRef.current = []
   }
 
-  function discardConversation(action: 'cancel' | 'restart', confirmFirst = true) {
+  async function discardConversation(action: 'cancel' | 'restart', confirmFirst = true) {
     if (isProcessing) return
-    if (confirmFirst && !confirm(action === 'cancel' ? t.home.cancelConfirm : t.home.restartConfirm)) return
+    if (confirmFirst) {
+      const confirmed = await confirm({
+        message: action === 'cancel' ? t.home.cancelConfirm : t.home.restartConfirm,
+        confirmLabel: action === 'cancel' ? t.dialog.delete : t.home.restart,
+        danger: true,
+      })
+      if (!confirmed) return
+    }
     if (!isConnected) {
       // Nothing is running on the server to discard: just leave the screen.
       const wasScene = !!scenarioChoice && scenarioChoice !== FREE_CONVERSATION
@@ -421,8 +430,8 @@ function ConversationScreen() {
     else startRecording()
   }
 
-  function handleEndSession() {
-    if (confirm(t.home.endSessionConfirm)) {
+  async function handleEndSession() {
+    if (await confirm({ message: t.home.endSessionConfirm, confirmLabel: t.home.endSession })) {
       endSession()
       // Deliberately ended, so the id must not be inherited by the next
       // conversation — that is the one case where starting over is the point.

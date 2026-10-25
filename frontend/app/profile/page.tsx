@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { AppLayout } from '@/components/AppLayout'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { t } = useLanguage()
+  const { confirm, alert } = useDialog()
   const { user, isLoading, logout, deleteAccount } = useAuth()
 
   useEffect(() => {
@@ -25,12 +27,12 @@ export default function ProfilePage() {
   }
 
   async function handleDeleteAccount() {
-    if (!confirm(t.mobile.deleteConfirm)) return
+    if (!(await confirm({ message: t.mobile.deleteConfirm, confirmLabel: t.dialog.delete, danger: true }))) return
     try {
       await deleteAccount()
       router.push('/')
     } catch {
-      alert(t.mobile.deleteError)
+      await alert(t.mobile.deleteError)
     }
   }
 
