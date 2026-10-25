@@ -17,7 +17,7 @@ export function RecordButton({ isRecording, onClick, disabled }: RecordButtonPro
         'relative w-24 h-24 rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2',
         isRecording
           ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500 scale-110'
-          : 'bg-primary-500 hover:bg-primary-600 focus:ring-primary-500',
+          : 'bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 shadow-[0_0_0_10px_color-mix(in_oklch,var(--terra)_16%,transparent)]',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >

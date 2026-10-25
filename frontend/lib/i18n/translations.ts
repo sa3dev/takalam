@@ -2,6 +2,9 @@ export const translations = {
   fr: {
     // Navigation
     nav: {
+      situations: "Situations",
+      progress: "Progrès",
+      profile: "Profil",
       home: "Accueil",
       dashboard: "Tableau de bord",
       logout: "Déconnexion"
@@ -58,6 +61,34 @@ export const translations = {
       tagline: "Takalam - Apprenez l'arabe avec confiance et sans peur"
     },
     // Daily speaking allowance + upgrade screen
+    mobile: {
+      hello: "Bonjour",
+      askPractice: "Prêt à parler arabe aujourd'hui ?",
+      freeTitle: "Parler librement",
+      freeBody: "Discute avec ton assistant IA sur n'importe quel sujet.",
+      start: "Commencer",
+      popular: "Situations populaires",
+      seeAll: "Voir tout",
+      resume: "Reprendre la conversation",
+      resumeBody: "Une conversation est en cours.",
+      situationsTitle: "Situations",
+      situationsSubtitle: "Des situations de la vie réelle pour apprendre en contexte.",
+      freeConversation: "Conversation libre",
+      profileTitle: "Profil",
+      practiceTime: "Temps de pratique",
+      conversations: "Conversations",
+      interfaceLanguage: "Langue de l'interface",
+      legal: "Informations",
+      privacy: "Confidentialité",
+      terms: "Conditions",
+      contact: "Contact",
+      dangerTitle: "Zone dangereuse",
+      dangerBody: "La suppression de votre compte efface définitivement toutes vos données (sessions, transcriptions, progression).",
+      deleteAccount: "Supprimer mon compte",
+      deleteConfirm: "Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.",
+      deleteError: "Une erreur est survenue. Réessayez.",
+      back: "Retour"
+    },
     scenarios: {
       backToScenarios: "Retour aux situations",
       or: "ou",
@@ -98,6 +129,9 @@ export const translations = {
   },
   en: {
     nav: {
+      situations: "Situations",
+      progress: "Progress",
+      profile: "Profile",
       home: "Home",
       dashboard: "Dashboard",
       logout: "Sign out"
@@ -150,6 +184,34 @@ export const translations = {
     footer: {
       tagline: "Takalam - Learn Arabic with confidence and no fear"
     },
+    mobile: {
+      hello: "Hello",
+      askPractice: "Ready to speak Arabic today?",
+      freeTitle: "Speak freely",
+      freeBody: "Chat with your AI assistant about anything.",
+      start: "Start",
+      popular: "Popular situations",
+      seeAll: "See all",
+      resume: "Resume conversation",
+      resumeBody: "A conversation is in progress.",
+      situationsTitle: "Situations",
+      situationsSubtitle: "Real-life situations to learn in context.",
+      freeConversation: "Free conversation",
+      profileTitle: "Profile",
+      practiceTime: "Practice time",
+      conversations: "Conversations",
+      interfaceLanguage: "Interface language",
+      legal: "Information",
+      privacy: "Privacy",
+      terms: "Terms",
+      contact: "Contact",
+      dangerTitle: "Danger zone",
+      dangerBody: "Deleting your account permanently erases all your data (sessions, transcripts, progress).",
+      deleteAccount: "Delete my account",
+      deleteConfirm: "Permanently delete your account and all your data? This cannot be undone.",
+      deleteError: "Something went wrong. Please try again.",
+      back: "Back"
+    },
     scenarios: {
       backToScenarios: "Back to situations",
       or: "or",
@@ -190,6 +252,9 @@ export const translations = {
   },
   es: {
     nav: {
+      situations: "Situaciones",
+      progress: "Progreso",
+      profile: "Perfil",
       home: "Inicio",
       dashboard: "Panel",
       logout: "Salir"
@@ -242,6 +307,34 @@ export const translations = {
     footer: {
       tagline: "Takalam - Aprende árabe con confianza y sin miedo"
     },
+    mobile: {
+      hello: "Hola",
+      askPractice: "¿Listo para hablar árabe hoy?",
+      freeTitle: "Hablar libremente",
+      freeBody: "Charla con tu asistente de IA sobre lo que quieras.",
+      start: "Empezar",
+      popular: "Situaciones populares",
+      seeAll: "Ver todo",
+      resume: "Reanudar la conversación",
+      resumeBody: "Hay una conversación en curso.",
+      situationsTitle: "Situaciones",
+      situationsSubtitle: "Situaciones de la vida real para aprender en contexto.",
+      freeConversation: "Conversación libre",
+      profileTitle: "Perfil",
+      practiceTime: "Tiempo de práctica",
+      conversations: "Conversaciones",
+      interfaceLanguage: "Idioma de la interfaz",
+      legal: "Información",
+      privacy: "Privacidad",
+      terms: "Condiciones",
+      contact: "Contacto",
+      dangerTitle: "Zona peligrosa",
+      dangerBody: "Eliminar tu cuenta borra definitivamente todos tus datos (sesiones, transcripciones, progreso).",
+      deleteAccount: "Eliminar mi cuenta",
+      deleteConfirm: "¿Eliminar definitivamente tu cuenta y todos tus datos? Esta acción es irreversible.",
+      deleteError: "Ha ocurrido un error. Inténtalo de nuevo.",
+      back: "Volver"
+    },
     scenarios: {
       backToScenarios: "Volver a las situaciones",
       or: "o",
@@ -282,6 +375,9 @@ export const translations = {
   },
   it: {
     nav: {
+      situations: "Situazioni",
+      progress: "Progressi",
+      profile: "Profilo",
       home: "Home",
       dashboard: "Cruscotto",
       logout: "Esci"
@@ -334,6 +430,34 @@ export const translations = {
     footer: {
       tagline: "Takalam - Impara l'arabo con fiducia e senza paura"
     },
+    mobile: {
+      hello: "Ciao",
+      askPractice: "Pronto a parlare arabo oggi?",
+      freeTitle: "Parla liberamente",
+      freeBody: "Chiacchiera con il tuo assistente IA di qualsiasi argomento.",
+      start: "Inizia",
+      popular: "Situazioni popolari",
+      seeAll: "Vedi tutto",
+      resume: "Riprendi la conversazione",
+      resumeBody: "Una conversazione è in corso.",
+      situationsTitle: "Situazioni",
+      situationsSubtitle: "Situazioni di vita reale per imparare in contesto.",
+      freeConversation: "Conversazione libera",
+      profileTitle: "Profilo",
+      practiceTime: "Tempo di pratica",
+      conversations: "Conversazioni",
+      interfaceLanguage: "Lingua dell'interfaccia",
+      legal: "Informazioni",
+      privacy: "Privacy",
+      terms: "Condizioni",
+      contact: "Contatti",
+      dangerTitle: "Zona pericolosa",
+      dangerBody: "Eliminare l'account cancella definitivamente tutti i tuoi dati (sessioni, trascrizioni, progressi).",
+      deleteAccount: "Elimina il mio account",
+      deleteConfirm: "Eliminare definitivamente l'account e tutti i dati? L'azione è irreversibile.",
+      deleteError: "Si è verificato un errore. Riprova.",
+      back: "Indietro"
+    },
     scenarios: {
       backToScenarios: "Torna alle situazioni",
       or: "o",
@@ -374,6 +498,9 @@ export const translations = {
   },
   ru: {
     nav: {
+      situations: "Ситуации",
+      progress: "Прогресс",
+      profile: "Профиль",
       home: "Главная",
       dashboard: "Панель",
       logout: "Выйти"
@@ -426,6 +553,34 @@ export const translations = {
     footer: {
       tagline: "Такалам - Учите арабский с уверенностью и без страха"
     },
+    mobile: {
+      hello: "Здравствуйте",
+      askPractice: "Готовы говорить по-арабски сегодня?",
+      freeTitle: "Свободный разговор",
+      freeBody: "Общайтесь с ИИ-помощником на любую тему.",
+      start: "Начать",
+      popular: "Популярные ситуации",
+      seeAll: "Все",
+      resume: "Продолжить разговор",
+      resumeBody: "Разговор уже идёт.",
+      situationsTitle: "Ситуации",
+      situationsSubtitle: "Реальные жизненные ситуации для обучения в контексте.",
+      freeConversation: "Свободный разговор",
+      profileTitle: "Профиль",
+      practiceTime: "Время практики",
+      conversations: "Разговоры",
+      interfaceLanguage: "Язык интерфейса",
+      legal: "Информация",
+      privacy: "Конфиденциальность",
+      terms: "Условия",
+      contact: "Контакты",
+      dangerTitle: "Опасная зона",
+      dangerBody: "Удаление аккаунта навсегда стирает все ваши данные (сеансы, расшифровки, прогресс).",
+      deleteAccount: "Удалить мой аккаунт",
+      deleteConfirm: "Безвозвратно удалить аккаунт и все данные? Это действие необратимо.",
+      deleteError: "Произошла ошибка. Повторите попытку.",
+      back: "Назад"
+    },
     scenarios: {
       backToScenarios: "К ситуациям",
       or: "или",
@@ -466,6 +621,9 @@ export const translations = {
   },
   zh: {
     nav: {
+      situations: "情景",
+      progress: "进度",
+      profile: "我的",
       home: "首页",
       dashboard: "仪表板",
       logout: "退出"
@@ -518,6 +676,34 @@ export const translations = {
     footer: {
       tagline: "Takalam - 自信无畏地学习阿拉伯语"
     },
+    mobile: {
+      hello: "你好",
+      askPractice: "今天准备好说阿拉伯语了吗？",
+      freeTitle: "自由交谈",
+      freeBody: "和你的 AI 助手聊任何话题。",
+      start: "开始",
+      popular: "热门情景",
+      seeAll: "查看全部",
+      resume: "继续对话",
+      resumeBody: "有一场对话正在进行。",
+      situationsTitle: "情景",
+      situationsSubtitle: "在真实生活场景中学习。",
+      freeConversation: "自由对话",
+      profileTitle: "个人资料",
+      practiceTime: "练习时间",
+      conversations: "对话数",
+      interfaceLanguage: "界面语言",
+      legal: "信息",
+      privacy: "隐私",
+      terms: "条款",
+      contact: "联系",
+      dangerTitle: "危险区域",
+      dangerBody: "删除账户将永久清除你的所有数据（会话、转录、进度）。",
+      deleteAccount: "删除我的账户",
+      deleteConfirm: "确定永久删除账户和所有数据吗？此操作无法撤销。",
+      deleteError: "出现错误，请重试。",
+      back: "返回"
+    },
     scenarios: {
       backToScenarios: "返回情景列表",
       or: "或",
@@ -561,6 +747,9 @@ export const translations = {
   },
   ar: {
     nav: {
+      situations: "المواقف",
+      progress: "التقدم",
+      profile: "الملف",
       home: "الرئيسية",
       dashboard: "لوحة التحكم",
       logout: "خروج"
@@ -612,6 +801,34 @@ export const translations = {
     },
     footer: {
       tagline: "تكلم - تعلم العربية بثقة وبدون خوف"
+    },
+    mobile: {
+      hello: "مرحبًا",
+      askPractice: "هل أنت مستعد للتحدث بالعربية اليوم؟",
+      freeTitle: "تحدّث بحرية",
+      freeBody: "تحدّث مع مساعدك الذكي عن أي موضوع.",
+      start: "ابدأ",
+      popular: "مواقف شائعة",
+      seeAll: "عرض الكل",
+      resume: "متابعة المحادثة",
+      resumeBody: "هناك محادثة جارية.",
+      situationsTitle: "المواقف",
+      situationsSubtitle: "مواقف من الحياة الواقعية للتعلّم في سياقها.",
+      freeConversation: "محادثة حرة",
+      profileTitle: "الملف الشخصي",
+      practiceTime: "وقت التدريب",
+      conversations: "المحادثات",
+      interfaceLanguage: "لغة الواجهة",
+      legal: "معلومات",
+      privacy: "الخصوصية",
+      terms: "الشروط",
+      contact: "اتصل بنا",
+      dangerTitle: "منطقة الخطر",
+      dangerBody: "حذف حسابك يمحو جميع بياناتك نهائيًا (الجلسات والنصوص والتقدم).",
+      deleteAccount: "حذف حسابي",
+      deleteConfirm: "هل تريد حذف حسابك وجميع بياناتك نهائيًا؟ لا يمكن التراجع عن ذلك.",
+      deleteError: "حدث خطأ. حاول مرة أخرى.",
+      back: "رجوع"
     },
     scenarios: {
       backToScenarios: "العودة إلى المواقف",

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { BottomNav } from './BottomNav'
 import { ReactNode } from 'react'
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -14,7 +15,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const navLinks = [
     { href: '/app', label: t.nav.home },
+    { href: '/situations', label: t.nav.situations },
     { href: '/dashboard', label: t.nav.dashboard },
+    { href: '/profile', label: t.nav.profile },
   ]
 
   return (
@@ -26,7 +29,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {/* ── Header ── */}
       <header style={{ background: 'var(--clay-d)', borderBottom: '1px solid var(--clay)' }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 md:py-4 flex items-center gap-4">
 
           {/* Brand — same style as landing page nav */}
           <Link href="/app" className="flex items-baseline gap-2 shrink-0 no-underline mr-4">
@@ -49,7 +52,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </Link>
 
           {/* Nav links */}
-          <nav className="flex gap-1 flex-1">
+          <nav className="hidden md:flex gap-1 flex-1">
             {navLinks.map(({ href, label }) => {
               const active = pathname === href
               return (
@@ -73,7 +76,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 ml-auto">
             <LanguageSwitcher />
             {user && (
-              <>
+              <div className="hidden md:flex items-center gap-3">
                 <span
                   className="text-sm hidden sm:block"
                   style={{ color: 'var(--terra-soft)', fontFamily: 'var(--sans)' }}
@@ -81,7 +84,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   {user.username}
                 </span>
                 <LogoutButton onClick={logout} label={t.nav.logout} />
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -95,7 +98,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </main>
 
       {/* ── Footer ── */}
-      <footer style={{
+      <footer className="hidden md:block" style={{
         background: 'var(--cream-2)',
         borderTop: '1px solid var(--line)',
         padding: '20px 40px',
@@ -121,6 +124,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </footer>
+
+      {/* Phones: the four places of the app, under the thumb. */}
+      <BottomNav />
     </div>
   )
 }
