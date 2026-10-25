@@ -8,7 +8,9 @@ import { LanguageSwitcher } from './LanguageSwitcher'
 import { BottomNav } from './BottomNav'
 import { ReactNode } from 'react'
 
-export function AppLayout({ children }: { children: ReactNode }) {
+/** `immersive` gives a phone's whole screen to the page: no header, no tab bar.
+ *  From the md breakpoint up the chrome is always there. */
+export function AppLayout({ children, immersive = false }: { children: ReactNode; immersive?: boolean }) {
   const { t } = useLanguage()
   const { user, logout } = useAuth()
   const pathname = usePathname()
@@ -28,7 +30,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'var(--cream)' }}>
 
       {/* ── Header ── */}
-      <header style={{ background: 'var(--clay-d)', borderBottom: '1px solid var(--clay)' }}>
+      <header
+        className={immersive ? 'hidden md:block' : undefined}
+        style={{ background: 'var(--clay-d)', borderBottom: '1px solid var(--clay)' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 md:py-4 flex items-center gap-4">
 
           {/* Brand — same style as landing page nav */}
@@ -126,7 +131,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </footer>
 
       {/* Phones: the four places of the app, under the thumb. */}
-      <BottomNav />
+      {!immersive && <BottomNav />}
     </div>
   )
 }

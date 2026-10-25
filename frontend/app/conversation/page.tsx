@@ -20,10 +20,9 @@ import { AppLayout } from '@/components/AppLayout'
 import { RecordButton } from '@/components/RecordButton'
 import { TranscriptItem } from '@/components/TranscriptItem'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
-import { QuotaGauge } from '@/components/QuotaGauge'
+import { QuotaPill } from '@/components/QuotaPill'
 import { PaywallModal } from '@/components/PaywallModal'
 import { ScenarioPicker, FREE_CONVERSATION } from '@/components/ScenarioPicker'
-import { Card } from '@/components/Card'
 import { track } from '@/lib/analytics'
 
 interface Transcript {
@@ -114,6 +113,7 @@ export default function ConversationPage() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isPaywallOpen, setIsPaywallOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const audioUnlockedRef = useRef(false)
   const pendingActionRef = useRef<'cancel' | 'restart' | null>(null)
@@ -450,28 +450,42 @@ export default function ConversationPage() {
     ? t.home.processing
     : t.home.clickToRecord
 
+  // What the menu offers depends on where the conversation is.
+  const isScene = !!scenarioCopy && typeof scenarioCopy !== 'string'
+  const menuItems: { label: string; onSelect: () => void; danger?: boolean; disabled?: boolean }[] = []
+  if (started) {
+    menuItems.push({ label: t.home.endSession, onSelect: handleEndSession })
+    menuItems.push({ label: t.home.restart, onSelect: () => discardConversation('restart'), disabled: isProcessing })
+  }
+  if (isScene) {
+    menuItems.push({
+      label: `← ${t.scenarios.backToScenarios}`,
+      onSelect: () => discardConversation('cancel', hasSpoken),
+      disabled: isProcessing,
+    })
+  }
+  if (started) {
+    menuItems.push({ label: t.home.cancel, onSelect: () => discardConversation('cancel'), danger: true, disabled: isProcessing })
+  }
+
+  const paywallCta = outOfQuota && (
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="max-w-xs text-sm text-calm-muted">
+        {t.quota.wallTitle}
+        {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
+      </p>
+      <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
+        {t.quota.cta}
+      </button>
+    </div>
+  )
+
   return (
-    <AppLayout>
-      <div className={clsx('max-w-4xl mx-auto px-4 h-full flex flex-col', started ? 'py-3' : 'py-6')}>
-        {scenarioCopy && typeof scenarioCopy !== 'string' && (
-          <div className="mb-2 shrink-0 rounded-lg bg-primary-50 px-3 py-2 text-sm text-primary-700">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="font-semibold">{scenarioCopy.title}</span>
-                <span className="opacity-80"> — {t.scenarios.goalLabel} : {scenarioCopy.goal}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => discardConversation('cancel', hasSpoken)}
-                disabled={isProcessing}
-                className="shrink-0 font-medium underline underline-offset-2 hover:no-underline disabled:opacity-50"
-              >
-                ← {t.scenarios.backToScenarios}
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="flex items-center gap-3 mb-2 shrink-0">
+    <AppLayout immersive>
+      {/* The whole screen belongs to the conversation: no header, no tab bar.
+          What was around it is folded into one slim bar and a menu. */}
+      <div className="mx-auto flex h-full max-w-3xl flex-col px-4 pb-4 pt-3">
+        <div className="relative mb-2 flex shrink-0 items-center gap-2">
           <Link
             href="/app"
             aria-label={t.mobile.back}
@@ -479,132 +493,138 @@ export default function ConversationPage() {
           >
             ←
           </Link>
-          <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-calm-text">
-            {scenarioCopy && typeof scenarioCopy !== 'string' ? scenarioCopy.title : t.mobile.freeConversation}
-          </h1>
-          <ConnectionStatus isConnected={isConnected} error={connectionError} />
-        </div>
-        {/* The time left to speak today stays in view, whatever the screen. */}
-        <div className={clsx('shrink-0 w-full', started ? 'mb-2' : 'mb-4 max-w-sm mx-auto')}>
-          <QuotaGauge quota={quota} compact={started} />
-        </div>
-
-        {/* min-h-0 is what makes flex-1 + overflow actually scroll here: without
-            it the card grows to fit the transcript and pushes the controls off. */}
-        <Card className={clsx('flex-1 min-h-0 overflow-y-auto scrollbar-thin', started ? 'mb-3' : 'mb-4')}>
-          {transcripts.length === 0 ? (
-            <div className="flex flex-col justify-center min-h-full text-calm-muted">
-              <div className="w-full">
-                <p className="text-center">
-                  {t.home.noConversation}<br />
-                  {t.home.clickToStart}
-                </p>
-                {/* Offered only until the conversation begins; the ordinary
-                    chat stays one click away on the microphone. */}
-                {!scenarioChoice && <ScenarioPicker onPick={handleScenarioPick} />}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {transcripts.map((transcript, index) => (
-                <TranscriptItem
-                  key={index}
-                  speaker={transcript.speaker}
-                  text={transcript.text}
-                  translation={transcript.translation}
-                  timestamp={transcript.timestamp}
-                  onReplay={transcript.audioUrls?.length ? () => replayAudio(transcript.audioUrls!) : undefined}
-                />
-              ))}
-              {isProcessing && (
-                <div className="flex justify-start">
-                  <div className="bg-calm-surface border border-calm-border rounded-2xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-calm-muted rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-calm-muted rounded-full animate-bounce delay-100" />
-                      <div className="w-2 h-2 bg-calm-muted rounded-full animate-bounce delay-200" />
-                    </div>
-                  </div>
-                </div>
+          <div className="min-w-0 flex-1 text-center">
+            <h1 className="truncate text-base font-semibold text-calm-text">
+              {isScene ? scenarioCopy.title : t.mobile.freeConversation}
+            </h1>
+            {isScene && (
+              <p className="truncate text-xs text-calm-muted">
+                {t.scenarios.goalLabel} : {scenarioCopy.goal}
+              </p>
+            )}
+          </div>
+          <QuotaPill quota={quota} />
+          {menuItems.length > 0 && (
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setMenuOpen(open => !open)}
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-calm-border bg-calm-surface text-calm-text"
+              >
+                ⋯
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                  <ul className="absolute right-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-xl border border-calm-border bg-calm-surface py-1 shadow-lg">
+                    {menuItems.map(item => (
+                      <li key={item.label}>
+                        <button
+                          type="button"
+                          disabled={item.disabled}
+                          onClick={() => { setMenuOpen(false); item.onSelect() }}
+                          className={clsx(
+                            'w-full px-4 py-2.5 text-left text-sm hover:bg-calm-bg disabled:opacity-50',
+                            item.danger ? 'text-red-600' : 'text-calm-text'
+                          )}
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
-              <div ref={transcriptEndRef} />
             </div>
           )}
-        </Card>
+        </div>
 
-        {started ? (
-          /* One row, the two ends of it: leaving on the left, speaking on the
-             right, and nothing in between. The invitation to press a microphone
-             is carried by the microphone. */
-          <div className="flex flex-col-reverse items-center gap-3 shrink-0 sm:flex-row sm:justify-between sm:gap-4">
-            <div className="flex flex-wrap items-center justify-center gap-2 min-w-0 sm:justify-start">
-              <button onClick={handleEndSession} className="btn btn-secondary">
-                {t.home.endSession}
-              </button>
-              <button
-                onClick={() => discardConversation('restart')}
-                disabled={isProcessing}
-                className="btn btn-secondary disabled:opacity-50"
-              >
-                {t.home.restart}
-              </button>
-              <button
-                onClick={() => discardConversation('cancel')}
-                disabled={isProcessing}
-                className="px-3 py-2 text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
-              >
-                {t.home.cancel}
-              </button>
-              {/* The wall is a dead end without this: the modal is only pushed
-                  by the server when a turn is refused, and turns are now
-                  blocked before they can be sent. It carries the reset time,
-                  so the row needs no sentence of its own. */}
-              {outOfQuota && (
-                <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
-                  {t.quota.cta}
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              {/* A count is not a caption: it says something the button cannot. */}
-              {isRecording && (
-                <span className="text-lg font-mono font-bold text-red-500 tabular-nums">
-                  {formatRecordingTime(recordingTime)}
-                </span>
-              )}
+        {/* Only worth a line when something is wrong: a working connection is the
+            normal state and takes no room. */}
+        {!isConnected && (
+          <div className="mb-2 flex shrink-0 justify-center">
+            <ConnectionStatus isConnected={isConnected} error={connectionError} />
+          </div>
+        )}
+
+        {transcripts.length === 0 ? (
+          /* Nothing said yet: the microphone is the page. */
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 overflow-y-auto py-4">
+            <p className="text-center text-sm text-calm-muted">{hint}</p>
+            <div className="my-6">
               <RecordButton
+                size="lg"
                 isRecording={isRecording}
                 onClick={handleRecordButtonClick}
                 disabled={!isConnected || isProcessing || outOfQuota}
               />
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 shrink-0">
             {isRecording && (
-              <div className="text-2xl font-mono text-red-500 font-bold">
+              <div className="text-2xl font-mono font-bold text-red-500 tabular-nums">
                 {formatRecordingTime(recordingTime)}
               </div>
             )}
-            <RecordButton
-              isRecording={isRecording}
-              onClick={handleRecordButtonClick}
-              disabled={!isConnected || isProcessing || outOfQuota}
-            />
-            {outOfQuota ? (
-              <>
-                <p className="text-sm text-calm-muted text-center max-w-xs">
-                  {t.quota.wallTitle}
-                  {quota && ` — ${t.quota.resets.replace('{time}', formatResetTime(quota.resets_at, language))}`}
-                </p>
-                <button onClick={() => setIsPaywallOpen(true)} className="btn btn-primary">
-                  {t.quota.cta}
-                </button>
-              </>
-            ) : (
-              <p className="text-sm text-calm-muted">{hint}</p>
-            )}
+            {paywallCta}
+            {/* Offered only until the conversation begins; the ordinary chat is
+                the microphone above. */}
+            {!scenarioChoice && <ScenarioPicker onPick={handleScenarioPick} />}
           </div>
+        ) : (
+          <>
+            {/* min-h-0 is what makes flex-1 + overflow actually scroll here: without
+                it the list grows to fit the transcript and pushes the microphone off. */}
+            <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin sm:card">
+              <div className="space-y-2">
+                {transcripts.map((transcript, index) => (
+                  <TranscriptItem
+                    key={index}
+                    speaker={transcript.speaker}
+                    text={transcript.text}
+                    translation={transcript.translation}
+                    timestamp={transcript.timestamp}
+                    onReplay={transcript.audioUrls?.length ? () => replayAudio(transcript.audioUrls!) : undefined}
+                  />
+                ))}
+                {isProcessing && (
+                  <div className="flex justify-start">
+                    <div className="bg-calm-surface border border-calm-border rounded-2xl px-4 py-3">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-calm-muted rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-calm-muted rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-calm-muted rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={transcriptEndRef} />
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-col items-center gap-2 pt-3">
+              {outOfQuota ? (
+                paywallCta
+              ) : (
+                <>
+                  <div className="flex items-center gap-4">
+                    <Waves active={isRecording} />
+                    <RecordButton
+                      isRecording={isRecording}
+                      onClick={handleRecordButtonClick}
+                      disabled={!isConnected || isProcessing}
+                    />
+                    <Waves active={isRecording} />
+                  </div>
+                  {/* A count says something the button cannot; the hint says what
+                      the next press will do. */}
+                  <p className="h-5 text-xs text-calm-muted tabular-nums">
+                    {isRecording ? formatRecordingTime(recordingTime) : hint}
+                  </p>
+                </>
+              )}
+            </div>
+          </>
         )}
 
         {/* The next clip starts when the current one ends. Bound here and not in an
@@ -619,5 +639,21 @@ export default function ConversationPage() {
         />
       </div>
     </AppLayout>
+  )
+}
+
+/** Five bars either side of the microphone, moving only while it listens. */
+function Waves({ active }: { active: boolean }) {
+  const heights = [10, 18, 26, 18, 10]
+  return (
+    <div className="flex h-8 w-12 items-center justify-center gap-1" aria-hidden="true">
+      {heights.map((height, i) => (
+        <span
+          key={i}
+          className={clsx('w-1 rounded-full bg-primary-400 transition-opacity', active ? 'animate-pulse opacity-90' : 'opacity-0')}
+          style={{ height, animationDelay: `${i * 120}ms` }}
+        />
+      ))}
+    </div>
   )
 }
