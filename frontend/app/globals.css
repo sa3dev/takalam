@@ -40,8 +40,12 @@
     line-height: 1.6;
   }
 
+  /* Arabic that is read, not admired: Reem Kufi is a display face whose heavy,
+     tight letters swallow the vowel marks. Noto Sans Arabic keeps them apart.
+     Reem Kufi stays for the wordmark and large titles. */
   .arabic {
-    font-family: 'Reem Kufi', Arial, sans-serif;
+    font-family: 'Noto Sans Arabic', 'Reem Kufi', Arial, sans-serif;
+    line-height: 1.9;
     direction: rtl;
     text-align: right;
   }
