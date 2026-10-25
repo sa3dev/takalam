@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { clsx } from 'clsx'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   useWebSocket,
@@ -46,14 +46,6 @@ const SESSION_ID_KEY = 'takalam:session-id'
 // The situation chosen for this tab's conversation: a scenario id, or 'free'.
 const SCENARIO_KEY = 'takalam:scenario'
 
-/** The situation asked for in the address (?scenario=restaurant, or =free).
- *  Arriving with one always means a new conversation, so it is read before
- *  anything is restored from the tab. */
-function readRequestedScenario(): string | null {
-  if (typeof window === 'undefined') return null
-  const value = new URLSearchParams(window.location.search).get('scenario')
-  return value && value.length <= 40 ? value : null
-}
 
 function formatTimestamp(value: string): string {
   // The API serialises naive UTC. Without the marker a browser reads it as
@@ -63,7 +55,26 @@ function formatTimestamp(value: string): string {
 }
 
 export default function ConversationPage() {
+  // useSearchParams needs a Suspense boundary above it.
+  return (
+    <Suspense fallback={null}>
+      <ConversationScreen />
+    </Suspense>
+  )
+}
+
+function ConversationScreen() {
   const router = useRouter()
+  // The situation asked for in the address (?scenario=restaurant, or =free).
+  // Read from the router, not from window.location: on a client-side navigation
+  // the first render happens before the address has changed, and a reader that
+  // looked at window would see the previous page's URL and start the ordinary
+  // chat instead of the situation that was clicked.
+  const searchParams = useSearchParams()
+  const requestedScenario = (() => {
+    const value = searchParams.get('scenario')
+    return value && value.length <= 40 ? value : null
+  })()
   const { t, language } = useLanguage()
   const { user, isLoading } = useAuth()
   // Kept in sessionStorage, not minted per mount: a reload used to hand the
@@ -74,7 +85,8 @@ export default function ConversationPage() {
     const fresh = () => `session-${Date.now()}`
     if (typeof window === 'undefined') return fresh()
     try {
-      if (readRequestedScenario()) window.sessionStorage.removeItem(SESSION_ID_KEY)
+      // Arriving with a situation always means a new conversation.
+      if (requestedScenario) window.sessionStorage.removeItem(SESSION_ID_KEY)
       const stored = window.sessionStorage.getItem(SESSION_ID_KEY)
       if (stored) return stored
       const created = fresh()
@@ -90,7 +102,7 @@ export default function ConversationPage() {
   // choice survives a reload with the session it belongs to.
   const [scenarioChoice, setScenarioChoice] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
-    const requested = readRequestedScenario()
+    const requested = requestedScenario
     try {
       if (requested) {
         window.sessionStorage.setItem(SCENARIO_KEY, requested)
@@ -105,8 +117,8 @@ export default function ConversationPage() {
   // The address has done its job once read: a reload must resume this
   // conversation, not start another one from the same link.
   useEffect(() => {
-    if (readRequestedScenario()) router.replace('/conversation')
-  }, [router])
+    if (requestedScenario) router.replace('/conversation')
+  }, [router, requestedScenario])
   // Keep the current UI language in a ref so the recorder callback never sends a stale value
   const languageRef = useRef(language)
   useEffect(() => { languageRef.current = language }, [language])
