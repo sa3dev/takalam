@@ -479,7 +479,10 @@ export default function ConversationPage() {
     <AppLayout immersive>
       {/* The whole screen belongs to the conversation: no header, no tab bar.
           What was around it is folded into one slim bar and a menu. */}
-      <div className="mx-auto flex h-full max-w-3xl flex-col px-4 pb-4 pt-3">
+      <div
+        className="mx-auto flex h-full max-w-3xl flex-col px-4 pt-3"
+        style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
+      >
         <div className="relative mb-2 flex shrink-0 items-center gap-2">
           <Link
             href="/app"
@@ -545,10 +548,11 @@ export default function ConversationPage() {
         )}
 
         {transcripts.length === 0 ? (
-          /* Nothing said yet: the microphone is the page. */
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 overflow-y-auto py-4">
+          /* Nothing said yet: the microphone is the page, and it sits low, where a
+             thumb rests, rather than in the middle of the screen. */
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-end gap-6 overflow-y-auto pb-14 pt-4">
             <p className="text-center text-sm text-calm-muted">{hint}</p>
-            <div className="my-6">
+            <div className="mt-2">
               <RecordButton
                 size="lg"
                 isRecording={isRecording}
