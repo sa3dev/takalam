@@ -5,147 +5,178 @@ import { usePathname } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { BottomNav } from './BottomNav'
 import { ReactNode } from 'react'
 
-export function AppLayout({ children }: { children: ReactNode }) {
+const icon = {
+  home: <path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  situations: (
+    <>
+      <rect x="3" y="3" width="8" height="8" rx="2" />
+      <rect x="13" y="3" width="8" height="8" rx="2" />
+      <rect x="3" y="13" width="8" height="8" rx="2" />
+      <rect x="13" y="13" width="8" height="8" rx="2" />
+    </>
+  ),
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </>
+  ),
+  progress: <path d="M4 20V10m6 10V4m6 16v-7m4 7H2" />,
+  profile: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+    </>
+  ),
+}
+
+/** `immersive` gives a phone's whole screen to the page: no header, no tab bar.
+ *  From the md breakpoint up the sidebar is always there. */
+export function AppLayout({ children, immersive = false }: { children: ReactNode; immersive?: boolean }) {
   const { t } = useLanguage()
   const { user, logout } = useAuth()
   const pathname = usePathname()
 
   const navLinks = [
-    { href: '/app', label: t.nav.home },
-    { href: '/dashboard', label: t.nav.dashboard },
+    { href: '/app', label: t.nav.home, icon: icon.home, match: ['/app'] },
+    { href: '/situations', label: t.nav.situations, icon: icon.situations, match: ['/situations'] },
+    { href: '/conversation?scenario=free', label: t.mobile.freeConversation, icon: icon.mic, match: ['/conversation'] },
+    { href: '/dashboard', label: t.nav.progress, icon: icon.progress, match: ['/dashboard'] },
+    { href: '/profile', label: t.nav.profile, icon: icon.profile, match: ['/profile'] },
   ]
 
   return (
     // Locked to the viewport (dvh, so mobile URL bars don't cut it off) with the
     // scrolling delegated to <main>: pages that want to fill the screen exactly,
-    // like the conversation, can now ask for h-full instead of guessing the
-    // header and footer heights.
-    <div className="h-[100dvh] flex flex-col overflow-hidden" style={{ background: 'var(--cream)' }}>
+    // like the conversation, can ask for h-full instead of guessing the chrome.
+    <div className="h-[100dvh] flex overflow-hidden" style={{ background: 'var(--cream)' }}>
 
-      {/* ── Header ── */}
-      <header style={{ background: 'var(--clay-d)', borderBottom: '1px solid var(--clay)' }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center gap-4">
-
-          {/* Brand — same style as landing page nav */}
-          <Link href="/app" className="flex items-baseline gap-2 shrink-0 no-underline mr-4">
-            <span style={{
-              fontFamily: 'var(--disp)',
-              fontWeight: 700,
-              fontSize: '23px',
-              color: 'var(--cream)',
-              letterSpacing: '-0.02em',
-            }}>
-              Takalam
-            </span>
-            <span style={{
-              fontFamily: '"Reem Kufi", serif',
-              fontSize: '19px',
-              color: 'var(--terra-soft)',
-            }}>
-              تكلّم
-            </span>
-          </Link>
-
-          {/* Nav links */}
-          <nav className="flex gap-1 flex-1">
-            {navLinks.map(({ href, label }) => {
-              const active = pathname === href
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all no-underline"
-                  style={{
-                    fontFamily: 'var(--sans)',
-                    color: active ? 'var(--cream)' : 'var(--terra-soft)',
-                    background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  }}
-                >
-                  {label}
-                </Link>
-              )
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className="hidden md:flex w-64 shrink-0 flex-col"
+        style={{ background: 'var(--cream-2)', borderRight: '1px solid var(--line)' }}
+      >
+        <Link href="/app" className="flex items-center gap-3 px-6 pb-6 pt-7 no-underline">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+            {[6, 12, 18, 24, 30].map((x, i) => {
+              const h = [10, 20, 28, 18, 8][i]
+              return <rect key={x} x={x - 1.5} y={17 - h / 2} width="3" height={h} rx="1.5" fill="var(--terra)" />
             })}
-          </nav>
-
-          {/* Right side */}
-          <div className="flex items-center gap-3 ml-auto">
-            <LanguageSwitcher />
-            {user && (
-              <>
-                <span
-                  className="text-sm hidden sm:block"
-                  style={{ color: 'var(--terra-soft)', fontFamily: 'var(--sans)' }}
-                >
-                  {user.username}
-                </span>
-                <LogoutButton onClick={logout} label={t.nav.logout} />
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* ── Main content ── */}
-      {/* min-h-0 lets this shrink below its content so the overflow lands here
-          rather than on the page — one scrollbar, and the footer stays put. */}
-      <main className="flex-1 min-h-0 overflow-y-auto">
-        {children}
-      </main>
-
-      {/* ── Footer ── */}
-      <footer style={{
-        background: 'var(--cream-2)',
-        borderTop: '1px solid var(--line)',
-        padding: '20px 40px',
-      }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
-          <span style={{ fontFamily: 'var(--disp)', fontWeight: 700, fontSize: '15px', color: 'var(--terra-deep)' }}>
-            Takalam{' '}
-            <span style={{ fontFamily: '"Reem Kufi", serif', color: 'var(--terra)', fontWeight: 500, fontSize: '13px' }}>
+          </svg>
+          <div className="leading-none">
+            <div style={{ fontFamily: 'var(--disp)', fontWeight: 700, fontSize: '24px', color: 'var(--clay-d)', letterSpacing: '-0.02em' }}>
+              Takalam
+            </div>
+            <div style={{ fontFamily: '"Reem Kufi", serif', fontSize: '15px', color: 'var(--terra)', marginTop: '4px' }}>
               تكلّم
-            </span>
-          </span>
-          <div className="flex items-center gap-4">
-            <p style={{ fontSize: '13px', color: 'var(--faint)', fontFamily: 'var(--sans)' }}>
-              {t.footer.tagline}
-            </p>
-            <Link
-              href="/privacy"
-              style={{ fontSize: '12px', color: 'var(--muted)', fontFamily: 'var(--sans)' }}
-              className="no-underline hover:underline"
-            >
-              Confidentialité
-            </Link>
+            </div>
           </div>
-        </div>
-      </footer>
-    </div>
-  )
-}
+        </Link>
 
-function LogoutButton({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-sm px-3 py-1.5 rounded-full font-medium transition-all"
-      style={{
-        fontFamily: 'var(--sans)',
-        border: '1.5px solid rgba(255,255,255,0.25)',
-        color: 'var(--cream)',
-        background: 'transparent',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'transparent'
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
-      }}
-    >
-      {label}
-    </button>
+        <nav className="flex flex-col gap-1 px-3">
+          {navLinks.map(({ href, label, icon: path, match }) => {
+            const active = match.includes(pathname)
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium no-underline transition-colors"
+                style={{
+                  fontFamily: 'var(--sans)',
+                  color: active ? 'var(--terra-deep)' : 'var(--muted)',
+                  background: active ? 'var(--terra-soft)' : 'transparent',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  {path}
+                </svg>
+                {label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* The skyline closes the sidebar; the legal links sit just above it. */}
+        <div className="mt-auto">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 px-6 pb-3 text-xs" style={{ color: 'var(--faint)' }}>
+            <Link href="/privacy" className="no-underline hover:underline" style={{ color: 'inherit' }}>{t.mobile.privacy}</Link>
+            <Link href="/terms" className="no-underline hover:underline" style={{ color: 'inherit' }}>{t.mobile.terms}</Link>
+            <Link href="/contact" className="no-underline hover:underline" style={{ color: 'inherit' }}>{t.mobile.contact}</Link>
+          </div>
+          <div
+            className="h-44"
+            aria-hidden="true"
+            style={{
+              backgroundImage: 'url(/home/hero.jpg)',
+              backgroundSize: 'cover',
+              backgroundPosition: '85% 100%',
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 45%)',
+              maskImage: 'linear-gradient(to bottom, transparent, black 45%)',
+            }}
+          />
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+
+        {/* ── Phone header ── */}
+        <header
+          className={immersive ? 'hidden' : 'md:hidden'}
+          style={{ background: 'var(--clay-d)', borderBottom: '1px solid var(--clay)' }}
+        >
+          <div className="mx-auto flex items-center gap-4 px-4 py-3">
+            <Link href="/app" className="flex items-baseline gap-2 shrink-0 no-underline">
+              <span style={{ fontFamily: 'var(--disp)', fontWeight: 700, fontSize: '23px', color: 'var(--cream)', letterSpacing: '-0.02em' }}>
+                Takalam
+              </span>
+              <span style={{ fontFamily: '"Reem Kufi", serif', fontSize: '19px', color: 'var(--terra-soft)' }}>
+                تكلّم
+              </span>
+            </Link>
+            <div className="ml-auto">
+              <LanguageSwitcher />
+            </div>
+          </div>
+        </header>
+
+        {/* ── Desktop top bar: language and account, out of the way ── */}
+        <div className="hidden md:flex items-center justify-end gap-3 px-8 py-4">
+          <LanguageSwitcher tone="light" />
+          {user && (
+            <>
+              <Link
+                href="/profile"
+                title={user.username}
+                aria-label={t.nav.profile}
+                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold no-underline"
+                style={{ background: 'var(--terra-soft)', color: 'var(--terra-deep)' }}
+              >
+                {user.username.charAt(0).toUpperCase()}
+              </Link>
+              <button
+                onClick={logout}
+                className="rounded-full px-4 py-2 text-sm font-medium"
+                style={{ fontFamily: 'var(--sans)', border: '1px solid var(--line)', color: 'var(--muted)', background: 'var(--card)' }}
+              >
+                {t.nav.logout}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* min-h-0 lets this shrink below its content so the overflow lands here
+            rather than on the page: one scrollbar, and the tab bar stays put. */}
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          {children}
+        </main>
+
+        {/* Phones: the four places of the app, under the thumb. */}
+        {!immersive && <BottomNav />}
+      </div>
+    </div>
   )
 }

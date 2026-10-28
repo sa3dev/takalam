@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDialog } from '@/contexts/DialogContext'
 import { AppLayout } from '@/components/AppLayout'
 import { Card } from '@/components/Card'
 import type { TranslationKeys } from '@/lib/i18n/translations'
@@ -26,7 +27,8 @@ interface Analytics {
 export default function DashboardPage() {
   const router = useRouter()
   const { t } = useLanguage()
-  const { user, isLoading, deleteAccount } = useAuth()
+  const { confirm, alert } = useDialog()
+  const { user, isLoading } = useAuth()
 
   const [sessions, setSessions] = useState<Session[]>([])
   const [selectedSession, setSelectedSession] = useState<number | null>(null)
@@ -48,7 +50,7 @@ export default function DashboardPage() {
   async function fetchSessions() {
     try {
       setIsFetching(true)
-      const response = await fetch('/api/users/me/sessions', { credentials: 'include' })
+      const response = await fetch('/api/users/me/sessions?limit=100', { credentials: 'include' })
       if (!response.ok) return
       const data: Session[] = await response.json()
       setSessions(data)
@@ -115,7 +117,12 @@ export default function DashboardPage() {
 
   async function handleDeleteSelected() {
     if (checked.size === 0) return
-    if (!confirm(t.dashboard.confirmDeleteSessions.replace('{n}', String(checked.size)))) return
+    const confirmed = await confirm({
+      message: t.dashboard.confirmDeleteSessions.replace('{n}', String(checked.size)),
+      confirmLabel: t.dialog.delete,
+      danger: true,
+    })
+    if (!confirmed) return
     setIsDeleting(true)
     try {
       const response = await fetch('/api/users/me/sessions/delete', {
@@ -139,19 +146,9 @@ export default function DashboardPage() {
         if (next !== null) fetchAnalytics(next)
       }
     } catch {
-      alert(t.dashboard.deleteFailed)
+      await alert(t.dashboard.deleteFailed)
     } finally {
       setIsDeleting(false)
-    }
-  }
-
-  async function handleDeleteAccount() {
-    if (!confirm('Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.')) return
-    try {
-      await deleteAccount()
-      router.push('/')
-    } catch {
-      alert('Une erreur est survenue. Réessayez.')
     }
   }
 
@@ -176,6 +173,16 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-calm-text mb-2">{t.dashboard.title}</h1>
         <p className="text-calm-muted">{t.dashboard.subtitle}</p>
       </div>
+
+      {sessions.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <StatCard
+            value={formatDuration(sessions.reduce((total, s) => total + s.duration_seconds, 0), t)}
+            label={t.mobile.practiceTime}
+          />
+          <StatCard value={sessions.length} label={t.mobile.conversations} />
+        </div>
+      )}
 
       {sessions.length === 0 ? (
         <Card>
@@ -313,18 +320,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      <div className="mt-12 pt-8 border-t border-calm-border">
-        <h2 className="text-lg font-semibold text-calm-text mb-2">Zone dangereuse</h2>
-        <p className="text-sm text-calm-muted mb-4">
-          La suppression de votre compte efface définitivement toutes vos données (sessions, transcriptions, progression).
-        </p>
-        <button
-          onClick={handleDeleteAccount}
-          className="px-4 py-2 text-sm font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          Supprimer mon compte
-        </button>
-      </div>
     </div>
     </AppLayout>
   )

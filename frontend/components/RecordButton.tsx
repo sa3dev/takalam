@@ -6,21 +6,33 @@ interface RecordButtonProps {
   isRecording: boolean
   onClick: () => void
   disabled?: boolean
+  /** `lg` is the centrepiece of an empty conversation. */
+  size?: 'md' | 'lg'
 }
 
-export function RecordButton({ isRecording, onClick, disabled }: RecordButtonProps) {
+export function RecordButton({ isRecording, onClick, disabled, size = 'md' }: RecordButtonProps) {
+  const large = size === 'lg'
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'relative w-24 h-24 rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2',
+        'relative rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2',
+        large ? 'w-36 h-36' : 'w-24 h-24',
         isRecording
           ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500 scale-110'
-          : 'bg-primary-500 hover:bg-primary-600 focus:ring-primary-500',
+          : 'bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 shadow-[0_0_0_10px_color-mix(in_oklch,var(--terra)_16%,transparent)]',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
+      {/* Quiet concentric rings while waiting to be pressed */}
+      {large && !isRecording && (
+        <>
+          <span className="pointer-events-none absolute -inset-5 rounded-full border border-primary-400/30 animate-pulse-slow" />
+          <span className="pointer-events-none absolute -inset-10 rounded-full border border-primary-400/20 animate-pulse-slow" />
+        </>
+      )}
+
       {/* Outer pulse ring when recording */}
       {isRecording && (
         <>
@@ -35,7 +47,7 @@ export function RecordButton({ isRecording, onClick, disabled }: RecordButtonPro
           <div className="w-6 h-6 bg-white rounded-sm" />
         ) : (
           <svg
-            className="w-10 h-10 text-white"
+            className={large ? 'w-16 h-16 text-white' : 'w-10 h-10 text-white'}
             fill="currentColor"
             viewBox="0 0 20 20"
           >

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import { DialogProvider } from '@/contexts/DialogContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 
 // metadataBase is what turns the generated opengraph-image into the absolute URL
@@ -46,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Reem+Kufi:wght@500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Reem+Kufi:wght@500;600&family=Noto+Naskh+Arabic:wght@400;500&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -60,7 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         <AuthProvider>
           <LanguageProvider>
-            {children}
+            <DialogProvider>
+              {children}
+            </DialogProvider>
           </LanguageProvider>
         </AuthProvider>
       </body>

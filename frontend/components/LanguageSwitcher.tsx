@@ -5,7 +5,12 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { languages } from '@/lib/i18n/translations'
 import { clsx } from 'clsx'
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  /** `dark` sits on the clay header; `light` on the cream of a page or a card. */
+  tone?: 'dark' | 'light'
+}
+
+export function LanguageSwitcher({ tone = 'dark' }: LanguageSwitcherProps) {
   const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -28,9 +33,13 @@ export function LanguageSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all"
-        style={{ color: 'var(--cream)' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        style={
+          tone === 'light'
+            ? { color: 'var(--ink)', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '9999px' }
+            : { color: 'var(--cream)' }
+        }
+        onMouseEnter={e => { if (tone === 'dark') e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+        onMouseLeave={e => { if (tone === 'dark') e.currentTarget.style.background = 'transparent' }}
       >
         <span className="text-lg">{currentLang.flag}</span>
         <span className="text-sm font-medium hidden sm:block">{currentLang.code.toUpperCase()}</span>
