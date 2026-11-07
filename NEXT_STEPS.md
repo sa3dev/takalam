@@ -63,7 +63,10 @@ Objectif: ne plus recréer des boîtes à chaque projet. Tout converge vers une 
 - [ ] **Étiquettes Gmail** par projet, via des filtres sur le champ « À ».
 - [ ] **Répondre depuis l'adresse du produit** (optionnel): Gmail « Envoyer en tant que » avec un SMTP externe gratuit (Resend, Brevo ou Zoho). Ajouter les enregistrements **SPF** et **DKIM** dans le DNS, sinon les réponses finissent en spam.
 - [ ] **Filtre anti-spam** sur le catch-all: isoler les adresses jamais utilisées.
-- [ ] Pour Takalam: les adresses affichées sur le site sont `contact@takalamapp.com` et `privacy@takalamapp.com` (à faire fonctionner en premier).
+- [x] Pour Takalam: plus aucune adresse n'est affichée sur le site, un **formulaire de contact** (`/contact`) la remplace. Les messages sont enregistrés en base (table `contact_messages`) et annoncés par email via Resend.
+- [ ] Brancher Resend : créer un compte sur resend.com, créer une clé API, puis dans Dokploy renseigner `RESEND_API_KEY` et `CONTACT_TO_EMAIL` (votre boîte). Sans configuration DNS, l'expéditeur par défaut est `onboarding@resend.dev`, qui n'envoie qu'au propriétaire du compte Resend : suffisant pour se notifier soi-même.
+- [ ] Plus tard, pour envoyer depuis le domaine : le vérifier chez Resend (SPF/DKIM dans Cloudflare) puis renseigner `CONTACT_FROM_EMAIL`.
+- [ ] Décider de la durée de conservation des messages (la politique de confidentialité annonce 12 mois) et prévoir leur purge.
 
 Pour un nouveau MVP: acheter le domaine → activer le catch-all vers la boîte tech → ajouter SPF/DKIM si l'on veut répondre. Rien d'autre.
 

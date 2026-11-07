@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     TTS_TOTAL_TIMEOUT: float = 6.0
     # (alternative féminine : ar-SA-ZariyahNeural)
 
+    # Contact form notifications, sent through Resend's HTTP API. Without a key
+    # the messages are still stored and simply not announced by email.
+    RESEND_API_KEY: Optional[str] = None
+    CONTACT_TO_EMAIL: Optional[str] = None  # where the messages are delivered
+    # Resend lets an account send from this address, to its own owner, without
+    # any DNS setup; use a verified domain address once there is one.
+    CONTACT_FROM_EMAIL: str = "Takalam <onboarding@resend.dev>"
+
     # No defaults — must be set via env vars
     SECRET_KEY: str
     JWT_SECRET: str

@@ -39,6 +39,7 @@ export default function PrivacyPage() {
               <li><strong>Adresse email et nom d'utilisateur</strong> — à la création du compte.</li>
               <li><strong>Enregistrements audio</strong> — envoyés en temps réel pour la transcription. Ils ne sont pas stockés sur nos serveurs ; ils sont transmis à Groq (service tiers) pour transcription et supprimés immédiatement après.</li>
               <li><strong>Transcriptions de vos conversations</strong> — le texte de vos échanges avec l'assistant est conservé pour générer vos analyses de progression.</li>
+              <li><strong>Messages envoyés par le formulaire de contact</strong> — votre adresse email et le texte de votre message, conservés pour vous répondre.</li>
               <li><strong>Métriques de progression</strong> — scores de fluidité, corrections grammaticales, vocabulaire appris.</li>
             </ul>
           </section>
@@ -66,6 +67,7 @@ export default function PrivacyPage() {
             <p>
               Vos transcriptions et métriques sont conservées tant que votre compte est actif.
               L'historique de conversation en temps réel est supprimé automatiquement après 1 heure d'inactivité.
+              Les messages du formulaire de contact sont conservés 12 mois au plus, puis supprimés.
             </p>
           </section>
 
@@ -77,7 +79,7 @@ export default function PrivacyPage() {
             <ul className="space-y-2 list-disc list-inside">
               <li><strong>Droit d'accès</strong> — vos données sont visibles dans votre tableau de bord.</li>
               <li><strong>Droit à l'effacement</strong> — vous pouvez supprimer votre compte et toutes vos données depuis les paramètres de votre compte. La suppression est immédiate et irréversible.</li>
-              <li><strong>Droit à la portabilité</strong> — contactez-nous pour obtenir une copie de vos données.</li>
+              <li><strong>Droit à la portabilité</strong> — demandez-nous une copie de vos données par le <Link href="/contact" style={{ color: 'var(--terra)' }}>formulaire de contact</Link>.</li>
             </ul>
           </section>
 
@@ -93,8 +95,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold mb-3" style={{ color: 'var(--terra-deep)' }}>8. Contact</h2>
             <p>
-              Pour toute question relative à vos données, contactez-nous à{' '}
-              <a href="mailto:privacy@takalamapp.com" style={{ color: 'var(--terra)' }}>privacy@takalamapp.com</a>.
+              Pour toute question relative à vos données, ou pour exercer vos droits, écrivez-nous par le{' '}
+              <Link href="/contact" style={{ color: 'var(--terra)' }}>formulaire de contact</Link>{' '}
+              en choisissant « Mes données personnelles ».
             </p>
           </section>
 

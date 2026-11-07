@@ -76,6 +76,11 @@ services:
       AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-}
       TTS_FIRST_BYTE_TIMEOUT: ${TTS_FIRST_BYTE_TIMEOUT:-2.0}
       TTS_TOTAL_TIMEOUT: ${TTS_TOTAL_TIMEOUT:-6.0}
+      # Formulaire de contact : les messages sont toujours enregistrés ; sans clé
+      # Resend ils ne sont simplement pas annoncés par email.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL:-}
+      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL:-Takalam <onboarding@resend.dev>}
       # Modèle de conversation — déplaçable sans reconstruire l'image. Groq
       # retire ses modèles sur préavis, et un identifiant retiré fait échouer
       # chaque tour de parole. Pouvoir en changer par variable rend la panne

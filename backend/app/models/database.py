@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Float, ForeignKey, Text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Float, ForeignKey, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -107,6 +107,19 @@ class SessionAnalytics(Base):
 
     # Relationships
     session = relationship("Session", back_populates="analytics")
+
+
+class ContactMessage(Base):
+    """A message sent through the public contact form. Always stored, so a
+    failed email never loses one; `notified` says whether the owner was told."""
+    __tablename__ = "contact_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    email = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    notified = Column(Boolean, nullable=False, default=False)
 
 
 class PaywallEvent(Base):
