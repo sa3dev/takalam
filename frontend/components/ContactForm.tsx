@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { track } from '@/lib/analytics'
 
 const TOPICS = [
   { value: 'question', label: 'Une question' },
@@ -44,6 +45,7 @@ export function ContactForm() {
       })
       if (response.status === 429) return setStatus('limited')
       if (!response.ok) return setStatus('error')
+      track('contact-sent', { topic })
       setStatus('sent')
       setMessage('')
     } catch {
