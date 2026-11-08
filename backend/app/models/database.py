@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Float, ForeignKey, Text, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Float, ForeignKey, Text, Boolean, Date, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -107,6 +107,24 @@ class SessionAnalytics(Base):
 
     # Relationships
     session = relationship("Session", back_populates="analytics")
+
+
+class DailyUsage(Base):
+    """Seconds a learner spoke on one UTC day, kept for good.
+
+    The live counter that enforces the free allowance sits in Redis and
+    expires, so without this table there is no history to decide the length of
+    the free allowance from. One row per user per day; `plan` is the plan they
+    had when they spoke, since it changes the meaning of the number."""
+    __tablename__ = "daily_usage"
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_daily_usage_user_day"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    day = Column(Date, nullable=False, index=True)
+    spoken_seconds = Column(Float, nullable=False, default=0.0)
+    turns = Column(Integer, nullable=False, default=0)
+    plan = Column(String, nullable=False, default=PLAN_FREE)
 
 
 class ContactMessage(Base):

@@ -8,6 +8,7 @@ from app.models.database import (
     Transcription,
     SessionAnalytics,
     PaywallEvent,
+    DailyUsage,
 )
 from app.schemas.auth import UserCreate, UserResponse, LoginRequest
 from app.core.security import verify_password, get_password_hash, create_access_token
@@ -103,6 +104,7 @@ def delete_account(
     # request. Without this the FK blocks the delete outright, and precisely for
     # the users who engaged most.
     db.query(PaywallEvent).filter(PaywallEvent.user_id == user_id).delete(synchronize_session=False)
+    db.query(DailyUsage).filter(DailyUsage.user_id == user_id).delete(synchronize_session=False)
     db.delete(current_user)
     db.commit()
 
