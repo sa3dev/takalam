@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from app.models.database import (
     get_db,
@@ -8,8 +8,10 @@ from app.models.database import (
     Transcription,
     SessionAnalytics,
     PaywallEvent,
+    PasswordResetToken,
 )
-from app.schemas.auth import UserCreate, UserResponse, LoginRequest
+from app.schemas.auth import UserCreate, UserResponse, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest
+from app.services import password_reset
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.auth_deps import get_current_user
 from app.core.rate_limit import limiter
@@ -70,6 +72,49 @@ def login(request: Request, credentials: LoginRequest, response: Response, db: S
     return user
 
 
+@router.post("/forgot-password")
+@limiter.limit("5/hour")
+def forgot_password(
+    request: Request,
+    payload: ForgotPasswordRequest,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """Always answers the same, whether or not the address has an account: the
+    form must not become a way to find out who is registered."""
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user:
+        token = password_reset.issue_token(db, user)
+        if token:
+            background.add_task(password_reset.send_reset_email, user.email, token)
+            logger.info("Password reset requested for user_id=%d", user.id)
+    return {"status": "sent"}
+
+
+@router.post("/reset-password", response_model=UserResponse)
+@limiter.limit("10/hour")
+def reset_password(
+    request: Request,
+    payload: ResetPasswordRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    row = password_reset.find_valid_token(db, payload.token)
+    user = db.query(User).filter(User.id == row.user_id).first() if row else None
+    if not row or not user:
+        # Unknown, expired and already used look the same on purpose.
+        raise HTTPException(status_code=400, detail="Invalid or expired link")
+
+    user.hashed_password = get_password_hash(payload.password)
+    password_reset.consume_token(db, row)
+    db.commit()
+    logger.info("Password reset completed for user_id=%d", user.id)
+
+    # The link proved ownership of the mailbox, so sign the person in.
+    _set_auth_cookie(response, create_access_token({"sub": str(user.id)}))
+    return user
+
+
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie(key=_COOKIE_NAME, path="/")
@@ -103,6 +148,7 @@ def delete_account(
     # request. Without this the FK blocks the delete outright, and precisely for
     # the users who engaged most.
     db.query(PaywallEvent).filter(PaywallEvent.user_id == user_id).delete(synchronize_session=False)
+    db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
     db.delete(current_user)
     db.commit()
 

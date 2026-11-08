@@ -35,3 +35,16 @@ def test_erasure_removes_everything_referencing_the_account(db, redis_stub, user
     assert db.query(PaywallEvent).count() == 0
     assert db.query(DBSession).count() == 0
     assert db.query(Transcription).count() == 0
+
+
+def test_erasure_also_removes_password_reset_tokens(db, redis_stub, user):
+    from datetime import datetime, timedelta
+    from app.models.database import PasswordResetToken
+
+    db.add(PasswordResetToken(user_id=user.id, token_hash="h" * 64, expires_at=datetime.utcnow() + timedelta(hours=1)))
+    db.commit()
+
+    delete_account(response=Response(), current_user=user, db=db)
+
+    assert db.query(User).count() == 0
+    assert db.query(PasswordResetToken).count() == 0

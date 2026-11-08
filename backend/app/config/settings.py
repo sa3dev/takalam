@@ -37,13 +37,16 @@ class Settings(BaseSettings):
     TTS_TOTAL_TIMEOUT: float = 6.0
     # (alternative féminine : ar-SA-ZariyahNeural)
 
-    # Contact form notifications, sent through Resend's HTTP API. Without a key
-    # the messages are still stored and simply not announced by email.
+    # Outgoing email, through Resend's HTTP API. Without a key nothing is sent:
+    # contact messages are still stored, and a password reset simply has no
+    # effect for lack of a way to deliver its link.
     RESEND_API_KEY: Optional[str] = None
-    CONTACT_TO_EMAIL: Optional[str] = None  # where the messages are delivered
-    # Resend lets an account send from this address, to its own owner, without
-    # any DNS setup; use a verified domain address once there is one.
-    CONTACT_FROM_EMAIL: str = "Takalam <onboarding@resend.dev>"
+    # The sender. Resend lets an account send from this default address only to
+    # its own owner; sending to anyone needs an address on a verified domain.
+    MAIL_FROM_EMAIL: str = "Takalam <onboarding@resend.dev>"
+    CONTACT_TO_EMAIL: Optional[str] = None  # where contact messages are delivered
+    # Where the app lives, for the links put in emails.
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # No defaults — must be set via env vars
     SECRET_KEY: str

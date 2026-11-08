@@ -58,7 +58,8 @@ services:
       AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL:-}
-      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL:-Takalam <onboarding@resend.dev>}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL:-Takalam <onboarding@resend.dev>}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
       # Security
       SECRET_KEY: ${SECRET_KEY}
