@@ -9,6 +9,7 @@ from app.models.database import (
     SessionAnalytics,
     PaywallEvent,
     PasswordResetToken,
+    DailyUsage,
 )
 from app.schemas.auth import UserCreate, UserResponse, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest
 from app.services import password_reset
@@ -149,6 +150,7 @@ def delete_account(
     # the users who engaged most.
     db.query(PaywallEvent).filter(PaywallEvent.user_id == user_id).delete(synchronize_session=False)
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
+    db.query(DailyUsage).filter(DailyUsage.user_id == user_id).delete(synchronize_session=False)
     db.delete(current_user)
     db.commit()
 

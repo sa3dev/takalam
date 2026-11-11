@@ -24,7 +24,7 @@ import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { QuotaPill } from '@/components/QuotaPill'
 import { PaywallModal } from '@/components/PaywallModal'
 import { FREE_CONVERSATION } from '@/hooks/useScenarios'
-import { track } from '@/lib/analytics'
+import { track, durationBucket } from '@/lib/analytics'
 
 interface Transcript {
   speaker: 'user' | 'assistant'
@@ -131,6 +131,11 @@ function ConversationScreen() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const audioUnlockedRef = useRef(false)
   const pendingActionRef = useRef<'cancel' | 'restart' | null>(null)
+  // For the measurements: did the learner speak yet, was the first answer heard,
+  // and since when has this conversation been going.
+  const userSpokeRef = useRef(false)
+  const firstVoiceRef = useRef(false)
+  const conversationStartRef = useRef<number | null>(null)
   const scenarioChoiceRef = useRef<string | null>(null)
   const startSessionRef = useRef<((scenarioId?: string, targetLang?: string) => void) | null>(null)
   const silentUrlRef = useRef<string | null>(null)
@@ -171,6 +176,12 @@ function ConversationScreen() {
     try {
       el.src = url
       await el.play()
+      // The moment the product proves itself: an answer to something the
+      // learner said, actually heard. The scene's opening line does not count.
+      if (userSpokeRef.current && !firstVoiceRef.current) {
+        firstVoiceRef.current = true
+        track('first-voice-played', { scenario: scenarioChoiceRef.current ?? 'free' })
+      }
     } catch (error) {
       const name = error instanceof Error ? error.name : 'unknown'
       console.error('Audio playback failed:', error)
@@ -188,6 +199,7 @@ function ConversationScreen() {
 
   /** Replace whatever is playing with this reply, from its first sentence. */
   const replayAudio = useCallback((urls: string[]) => {
+    track('replay-click', { scenario: scenarioChoiceRef.current ?? 'free' })
     queueRef.current = [...urls]
     isPlayingRef.current = false
     void playNext()
@@ -273,7 +285,8 @@ function ConversationScreen() {
     }
     if (message.type !== 'session_started' || hasRestoredRef.current) return
     hasRestoredRef.current = true
-    track('session-started')
+    conversationStartRef.current = Date.now()
+    track('session-started', { scenario: scenarioChoiceRef.current ?? 'free' })
 
     const dbSessionId = message.db_session_id
     if (typeof dbSessionId !== 'number') return
@@ -314,7 +327,9 @@ function ConversationScreen() {
     lastUsedRef.current = used
     if (prev === null) return
     for (const minutes of [2, 5, 10]) {
-      if (prev < minutes * 60 && used >= minutes * 60) track(`spoken-${minutes}min`)
+      if (prev < minutes * 60 && used >= minutes * 60) {
+        track(`spoken-${minutes}min`, { scenario: scenarioChoiceRef.current ?? 'free' })
+      }
     }
   }, [used])
 
@@ -343,6 +358,7 @@ function ConversationScreen() {
 
   const handleAudioRecorded = useCallback(async (audioBlob: Blob) => {
     try {
+      userSpokeRef.current = true
       setIsProcessing(true)
       const base64Audio = await blobToBase64(audioBlob)
       sendAudioChunk(base64Audio, audioBlob.type || 'audio/webm', languageRef.current)
@@ -353,6 +369,8 @@ function ConversationScreen() {
 
   const { isRecording, recordingTime, startRecording, stopRecording } = useAudioRecorder({
     onAudioData: handleAudioRecorded,
+    // A learner who cannot be heard is lost before the first word: worth knowing how many.
+    onError: error => track(error.name === 'NotAllowedError' ? 'mic-denied' : 'mic-error', { error: error.name }),
   })
 
   useEffect(() => { scenarioChoiceRef.current = scenarioChoice }, [scenarioChoice])
@@ -407,7 +425,10 @@ function ConversationScreen() {
       leaveConversation(wasScene ? '/situations' : '/app')
       return
     }
-    track(action === 'cancel' ? 'session-cancel' : 'session-restart')
+    track(action === 'cancel' ? 'session-cancel' : 'session-restart', {
+      scenario: scenarioChoice ?? 'free',
+      spoke: transcripts.some(item => item.speaker === 'user') ? 'yes' : 'no',
+    })
     pendingActionRef.current = action
     cancelSession()
   }
@@ -432,6 +453,11 @@ function ConversationScreen() {
 
   async function handleEndSession() {
     if (await confirm({ message: t.home.endSessionConfirm, confirmLabel: t.home.endSession })) {
+      track('session-ended', {
+        scenario: scenarioChoice ?? 'free',
+        turns: transcripts.filter(item => item.speaker === 'user').length,
+        duration: durationBucket(conversationStartRef.current ? (Date.now() - conversationStartRef.current) / 1000 : 0),
+      })
       endSession()
       // Deliberately ended, so the id must not be inherited by the next
       // conversation — that is the one case where starting over is the point.

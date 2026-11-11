@@ -23,6 +23,7 @@ Objectif: avoir des données utilisateurs avant de décider de passer le quota g
 
 La limite est dans `backend/app/config/settings.py:77`: `FREE_DAILY_SPOKEN_SECONDS = 600`. Elle est quotidienne, comptée en secondes parlées, et modifiable par variable d'environnement.
 
+- [x] Requêtes SQL prêtes dans `analytics/queries.sql` (temps parlé par jour, mur, paywall, activation, rétention, situations) ; la table `daily_usage` enregistre désormais le temps parlé. Événements et entonnoirs Umami : `analytics/UMAMI.md`.
 - [ ] Requête SQL: répartition des secondes parlées par utilisateur et par jour (moins de 2 min / 2-5 / 5-10 / plus de 10), à partir de `transcriptions`
 - [ ] Compter les `wall_hit` et les `interest` dans `paywall_events`
 - [ ] Optionnel: table `daily_usage` (user, jour, secondes) pour garder l'historique, car le compteur actuel est dans Redis (éphémère)

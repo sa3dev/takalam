@@ -14,6 +14,7 @@ from app.core.rate_limit import (
 from app.config.settings import settings
 from app.models.database import User
 from app.services.paywall import record_wall_hit
+from app.services.usage_history import record_spoken_seconds
 from app.services.scenarios import get_scenario
 
 logger = logging.getLogger(__name__)
@@ -91,6 +92,7 @@ async def websocket_endpoint(
                 # provider failure — gives the estimate back. A turn the user
                 # never got an answer to costs them nothing.
                 total = settle_spoken_seconds(current_user.id, reserved, spoken or 0.0)
+                record_spoken_seconds(db, current_user.id, current_user.plan, spoken or 0.0)
                 # Live gauge update. Only the running total travels — the client
                 # already knows its plan and limit from GET /api/users/me/quota.
                 await manager.send_message(scoped_session_id, {
