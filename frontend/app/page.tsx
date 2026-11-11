@@ -183,9 +183,17 @@ const LANDING_CSS = `
   @media (prefers-reduced-motion: reduce) {
     .lp .orb .core, .lp .orb .ring, .lp .orb .owave span { animation: none; }
     .lp .orb .ring { opacity: 0; }
+    /* Without the animation the bars have no height at all: show them still. */
+    .lp .orb .owave span { height: var(--h, 14px); }
     .lp * { animation-duration: .001s !important; }
   }
 `
+
+// Seven bars, tallest in the middle; each breathes at its own pace.
+const WAVE_BARS = [0, 1, 2, 3, 4, 5, 6].map(i => ({
+  height: Math.round(8 + Math.sin((i / 6) * Math.PI) * 16),
+  duration: [0.9, 1.15, 0.8, 1.25, 0.95, 1.1, 0.85][i],
+}))
 
 const FAQ_ITEMS = [
   {
@@ -214,7 +222,6 @@ export default function LandingPage() {
   const router = useRouter()
   const { user, isLoading } = useAuth()
 
-  const owaveRef = useRef<HTMLDivElement>(null)
   const faqRefs = useRef<(HTMLDivElement | null)[]>(Array(FAQ_ITEMS.length).fill(null))
 
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -222,20 +229,6 @@ export default function LandingPage() {
   useEffect(() => {
     if (!isLoading && user) router.push('/app')
   }, [user, isLoading, router])
-
-  useEffect(() => {
-    const wave = owaveRef.current
-    if (!wave) return
-    for (let i = 0; i < 7; i++) {
-      const s = document.createElement('span')
-      const t = Math.sin((i / 6) * Math.PI)
-      s.style.setProperty('--h', `${(8 + t * 16).toFixed(0)}px`)
-      s.style.animationDelay = `${(i * 0.08).toFixed(2)}s`
-      s.style.animationDuration = `${(0.8 + Math.random() * 0.5).toFixed(2)}s`
-      wave.appendChild(s)
-    }
-    return () => { wave.innerHTML = '' }
-  }, [])
 
   function toggleFaq(index: number) {
     const prev = openFaq
@@ -278,7 +271,21 @@ export default function LandingPage() {
               <div className="ring" />
               <div className="ring" />
               <div className="core" />
-              <div className="owave" ref={owaveRef} />
+              {/* Drawn by React, not appended to the DOM from an effect: this page
+                  renders nothing until the session check is done, so an effect
+                  run at mount found no element to fill and the bars never came. */}
+              <div className="owave" aria-hidden="true">
+                {WAVE_BARS.map((bar, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      ['--h' as string]: `${bar.height}px`,
+                      animationDelay: `${(i * 0.08).toFixed(2)}s`,
+                      animationDuration: `${bar.duration}s`,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <h1>Osez parler.<br /><span className="o">Vraiment.</span></h1>
