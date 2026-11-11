@@ -125,6 +125,13 @@ function LoginForm() {
                 className="w-full px-3 py-2 border border-calm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-calm-bg text-calm-text"
                 placeholder="••••••••"
               />
+              {mode === 'login' && (
+                <div className="mt-1.5 text-right">
+                  <Link href="/forgot-password" className="text-sm text-primary-600 hover:underline">
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
+              )}
             </div>
 
             {error && (

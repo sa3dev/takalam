@@ -64,8 +64,9 @@ Objectif: ne plus recréer des boîtes à chaque projet. Tout converge vers une 
 - [ ] **Répondre depuis l'adresse du produit** (optionnel): Gmail « Envoyer en tant que » avec un SMTP externe gratuit (Resend, Brevo ou Zoho). Ajouter les enregistrements **SPF** et **DKIM** dans le DNS, sinon les réponses finissent en spam.
 - [ ] **Filtre anti-spam** sur le catch-all: isoler les adresses jamais utilisées.
 - [x] Pour Takalam: plus aucune adresse n'est affichée sur le site, un **formulaire de contact** (`/contact`) la remplace. Les messages sont enregistrés en base (table `contact_messages`) et annoncés par email via Resend.
-- [ ] Brancher Resend : créer un compte sur resend.com, créer une clé API, puis dans Dokploy renseigner `RESEND_API_KEY` et `CONTACT_TO_EMAIL` (votre boîte). Sans configuration DNS, l'expéditeur par défaut est `onboarding@resend.dev`, qui n'envoie qu'au propriétaire du compte Resend : suffisant pour se notifier soi-même.
-- [ ] Plus tard, pour envoyer depuis le domaine : le vérifier chez Resend (SPF/DKIM dans Cloudflare) puis renseigner `CONTACT_FROM_EMAIL`.
+- [ ] Brancher Resend : créer un compte sur resend.com et une clé API, puis dans Dokploy renseigner `RESEND_API_KEY`, `CONTACT_TO_EMAIL` (votre boîte) et `FRONTEND_URL` (`https://takalamapp.com`).
+- [ ] **Vérifier le domaine chez Resend** (Domains → Add Domain → `takalamapp.com`) : ajouter dans Cloudflare les enregistrements SPF et DKIM qu'il indique, attendre « Verified », puis renseigner `MAIL_FROM_EMAIL` (ex. `Takalam <no-reply@takalamapp.com>`). **Obligatoire pour le mot de passe oublié** : sans domaine vérifié, l'expéditeur de test n'écrit qu'au propriétaire du compte Resend, donc les utilisateurs ne recevraient rien.
+- [ ] Après vérification du domaine : tester « Mot de passe oublié » avec une vraie adresse, et regarder les courriers indésirables.
 - [ ] Décider de la durée de conservation des messages (la politique de confidentialité annonce 12 mois) et prévoir leur purge.
 
 Pour un nouveau MVP: acheter le domaine → activer le catch-all vers la boîte tech → ajouter SPF/DKIM si l'on veut répondre. Rien d'autre.

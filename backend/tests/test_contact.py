@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.core.rate_limit import limiter
 from app.main import app
 from app.models.database import ContactMessage, get_db
-from app.services import contact_mail
+from app.services import contact_mail, mailer
 
 GOOD = {"topic": "bug", "email": "someone@example.com", "message": "Le micro ne répond plus depuis hier."}
 
@@ -81,12 +81,13 @@ def test_bad_input_is_refused(client, db, change):
 
 
 def test_without_a_mail_key_the_message_is_kept_and_nothing_is_sent(monkeypatch):
-    monkeypatch.setattr(contact_mail.settings, "RESEND_API_KEY", None)
+    monkeypatch.setattr(contact_mail.settings, "CONTACT_TO_EMAIL", "owner@example.com")
+    monkeypatch.setattr(mailer.settings, "RESEND_API_KEY", None)
     assert asyncio.run(contact_mail.notify_contact_message(1, "bug", "a@b.co", "hello there")) is False
 
 
 def test_the_email_carries_the_sender_as_reply_to_and_a_fixed_subject(monkeypatch):
-    monkeypatch.setattr(contact_mail.settings, "RESEND_API_KEY", "key")
+    monkeypatch.setattr(mailer.settings, "RESEND_API_KEY", "key")
     monkeypatch.setattr(contact_mail.settings, "CONTACT_TO_EMAIL", "owner@example.com")
     captured = {}
 
@@ -108,7 +109,7 @@ def test_the_email_carries_the_sender_as_reply_to_and_a_fixed_subject(monkeypatc
             captured.update(url=url, headers=headers, json=json)
             return FakeResponse()
 
-    monkeypatch.setattr(contact_mail.httpx, "AsyncClient", FakeClient)
+    monkeypatch.setattr(mailer.httpx, "AsyncClient", FakeClient)
 
     sent = asyncio.run(contact_mail.notify_contact_message(7, "data", "me@example.com", "Please erase\r\nBcc: x@y.z"))
 

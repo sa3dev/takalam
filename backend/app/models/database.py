@@ -109,6 +109,22 @@ class SessionAnalytics(Base):
     session = relationship("Session", back_populates="analytics")
 
 
+class PasswordResetToken(Base):
+    """A single-use link to choose a new password.
+
+    Only the SHA-256 of the token is stored: the token itself exists in the
+    email alone, so a read of this table (a backup, a leak) cannot be turned
+    into account takeovers."""
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String, nullable=False, unique=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+
+
 class ContactMessage(Base):
     """A message sent through the public contact form. Always stored, so a
     failed email never loses one; `notified` says whether the owner was told."""
