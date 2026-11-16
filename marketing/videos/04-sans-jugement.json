@@ -1,0 +1,7 @@
+{ "scenes": [
+  { "from": 0,  "to": 3,  "bg": "terra", "type": "text", "lines": ["Se tromper devant quelqu'un…"] },
+  { "from": 3,  "to": 6,  "bg": "terra", "type": "text", "lines": ["…le pire moment pour apprendre."] },
+  { "from": 6,  "to": 12, "bg": "cream", "type": "text", "lines": ["Avec Takalam, tu parles seul.", { "t": "L'IA ne se moque jamais.", "c": "terra" }] },
+  { "from": 12, "to": 16, "bg": "terra", "type": "demo", "u": { "ar": "أريد قهوة", "fr": "Je veux un café, s'il vous plaît." }, "i": { "ar": "تفضّل! مع الحليب؟", "fr": "Voilà ! Avec du lait ?" }, "caption": "Tu te trompes ? Tu recommences." },
+  { "from": 16, "to": 20, "bg": "cream", "type": "end", "pill": "Lien en bio", "note": "Sans carte bancaire" }
+] }

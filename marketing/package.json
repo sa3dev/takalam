@@ -1,0 +1,13 @@
+{
+  "name": "takalam-marketing",
+  "private": true,
+  "description": "Génère les vidéos de marque (reels, TikTok, Shorts) à partir de fichiers JSON",
+  "scripts": {
+    "film": "node render.js templates/brand-film.html --duration 15",
+    "reels": "node render.js --all"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "puppeteer-core": "^24.0.0"
+  }
+}

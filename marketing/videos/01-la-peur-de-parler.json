@@ -1,0 +1,7 @@
+{ "scenes": [
+  { "from": 0,  "to": 3,  "bg": "terra", "type": "text", "lines": ["Tu comprends l'arabe…"] },
+  { "from": 3,  "to": 6,  "bg": "terra", "type": "text", "lines": ["…mais tu n'oses pas parler ?"] },
+  { "from": 6,  "to": 11, "bg": "cream", "type": "text", "lines": ["Ce n'est pas le vocabulaire.", { "t": "C'est la peur du regard des autres.", "c": "terra" }] },
+  { "from": 11, "to": 16, "bg": "terra", "type": "demo", "u": { "ar": "أريد قهوة", "fr": "Je veux un café, s'il vous plaît." }, "i": { "ar": "تفضّل! مع الحليب؟", "fr": "Voilà ! Avec du lait ?" }, "caption": "Ici, personne ne t'écoute. Juste toi et la langue." },
+  { "from": 16, "to": 20, "bg": "cream", "type": "end", "pill": "Lien en bio", "note": "10 minutes offertes chaque jour" }
+] }

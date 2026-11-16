@@ -1,0 +1,6 @@
+{ "scenes": [
+  { "from": 0,  "to": 3,  "bg": "terra", "type": "text", "lines": ["Converti, et tu galères avec l'arabe ?"] },
+  { "from": 3,  "to": 8,  "bg": "cream", "type": "text", "lines": ["On t'a appris à lire.", { "t": "Pas à parler.", "c": "terra" }] },
+  { "from": 8,  "to": 14, "bg": "terra", "type": "demo", "u": { "ar": "أريد قهوة", "fr": "Je veux un café, s'il vous plaît." }, "i": { "ar": "تفضّل! مع الحليب؟", "fr": "Voilà ! Avec du lait ?" }, "caption": "Il te manque la pratique orale." },
+  { "from": 14, "to": 20, "bg": "cream", "type": "end", "pill": "Lien en bio", "note": "Parle dès le premier jour" }
+] }

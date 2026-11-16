@@ -1,0 +1,143 @@
+<!doctype html>
+<!-- Moteur de vidéos Takalam : lit un fichier de videos/*.json (voir README) et dessine l'image au temps t. -->
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Reem+Kufi:wght@500;600&family=Noto+Naskh+Arabic:wght@400;500&display=swap">
+<style>
+:root{--cream:oklch(0.965 0.015 76);--cream-2:oklch(0.945 0.018 74);--ink:oklch(0.28 0.02 50);--muted:oklch(0.52 0.024 54);--terra:oklch(0.6 0.14 41);--terra-deep:oklch(0.46 0.115 39);--clay:oklch(0.36 0.075 41);--terra-soft:oklch(0.89 0.05 56);--disp:"Space Grotesk",sans-serif;--sans:"Hanken Grotesk",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#000}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.scene{position:absolute;inset:0;overflow:hidden;opacity:0}
+.bg-terra{background:radial-gradient(120% 90% at 50% 0%,var(--terra) 0%,var(--terra-deep) 55%,var(--clay) 100%)}
+.bg-clay{background:var(--clay)}
+.bg-cream{background:var(--cream)}
+.a{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);will-change:transform,opacity}
+.it{opacity:0;will-change:transform,opacity}
+/* texte */
+.col{position:absolute;left:80px;right:80px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:36px;text-align:center}
+.line{font-family:var(--disp);font-weight:700;letter-spacing:-.025em;line-height:1.08;text-wrap:balance}
+.c-cream{color:var(--cream)}.c-soft{color:var(--terra-soft)}.c-ink{color:var(--ink)}.c-terra{color:var(--terra-deep)}
+/* orbe */
+#orb{position:absolute;left:540px;top:0;width:450px;height:450px;z-index:60;opacity:0;transform:translate(-50%,-50%)}
+.ring{position:absolute;left:50%;top:50%;width:450px;height:450px;margin:-225px 0 0 -225px;border-radius:50%;border:4px solid color-mix(in oklch,var(--terra-soft) 60%,transparent)}
+.core{position:absolute;left:50%;top:50%;width:270px;height:270px;margin:-135px 0 0 -135px;border-radius:50%;background:radial-gradient(circle at 35% 30%,oklch(0.92 0.06 70),var(--terra-soft) 45%,oklch(0.7 0.13 50) 100%);box-shadow:0 0 150px 18px color-mix(in oklch,var(--terra-soft) 55%,transparent),inset 0 -18px 48px color-mix(in oklch,var(--terra-deep) 40%,transparent)}
+.wave{position:absolute;left:50%;top:50%;display:flex;align-items:center;gap:9px;height:90px;transform:translate(-50%,-50%)}
+.wave span{width:9px;border-radius:9px;background:var(--clay);height:18px}
+/* mot arabe */
+.word-ar{font-family:'Noto Naskh Arabic',serif;font-size:230px;line-height:1.5;color:var(--ink);direction:rtl;text-align:center;white-space:nowrap}
+.word-fr{font-family:var(--disp);font-weight:600;font-size:76px;color:var(--terra-deep);text-align:center;letter-spacing:-.015em}
+.rule{width:140px;height:8px;border-radius:8px;background:var(--terra)}
+/* photo */
+.photo{position:absolute;inset:0;background-size:cover;background-position:center}
+.veil{position:absolute;inset:0;background:linear-gradient(to top,oklch(0.24 0.05 40 / .94) 0%,oklch(0.3 0.06 40 / .72) 38%,oklch(0.3 0.06 40 / .12) 70%,transparent 100%)}
+/* échange */
+.bub{position:absolute;left:110px;width:860px;border-radius:44px;padding:48px 56px}
+.bub.u{background:var(--cream);color:var(--ink);border-bottom-right-radius:12px}
+.bub.i{background:var(--clay);color:var(--cream);border-bottom-left-radius:12px;border:2px solid color-mix(in oklch,var(--terra-soft) 25%,transparent)}
+.ar{font-family:'Noto Naskh Arabic',serif;font-size:96px;line-height:1.5;direction:rtl;text-align:right}
+.tr{font-family:var(--sans);font-size:42px;font-weight:500;margin-top:8px}
+.u .tr{color:var(--muted)}.i .tr{color:color-mix(in oklch,var(--cream) 78%,transparent)}
+.cap{font-family:var(--disp);font-weight:700;font-size:78px;line-height:1.1;color:var(--cream);text-align:center;letter-spacing:-.02em;text-wrap:balance}
+/* fin */
+.icon{width:260px;height:260px;border-radius:58px;background:#8C3D22;position:relative;box-shadow:0 50px 90px -30px rgba(60,25,10,.55)}
+.icon i{position:absolute;width:24px;border-radius:12px;background:#F6D3BC}
+.word{font-family:var(--disp);font-weight:700;font-size:140px;color:var(--terra-deep);letter-spacing:-.025em;line-height:1;white-space:nowrap}
+.arw{font-family:'Reem Kufi',serif;font-weight:500;font-size:120px;color:var(--terra);line-height:1.2;white-space:nowrap}
+.tag{font-family:var(--disp);font-weight:600;font-size:60px;color:var(--ink);white-space:nowrap;letter-spacing:-.01em}
+.btn{font-family:var(--sans);font-weight:600;font-size:52px;color:#fff;background:var(--terra-deep);border-radius:999px;padding:38px 96px;white-space:nowrap;box-shadow:0 40px 70px -28px rgba(60,25,10,.55)}
+.note{font-family:var(--sans);font-weight:500;font-size:42px;color:var(--muted);white-space:nowrap;text-align:center}
+</style></head><body>
+<div id="stage">
+  <div id="orb"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core" id="core"></div><div class="wave" id="wave"></div></div>
+</div>
+<script>
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const eo=x=>1-Math.pow(1-clamp(x),3);
+const el=(cls,html,parent)=>{const d=document.createElement('div');d.className=cls;if(html!=null)d.innerHTML=html;if(parent)parent.appendChild(d);return d};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const stage=document.getElementById('stage');
+const BARS=[22,60,36,76,50,66,30,70,44].map((h,i)=>({h,sp:1.1+((i*37)%10)/12}));
+const wave=document.getElementById('wave');BARS.forEach(()=>wave.appendChild(document.createElement('span')));
+const rings=[...document.querySelectorAll('.ring')];
+let spec=null;
+
+function sizeFor(text){const n=text.length;return n<=14?150:n<=26?124:n<=48?100:n<=80?86:74}
+function lineOf(l,def){const o=typeof l==='string'?{t:l}:l;return {t:o.t,c:o.c||def}}
+// it(): un élément qui apparaît à `delay` secondes après le début de la scène
+function item(sc,node,delay,opts={}){sc._items.push({node,delay,...opts});return node}
+
+function build(s){
+  spec=s;
+  s.scenes.forEach((sc,i)=>{
+    sc._items=[];
+    const root=el('scene bg-'+(sc.bg||'terra'),null);root.style.zIndex=i+1;sc._el=root;stage.appendChild(root);
+    const defC=(sc.bg==='cream')?'ink':'cream';
+    if(sc.type==='text'||sc.type==='photo'){
+      const lines=(sc.lines||[]).map(l=>lineOf(l,sc.type==='photo'?'cream':defC));
+      if(sc.type==='photo'){
+        const ph=el('photo',null,root);ph.style.backgroundImage=`url("${sc.image}")`;sc._photo=ph;
+        el('veil',null,root);
+      }
+      const col=el('col',null,root);
+      if(sc.type==='photo'){col.style.bottom='200px';col.style.top='auto';col.style.alignItems='flex-start';col.style.textAlign='left';col.style.justifyContent='flex-end'}
+      else if(sc.orb){col.style.top='560px';col.style.bottom='120px'}
+      else{col.style.top='0';col.style.bottom='0'}
+      lines.forEach((l,k)=>{const d=el('line it c-'+l.c,esc(l.t),col);d.style.fontSize=(sc.size||sizeFor(l.t))+'px';if(sc.type==='photo')d.style.fontSize=(sc.size||Math.min(sizeFor(l.t),110))+'px';item(sc,d,.2+k*.6)});
+    }else if(sc.type==='word'){
+      const col=el('col',null,root);col.style.top='0';col.style.bottom='0';
+      item(sc,el('word-ar it',esc(sc.ar),col),.15);
+      item(sc,el('rule it',null,col),.55);
+      item(sc,el('word-fr it',esc(sc.fr),col),.75);
+    }else if(sc.type==='demo'){
+      // une illustration de l'échange, pas une vraie capture : à remplacer par une capture réelle si on en a une
+      const u=el('bub u it',`<div class="ar">${esc(sc.u.ar)}</div><div class="tr">${esc(sc.u.fr)}</div>`,root);u.style.top='620px';item(sc,u,.2,{rise:60});
+      const a=el('bub i it',`<div class="ar">${esc(sc.i.ar)}</div><div class="tr">${esc(sc.i.fr)}</div>`,root);a.style.top='980px';item(sc,a,1.3,{rise:60});
+      const c=el('cap it',esc(sc.caption||''),root);c.style.cssText+='position:absolute;left:80px;right:80px;top:1420px';item(sc,c,2.3);
+    }else if(sc.type==='end'){
+      const mk=(cls,html,y,delay,extra)=>{const d=el('a it '+cls,html,root);d.style.top=y+'px';item(sc,d,delay,{keepX:true,...extra});return d};
+      const ic=mk('icon','<i style="left:67px;top:97px;height:66px"></i><i style="left:118px;top:67px;height:126px"></i><i style="left:169px;top:87px;height:86px"></i>',560,.1,{pop:true});
+      mk('word','Takalam',830,.5);mk('arw','تكلّم',1020,.8);
+      mk('tag',esc(sc.tagline||'Apprendre à parler, sans la peur.'),1210,1.3);
+      mk('btn',esc(sc.pill||'Lien en bio'),1420,2);
+      mk('note',esc(sc.note||'10 minutes offertes chaque jour'),1570,2.5);
+      if(sc.url)mk('note',esc(sc.url),1650,2.8);
+    }
+  });
+}
+
+function render(t){
+  const S=spec.scenes;
+  // scène courante
+  let cur=0;S.forEach((sc,i)=>{if(t>=sc.from)cur=i});
+  S.forEach((sc,i)=>{
+    const lt=t-sc.from;
+    const nextFrom=i+1<S.length?S[i+1].from+.4:1e9;
+    const visible=t>=sc.from&&t<nextFrom;
+    sc._el.style.display=visible?'block':'none';
+    if(!visible)return;
+    sc._el.style.opacity=i===0?1:clamp(lt/.35);
+    if(sc._photo){sc._photo.style.transform=`scale(${1+.07*clamp(lt/(sc.to-sc.from))})`}
+    sc._items.forEach(it=>{
+      const p=eo((lt-it.delay)/.6);
+      const rise=it.rise||40;
+      it.node.style.opacity=p;
+      if(it.keepX){const s=it.pop?.6+.4*p:1;it.node.style.transform=`translate(-50%,-50%) translateY(${(1-p)*rise}px) scale(${s})`}
+      else it.node.style.transform=`translateY(${(1-p)*rise}px)`;
+    });
+  });
+  // orbe partagé
+  const c=S[cur];
+  const on=c.orb||c.type==='demo';
+  const orbA=on?clamp((t-c.from)/.4):0;
+  const orb=document.getElementById('orb');
+  orb.style.opacity=orbA;
+  orb.style.top=(c.type==='demo'?330:(c.orb?300:860))+'px';
+  const sc=c.type==='demo'||c.orb?.6:1;
+  orb.style.transform=`translate(-50%,-50%) scale(${sc})`;
+  document.getElementById('core').style.transform=`scale(${1+.06*Math.sin(t*2*Math.PI/3.6)})`;
+  rings.forEach((r,i)=>{const p=((t/3)+i/3)%1;r.style.transform=`scale(${.6+1.3*p})`;r.style.opacity=.8*(1-p)});
+  [...wave.children].forEach((b,i)=>{const v=.5+.5*Math.sin(t*2*Math.PI*BARS[i].sp+i);b.style.height=(8+(BARS[i].h-8)*v)+'px'});
+}
+window.setup=build;window.render=render;
+</script></body></html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Reem+Kufi:wght@500;600&family=Noto+Naskh+Arabic:wght@400;500&display=swap">
+<style>
+:root{--cream:oklch(0.965 0.015 76);--cream-2:oklch(0.945 0.018 74);--card:oklch(0.99 0.007 84);--ink:oklch(0.28 0.02 50);--muted:oklch(0.52 0.024 54);--terra:oklch(0.6 0.14 41);--terra-deep:oklch(0.46 0.115 39);--clay:oklch(0.36 0.075 41);--terra-soft:oklch(0.89 0.05 56);--disp:"Space Grotesk",sans-serif;--sans:"Hanken Grotesk",sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#000}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,var(--terra) 0%,var(--terra-deep) 55%,var(--clay) 100%);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.a{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);will-change:transform,opacity}
+#cream{position:absolute;inset:0;background:var(--cream);opacity:0}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:34px;letter-spacing:.16em;text-transform:uppercase;color:var(--terra-soft);white-space:nowrap}
+.h1{font-family:var(--disp);font-weight:700;letter-spacing:-.025em;line-height:1.02;color:var(--cream);font-size:176px;white-space:nowrap;text-align:center}
+.o{color:var(--terra-soft)}
+.ring{position:absolute;left:50%;top:50%;width:450px;height:450px;margin:-225px 0 0 -225px;border-radius:50%;border:4px solid color-mix(in oklch,var(--terra-soft) 60%,transparent)}
+.core{position:absolute;left:50%;top:50%;width:270px;height:270px;margin:-135px 0 0 -135px;border-radius:50%;background:radial-gradient(circle at 35% 30%,oklch(0.92 0.06 70),var(--terra-soft) 45%,oklch(0.7 0.13 50) 100%);box-shadow:0 0 150px 18px color-mix(in oklch,var(--terra-soft) 55%,transparent),inset 0 -18px 48px color-mix(in oklch,var(--terra-deep) 40%,transparent)}
+.wave{position:absolute;left:50%;top:50%;display:flex;align-items:center;gap:9px;height:90px;transform:translate(-50%,-50%)}
+.wave span{width:9px;border-radius:9px;background:var(--clay);height:18px}
+.bub{width:860px;border-radius:44px;padding:48px 56px}
+.bub.u{background:var(--cream);color:var(--ink);border-bottom-right-radius:12px}
+.bub.i{background:var(--clay);color:var(--cream);border-bottom-left-radius:12px;border:2px solid color-mix(in oklch,var(--terra-soft) 25%,transparent)}
+.ar{font-family:'Noto Naskh Arabic',serif;font-size:96px;line-height:1.5;direction:rtl;text-align:right}
+.tr{font-family:var(--sans);font-size:42px;font-weight:500;margin-top:8px}
+.u .tr{color:var(--muted)} .i .tr{color:color-mix(in oklch,var(--cream) 78%,transparent)}
+.lab{font-family:var(--disp);font-weight:600;font-size:36px;letter-spacing:.16em;text-transform:uppercase;color:var(--terra-soft);white-space:nowrap}
+.big{font-family:var(--disp);font-weight:700;letter-spacing:-.025em;font-size:150px;line-height:1.05;color:var(--cream);white-space:nowrap}
+.icon{width:260px;height:260px;border-radius:58px;background:#8C3D22;position:relative;box-shadow:0 50px 90px -30px rgba(60,25,10,.55)}
+.icon i{position:absolute;width:24px;border-radius:12px;background:#F6D3BC;bottom:auto}
+.word{font-family:var(--disp);font-weight:700;font-size:140px;color:var(--terra-deep);letter-spacing:-.025em;line-height:1;white-space:nowrap}
+.arw{font-family:'Reem Kufi',serif;font-weight:500;font-size:120px;color:var(--terra);line-height:1.2;white-space:nowrap}
+.tag{font-family:var(--disp);font-weight:600;font-size:60px;color:var(--ink);white-space:nowrap;letter-spacing:-.01em}
+.btn{font-family:var(--sans);font-weight:600;font-size:46px;color:#fff;background:var(--terra-deep);border-radius:999px;padding:38px 84px;white-space:nowrap;box-shadow:0 40px 70px -28px rgba(60,25,10,.55)}
+.note{font-family:var(--sans);font-weight:500;font-size:38px;color:var(--muted);white-space:nowrap}
+</style></head><body>
+<div id="stage">
+  <div id="cream"></div>
+  <!-- orb -->
+  <div class="a" id="orb" style="width:450px;height:450px">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="core" id="core"></div>
+    <div class="wave" id="wave"></div>
+  </div>
+  <!-- scene 1 -->
+  <div class="a eyebrow" id="eyebrow">Takalam</div>
+  <div class="a h1" id="h1a">Osez parler.</div>
+  <div class="a h1 o" id="h1b">Vraiment.</div>
+  <!-- scene 2 -->
+  <div class="a lab" id="lab1">Vous parlez</div>
+  <div class="a bub u" id="bu"><div class="ar">أريد قهوة</div><div class="tr">Je veux un café, s'il vous plaît.</div></div>
+  <div class="a lab" id="lab2">Il répond</div>
+  <div class="a bub i" id="bi"><div class="ar">تفضّل! مع الحليب؟</div><div class="tr">Voilà ! Avec du lait ?</div></div>
+  <!-- scene 3 -->
+  <div class="a big" id="s3a">Sans jugement.</div>
+  <div class="a big" id="s3b">Sans public.</div>
+  <div class="a big o" id="s3c">Sans la peur.</div>
+  <!-- scene 4 -->
+  <div class="a icon" id="icon"><i style="left:67px;top:97px;height:66px"></i><i style="left:118px;top:67px;height:126px"></i><i style="left:169px;top:87px;height:86px"></i></div>
+  <div class="a word" id="word">Takalam</div>
+  <div class="a arw" id="arw">تكلّم</div>
+  <div class="a tag" id="tag">Apprendre à parler, sans la peur.</div>
+  <div class="a btn" id="btn">Commencer gratuitement</div>
+  <div class="a note" id="note">10 minutes offertes chaque jour · takalamapp.com</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const eo=x=>1-Math.pow(1-clamp(x),3);            // ease out
+const eio=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const prog=(t,s,d)=>eo((t-s)/d);                 // 0->1 starting at s
+const seg=(t,a,b,fi=.5,fo=.4)=>Math.min(prog(t,a,fi),1-eo((t-(b-fo))/fo)); // visible between a,b
+function put(el,x,y,{o=1,dy=0,s=1}={}){el.style.opacity=o;el.style.transform=`translate(-50%,-50%) translateY(${dy}px) scale(${s})`;el.style.left=x+'px';el.style.top=y+'px'}
+const H=[22,60,36,76,50,66,30,70,44].map((h,i)=>({h,sp:1.1+((i*37)%10)/12}));
+const wave=$('wave');H.forEach(()=>wave.appendChild(document.createElement('span')));
+const rings=[...document.querySelectorAll('.ring')];
+
+function render(t){
+  // background: hero gradient -> cream
+  $('cream').style.opacity=eio((t-10.3)/.8);
+
+  // orb: centre in scene 1, up top in scenes 2-3, out in scene 4
+  const up=eio((t-3.3)/.7);
+  const oy=860-up*(860-330);
+  const os=1-up*.45;
+  const oo=1-eio((t-10.2)/.5);
+  const breathe=1+.06*Math.sin(t*2*Math.PI/3.6);
+  put($('orb'),540,oy,{o:oo*prog(t,0,.8),s:os*prog(t,0,.9)});
+  $('core').style.transform=`scale(${breathe})`;
+  rings.forEach((r,i)=>{const p=((t/3)+i/3)%1;r.style.transform=`scale(${.6+1.3*p})`;r.style.opacity=.8*(1-p)});
+  // bars: always moving, fuller while someone speaks
+  const talking=(t>4.2&&t<5.6)||(t>5.9&&t<7.4)||t<3.4?1:.35;
+  [...wave.children].forEach((b,i)=>{const v=.5+.5*Math.sin(t*2*Math.PI*H[i].sp+i);b.style.height=(8+(H[i].h-8)*v*talking)+'px'});
+
+  // scene 1
+  put($('eyebrow'),540,330,{o:seg(t,.2,3.6,.6,.4),dy:(1-prog(t,.2,.7))*30});
+  put($('h1a'),540,1280,{o:seg(t,.7,3.6,.7,.4),dy:(1-prog(t,.7,.8))*50});
+  put($('h1b'),540,1450,{o:seg(t,1.5,3.6,.7,.4),dy:(1-prog(t,1.5,.8))*50});
+
+  // scene 2
+  put($('lab1'),540,720,{o:seg(t,3.9,7.3,.4,.4)});
+  put($('bu'),540,930,{o:seg(t,4.1,7.3,.5,.4),dy:(1-prog(t,4.1,.6))*60,s:.94+.06*prog(t,4.1,.6)});
+  put($('lab2'),540,1290,{o:seg(t,5.6,7.3,.4,.4)});
+  put($('bi'),540,1500,{o:seg(t,5.9,7.3,.5,.4),dy:(1-prog(t,5.9,.6))*60,s:.94+.06*prog(t,5.9,.6)});
+
+  // scene 3
+  put($('s3a'),540,1010,{o:seg(t,7.6,10.4,.5,.4),dy:(1-prog(t,7.6,.6))*50});
+  put($('s3b'),540,1220,{o:seg(t,8.4,10.4,.5,.4),dy:(1-prog(t,8.4,.6))*50});
+  put($('s3c'),540,1430,{o:seg(t,9.2,10.4,.5,.4),dy:(1-prog(t,9.2,.6))*50});
+  // the "o" colour on cream-free scenes is terra-soft (already on dark)
+
+  // scene 4
+  const ip=prog(t,10.9,.8);
+  put($('icon'),540,640,{o:ip,s:.6+.4*ip});
+  put($('word'),540,930,{o:prog(t,11.3,.7),dy:(1-prog(t,11.3,.8))*40});
+  put($('arw'),540,1120,{o:prog(t,11.6,.7),dy:(1-prog(t,11.6,.8))*30});
+  put($('tag'),540,1310,{o:prog(t,12.2,.7),dy:(1-prog(t,12.2,.8))*30});
+  put($('btn'),540,1470,{o:prog(t,12.9,.7),dy:(1-prog(t,12.9,.8))*30,s:1+.012*Math.sin(Math.max(0,t-13.6)*5)});
+  put($('note'),540,1620,{o:prog(t,13.4,.7)});
+}
+window.render=render;render(0);
+</script></body></html>

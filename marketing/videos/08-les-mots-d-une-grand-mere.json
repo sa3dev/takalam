@@ -1,0 +1,6 @@
+{ "scenes": [
+  { "from": 0,  "to": 3,  "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/family.jpg", "lines": ["Parler arabe avec ta grand-mère, enfin"] },
+  { "from": 3,  "to": 8,  "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/family.jpg", "lines": ["Tu veux lui parler, mais les mots ne viennent pas."] },
+  { "from": 8,  "to": 14, "bg": "terra", "type": "demo", "u": { "ar": "أريد قهوة", "fr": "Je veux un café, s'il vous plaît." }, "i": { "ar": "تفضّل! مع الحليب؟", "fr": "Voilà ! Avec du lait ?" }, "caption": "Entraîne-toi seul d'abord." },
+  { "from": 14, "to": 20, "bg": "cream", "type": "end", "pill": "Lien en bio", "tagline": "L'échauffement avant la vraie conversation.", "note": "Situation « Dîner en famille »" }
+] }

@@ -1,0 +1,8 @@
+{ "scenes": [
+  { "from": 0,  "to": 3,  "bg": "terra", "type": "photo", "image": "frontend/public/scenarios/restaurant.jpg", "lines": ["Commander en arabe sans bafouiller"] },
+  { "from": 3,  "to": 6,  "bg": "cream", "type": "word", "ar": "أريد قهوة", "fr": "Je veux un café" },
+  { "from": 6,  "to": 9,  "bg": "cream", "type": "word", "ar": "كم الحساب؟", "fr": "C'est combien ?" },
+  { "from": 9,  "to": 12, "bg": "cream", "type": "word", "ar": "شكرا جزيلا", "fr": "Merci beaucoup" },
+  { "from": 12, "to": 16, "bg": "terra", "type": "text", "orb": true, "lines": ["Entraîne-toi à voix haute avant le voyage."] },
+  { "from": 16, "to": 20, "bg": "cream", "type": "end", "pill": "Lien en bio", "note": "Situation « Au restaurant » · gratuit pour commencer" }
+] }

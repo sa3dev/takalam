@@ -1,0 +1,9 @@
+{ "scenes": [
+  { "from": 0,  "to": 3,  "bg": "terra", "type": "text", "orb": true, "lines": ["6 situations pour oser parler"] },
+  { "from": 3,  "to": 6,  "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/restaurant.jpg", "lines": ["Au restaurant"] },
+  { "from": 6,  "to": 8,  "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/taxi.jpg", "lines": ["En taxi"] },
+  { "from": 8,  "to": 10, "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/hotel.jpg", "lines": ["À l'hôtel"] },
+  { "from": 10, "to": 12, "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/market.jpg", "lines": ["Au marché"] },
+  { "from": 12, "to": 14, "bg": "clay", "type": "photo", "image": "frontend/public/scenarios/family.jpg", "lines": ["En famille"] },
+  { "from": 14, "to": 20, "bg": "cream", "type": "end", "pill": "Lien en bio", "tagline": "Choisis ta scène.", "note": "Gratuit pour commencer" }
+] }
