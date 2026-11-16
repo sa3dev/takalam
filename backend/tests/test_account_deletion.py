@@ -3,7 +3,7 @@ import pytest
 from fastapi import Response
 from sqlalchemy.exc import IntegrityError
 
-from app.models.database import PaywallEvent, Session as DBSession, Transcription, User
+from app.models.database import PaywallEvent, Session as DBSession, SessionFeedback, Transcription, User
 from app.routes.auth import delete_account
 
 
@@ -25,6 +25,7 @@ def test_erasure_removes_everything_referencing_the_account(db, redis_stub, user
     db.add(Transcription(session_id=session.id, speaker="user", text="مرحبا"))
     db.add(PaywallEvent(user_id=user.id, event="wall_hit"))
     db.add(PaywallEvent(user_id=user.id, event="interest", plan_choice="annual"))
+    db.add(SessionFeedback(session_id=session.id, user_id=user.id, rating="bad", comment="trop rapide"))
     db.commit()
 
     delete_account(response=Response(), current_user=user, db=db)
@@ -35,6 +36,7 @@ def test_erasure_removes_everything_referencing_the_account(db, redis_stub, user
     assert db.query(PaywallEvent).count() == 0
     assert db.query(DBSession).count() == 0
     assert db.query(Transcription).count() == 0
+    assert db.query(SessionFeedback).count() == 0
 
 
 def test_erasure_also_removes_password_reset_tokens(db, redis_stub, user):

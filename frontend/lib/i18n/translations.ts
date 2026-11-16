@@ -133,6 +133,18 @@ export const translations = {
       thanksTitle: "Merci, c'est noté !",
       thanksBody: "Les abonnements ne sont pas encore ouverts. Ton intérêt est enregistré et pèsera dans la décision. En attendant, tes minutes reviennent à {time}.",
       close: "Fermer"
+    },
+    feedback: {
+      title: "Comment s'est passée cette conversation ?",
+      good: "Bien",
+      ok: "Moyen",
+      bad: "Pas terrible",
+      promptGood: "Qu'est-ce qui t'a plu ?",
+      promptBad: "Qu'est-ce qui n'allait pas ?",
+      placeholder: "Quelques mots, si tu veux",
+      send: "Envoyer",
+      skip: "Passer",
+      thanks: "Merci, c'est noté !"
     }
   },
   en: {
@@ -264,6 +276,18 @@ export const translations = {
       thanksTitle: "Thanks, noted!",
       thanksBody: "Subscriptions aren't open yet. Your interest is recorded and will weigh on the decision. In the meantime, your minutes come back at {time}.",
       close: "Close"
+    },
+    feedback: {
+      title: "How did this conversation go?",
+      good: "Good",
+      ok: "So-so",
+      bad: "Not great",
+      promptGood: "What did you enjoy?",
+      promptBad: "What didn't work?",
+      placeholder: "A few words, if you like",
+      send: "Send",
+      skip: "Skip",
+      thanks: "Thanks, noted!"
     }
   },
   es: {
@@ -395,6 +419,18 @@ export const translations = {
       thanksTitle: "¡Gracias, anotado!",
       thanksBody: "Las suscripciones aún no están abiertas. Tu interés queda registrado y pesará en la decisión. Mientras tanto, tus minutos vuelven a las {time}.",
       close: "Cerrar"
+    },
+    feedback: {
+      title: "¿Cómo fue esta conversación?",
+      good: "Bien",
+      ok: "Regular",
+      bad: "No muy bien",
+      promptGood: "¿Qué te gustó?",
+      promptBad: "¿Qué no funcionó?",
+      placeholder: "Unas palabras, si quieres",
+      send: "Enviar",
+      skip: "Omitir",
+      thanks: "¡Gracias, anotado!"
     }
   },
   it: {
@@ -526,6 +562,18 @@ export const translations = {
       thanksTitle: "Grazie, annotato!",
       thanksBody: "Gli abbonamenti non sono ancora aperti. Il tuo interesse è registrato e peserà sulla decisione. Nel frattempo, i tuoi minuti tornano alle {time}.",
       close: "Chiudi"
+    },
+    feedback: {
+      title: "Com'è andata questa conversazione?",
+      good: "Bene",
+      ok: "Così così",
+      bad: "Non un granché",
+      promptGood: "Cosa ti è piaciuto?",
+      promptBad: "Cosa non ha funzionato?",
+      placeholder: "Qualche parola, se vuoi",
+      send: "Invia",
+      skip: "Salta",
+      thanks: "Grazie, annotato!"
     }
   },
   ru: {
@@ -657,6 +705,18 @@ export const translations = {
       thanksTitle: "Спасибо, записали!",
       thanksBody: "Подписки пока не открыты. Ваш интерес записан и будет учтён при решении. А пока ваши минуты вернутся в {time}.",
       close: "Закрыть"
+    },
+    feedback: {
+      title: "Как прошёл этот разговор?",
+      good: "Хорошо",
+      ok: "Так себе",
+      bad: "Не очень",
+      promptGood: "Что вам понравилось?",
+      promptBad: "Что не получилось?",
+      placeholder: "Несколько слов, если хотите",
+      send: "Отправить",
+      skip: "Пропустить",
+      thanks: "Спасибо, записано!"
     }
   },
   zh: {
@@ -791,6 +851,18 @@ export const translations = {
       thanksTitle: "谢谢，已记录！",
       thanksBody: "订阅尚未开放。您的意向已记录，会计入决策。在此期间，您的时间将在 {time} 恢复。",
       close: "关闭"
+    },
+    feedback: {
+      title: "这次对话怎么样？",
+      good: "不错",
+      ok: "一般",
+      bad: "不太好",
+      promptGood: "你喜欢什么？",
+      promptBad: "哪里不太好？",
+      placeholder: "想说几句也可以",
+      send: "发送",
+      skip: "跳过",
+      thanks: "谢谢，已记录！"
     }
   },
   ar: {
@@ -922,6 +994,18 @@ export const translations = {
       thanksTitle: "شكرًا، تم التسجيل!",
       thanksBody: "الاشتراكات لم تُفتح بعد. تم تسجيل اهتمامك وسيؤخذ في الحسبان. في هذه الأثناء، ستعود دقائقك الساعة {time}.",
       close: "إغلاق"
+    },
+    feedback: {
+      title: "كيف كانت هذه المحادثة؟",
+      good: "جيدة",
+      ok: "عادية",
+      bad: "ليست جيدة",
+      promptGood: "ما الذي أعجبك؟",
+      promptBad: "ما الذي لم يعمل؟",
+      placeholder: "بضع كلمات إن شئت",
+      send: "إرسال",
+      skip: "تخطَّ",
+      thanks: "شكرًا، تم التسجيل!"
     }
   }
 }

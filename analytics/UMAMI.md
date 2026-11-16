@@ -20,6 +20,7 @@ Aucun identifiant d'utilisateur n'est envoyé à Umami (la politique de confiden
 | `spoken-2min`, `spoken-5min`, `spoken-10min` | le total parlé du jour franchit le seuil | `scenario` |
 | `replay-click` | clic sur « Réécouter » | `scenario` |
 | `session-ended` | « Terminer la session » confirmé | `scenario`, `turns` (phrases dites), `duration` (`<2min`, `2-5min`, `5-10min`, `10min+`) |
+| `feedback-sent` | l'apprenant touche un smiley à la fin d'une conversation | `rating` (`good`, `ok`, `bad`) ; le texte libre n'est jamais envoyé à Umami, seulement stocké en base (`session_feedback`) |
 | `session-cancel`, `session-restart` | annuler / recommencer | `scenario`, `spoke` (`yes` si l'apprenant avait déjà parlé) |
 | `paywall-shown` | l'écran de limite s'affiche | |
 | `paywall-plan-select` | clic sur mensuel ou annuel | `plan` |

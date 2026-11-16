@@ -8,6 +8,7 @@ from app.models.database import (
     Transcription,
     SessionAnalytics,
     PaywallEvent,
+    SessionFeedback,
     PasswordResetToken,
     DailyUsage,
 )
@@ -143,6 +144,8 @@ def delete_account(
     if session_ids:
         db.query(SessionAnalytics).filter(SessionAnalytics.session_id.in_(session_ids)).delete(synchronize_session=False)
         db.query(Transcription).filter(Transcription.session_id.in_(session_ids)).delete(synchronize_session=False)
+    # Free text typed about a conversation is personal data: it goes too.
+    db.query(SessionFeedback).filter(SessionFeedback.user_id == user_id).delete(synchronize_session=False)
     db.query(DBSession).filter(DBSession.user_id == user_id).delete(synchronize_session=False)
     # Paywall analytics reference the user too, and erasure is not negotiable:
     # the funnel loses a data point rather than the account surviving a deletion

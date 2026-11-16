@@ -20,7 +20,9 @@ from app.schemas.session import (
     TranscriptionResponse,
 )
 from app.schemas.billing import QuotaResponse, UpgradeInterestRequest
+from app.schemas.feedback import FeedbackRequest
 from app.services.shadow_feedback import ShadowFeedbackAnalyzer
+from app.services.feedback import record_feedback
 from app.services.paywall import record_interest
 from app.services.scenarios import SCENARIOS
 from app.services.session_cleanup import delete_user_sessions
@@ -236,6 +238,21 @@ def register_upgrade_interest(
     we are measuring demand at these prices before building checkout."""
     record_interest(db, current_user.id, payload.plan_choice)
     return {"status": "recorded", "plan_choice": payload.plan_choice}
+
+
+@router.post("/sessions/{session_id}/feedback", status_code=201)
+@limiter.limit("30/hour")
+def send_session_feedback(
+    request: Request,
+    session_id: int,
+    payload: FeedbackRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """How the conversation went: a face, and optionally a few words."""
+    if not record_feedback(db, current_user.id, session_id, payload.rating, payload.comment):
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"status": "recorded"}
 
 
 @router.post("/ws-ticket")

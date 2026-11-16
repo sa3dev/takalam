@@ -177,6 +177,25 @@ class PaywallEvent(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+FEEDBACK_RATINGS = ("good", "ok", "bad")
+
+
+class SessionFeedback(Base):
+    """How a conversation felt, in the learner's own words, asked once as it ends.
+
+    One row per session: a tap on a face is stored at once and the optional
+    comment that follows replaces it, so a learner who stops after the face
+    still leaves a signal. Free text is personal data and goes with the account."""
+    __tablename__ = "session_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    rating = Column(String, nullable=False)  # "good" | "ok" | "bad"
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 def init_db():
     """Run pending Alembic migrations on startup."""
     from alembic.config import Config

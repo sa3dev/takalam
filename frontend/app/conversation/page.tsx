@@ -23,6 +23,7 @@ import { TranscriptItem } from '@/components/TranscriptItem'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { QuotaPill } from '@/components/QuotaPill'
 import { PaywallModal } from '@/components/PaywallModal'
+import { FeedbackModal } from '@/components/FeedbackModal'
 import { FREE_CONVERSATION } from '@/hooks/useScenarios'
 import { track, durationBucket } from '@/lib/analytics'
 
@@ -127,6 +128,10 @@ function ConversationScreen() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isPaywallOpen, setIsPaywallOpen] = useState(false)
+  // Row id of this conversation, known once the server has opened it; asked
+  // about when the learner ends it deliberately.
+  const dbSessionIdRef = useRef<number | null>(null)
+  const [feedbackSessionId, setFeedbackSessionId] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const audioUnlockedRef = useRef(false)
@@ -290,6 +295,7 @@ function ConversationScreen() {
 
     const dbSessionId = message.db_session_id
     if (typeof dbSessionId !== 'number') return
+    dbSessionIdRef.current = dbSessionId
 
     try {
       const res = await fetch(`/api/sessions/${dbSessionId}/transcriptions`, { credentials: 'include' })
@@ -465,7 +471,11 @@ function ConversationScreen() {
         window.sessionStorage.removeItem(SESSION_ID_KEY)
         window.sessionStorage.removeItem(SCENARIO_KEY)
       } catch { /* nothing to clear */ }
-      router.push('/dashboard')
+      // Ask how it went, but only of someone who actually spoke: an empty
+      // conversation has nothing to be judged. The question never blocks the way out.
+      const endedSessionId = dbSessionIdRef.current
+      if (endedSessionId !== null && hasSpoken) setFeedbackSessionId(endedSessionId)
+      else router.push('/dashboard')
     }
   }
 
@@ -680,6 +690,10 @@ function ConversationScreen() {
           quota={quota}
           onClose={() => setIsPaywallOpen(false)}
         />
+
+        {feedbackSessionId !== null && (
+          <FeedbackModal sessionId={feedbackSessionId} onClose={() => router.push('/dashboard')} />
+        )}
       </div>
     </AppLayout>
   )
