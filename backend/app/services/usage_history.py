@@ -4,12 +4,14 @@ from datetime import datetime
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from app.models.database import DailyUsage
+from app.models.database import DailyUsage, Session as ConversationSession
 
 logger = logging.getLogger(__name__)
 
 
-def record_spoken_seconds(db: Session, user_id: int, plan: str, seconds: float) -> None:
+def record_spoken_seconds(
+    db: Session, user_id: int, plan: str, seconds: float, session_id: int | None = None
+) -> None:
     """Add a turn's spoken seconds to the learner's row for today (UTC, the same
     day the live allowance counts).
 
@@ -22,19 +24,24 @@ def record_spoken_seconds(db: Session, user_id: int, plan: str, seconds: float) 
         row = db.query(DailyUsage).filter(DailyUsage.user_id == user_id, DailyUsage.day == today).first()
         if row is None:
             db.add(DailyUsage(user_id=user_id, day=today, spoken_seconds=seconds, turns=1, plan=plan))
-            db.commit()
-            return
-        # An increment in the database, not a read-modify-write in Python: two
-        # tabs speaking at once must not overwrite each other.
-        db.execute(
-            update(DailyUsage)
-            .where(DailyUsage.id == row.id)
-            .values(
-                spoken_seconds=DailyUsage.spoken_seconds + seconds,
-                turns=DailyUsage.turns + 1,
-                plan=plan,
+        else:
+            # An increment in the database, not a read-modify-write in Python: two
+            # tabs speaking at once must not overwrite each other.
+            db.execute(
+                update(DailyUsage)
+                .where(DailyUsage.id == row.id)
+                .values(
+                    spoken_seconds=DailyUsage.spoken_seconds + seconds,
+                    turns=DailyUsage.turns + 1,
+                    plan=plan,
+                )
             )
-        )
+        if session_id is not None:
+            db.execute(
+                update(ConversationSession)
+                .where(ConversationSession.id == session_id, ConversationSession.user_id == user_id)
+                .values(spoken_seconds=ConversationSession.spoken_seconds + seconds)
+            )
         db.commit()
     except Exception as e:
         db.rollback()

@@ -92,7 +92,10 @@ async def websocket_endpoint(
                 # provider failure — gives the estimate back. A turn the user
                 # never got an answer to costs them nothing.
                 total = settle_spoken_seconds(current_user.id, reserved, spoken or 0.0)
-                record_spoken_seconds(db, current_user.id, current_user.plan, spoken or 0.0)
+                record_spoken_seconds(
+                    db, current_user.id, current_user.plan, spoken or 0.0,
+                    session_id=manager.recall_db_session(scoped_session_id),
+                )
                 # Live gauge update. Only the running total travels — the client
                 # already knows its plan and limit from GET /api/users/me/quota.
                 await manager.send_message(scoped_session_id, {

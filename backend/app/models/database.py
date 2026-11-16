@@ -55,6 +55,9 @@ class Session(Base):
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
     duration_seconds = Column(Integer, default=0)
+    # Seconds the learner actually spoke in this conversation (as opposed to
+    # duration_seconds, the wall-clock length). Sum of the turns' audio durations.
+    spoken_seconds = Column(Float, nullable=False, server_default="0", default=0.0)
     # Role-play situation this conversation was started from; None is free talk.
     scenario_id = Column(String, nullable=True)
 

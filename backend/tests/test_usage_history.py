@@ -34,3 +34,14 @@ def test_erasure_removes_the_history_too(db, redis_stub, user):
 
     assert db.query(User).count() == 0
     assert db.query(DailyUsage).count() == 0
+
+
+def test_spoken_seconds_accumulate_on_the_session(db, user):
+    from app.models.database import Session as ConversationSession
+    conv = ConversationSession(user_id=user.id)
+    db.add(conv)
+    db.commit()
+    record_spoken_seconds(db, user.id, "free", 10.0, session_id=conv.id)
+    record_spoken_seconds(db, user.id, "free", 5.0, session_id=conv.id)
+    db.refresh(conv)
+    assert conv.spoken_seconds == 15.0
