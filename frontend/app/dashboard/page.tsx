@@ -26,7 +26,7 @@ interface Analytics {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { confirm, alert } = useDialog()
   const { user, isLoading } = useAuth()
 
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                           <span className="font-normal text-calm-muted"> · {scenarioTitle(session.scenario_id)}</span>
                         )}
                       </div>
-                      <div className="text-sm text-calm-muted">{formatDate(session.started_at)}</div>
+                      <div className="text-sm text-calm-muted">{formatDate(session.started_at, language)}</div>
                       <div className="text-xs text-calm-muted mt-1">
                         {t.dashboard.duration}: {formatDuration(session.duration_seconds, t)}
                       </div>
@@ -336,8 +336,13 @@ function StatCard({ value, label }: { value: number | string; label: string }) {
   )
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('ar-SA', {
+/** In the language of the interface (French by default), not in Arabic: the
+ *  date is there to find a session, not to practise reading. */
+function formatDate(dateString: string, language: string): string {
+  // The API serialises naive UTC: without the marker a browser reads it as local
+  // time and a session near midnight lands on the wrong day.
+  const iso = /(?:Z|[+-]\d{2}:?\d{2})$/.test(dateString) ? dateString : `${dateString}Z`
+  return new Date(iso).toLocaleDateString(language, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
