@@ -26,11 +26,19 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Where to go once signed in: only an on-site path, never a full URL, so the
+  // link cannot be turned into a redirect to someone else's site.
+  const requestedNext = searchParams.get('next')
+  const destination =
+    requestedNext && /^\/[a-z0-9\-_/]*$/i.test(requestedNext) && !requestedNext.startsWith('//')
+      ? requestedNext
+      : '/app'
+
   useEffect(() => {
     if (!isLoading && user) {
-      router.push('/app')
+      router.push(destination)
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router, destination])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,7 +52,7 @@ function LoginForm() {
         await register(email, username, password)
         track('signup-success')
       }
-      router.push('/app')
+      router.push(destination)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {

@@ -9,6 +9,7 @@ from app.models.database import (
     SessionAnalytics,
     PaywallEvent,
     SessionFeedback,
+    TesterSurvey,
     PasswordResetToken,
     DailyUsage,
 )
@@ -152,6 +153,7 @@ def delete_account(
     # request. Without this the FK blocks the delete outright, and precisely for
     # the users who engaged most.
     db.query(PaywallEvent).filter(PaywallEvent.user_id == user_id).delete(synchronize_session=False)
+    db.query(TesterSurvey).filter(TesterSurvey.user_id == user_id).delete(synchronize_session=False)
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
     db.query(DailyUsage).filter(DailyUsage.user_id == user_id).delete(synchronize_session=False)
     db.delete(current_user)

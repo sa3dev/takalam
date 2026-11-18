@@ -196,6 +196,21 @@ class SessionFeedback(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+class TesterSurvey(Base):
+    """The tester questionnaire, answered inside the app.
+
+    One row per account, answers kept as one JSON object keyed by question so
+    the questions can change without a migration. Free text is personal data and
+    goes with the account."""
+    __tablename__ = "tester_survey"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    answers = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Run pending Alembic migrations on startup."""
     from alembic.config import Config

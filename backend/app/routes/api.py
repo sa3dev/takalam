@@ -21,9 +21,11 @@ from app.schemas.session import (
 )
 from app.schemas.billing import QuotaResponse, UpgradeInterestRequest
 from app.schemas.feedback import FeedbackRequest
+from app.schemas.survey import SurveyAnswers, SurveyResponse
 from app.services.shadow_feedback import ShadowFeedbackAnalyzer
 from app.services.feedback import record_feedback
 from app.services.paywall import record_interest
+from app.services.survey import load_survey, save_survey
 from app.services.scenarios import SCENARIOS
 from app.services.session_cleanup import delete_user_sessions
 from app.core.auth_deps import get_current_user
@@ -253,6 +255,25 @@ def send_session_feedback(
     if not record_feedback(db, current_user.id, session_id, payload.rating, payload.comment):
         raise HTTPException(status_code=404, detail="Session not found")
     return {"status": "recorded"}
+
+
+@router.get("/users/me/survey", response_model=SurveyResponse)
+def get_my_survey(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """The tester's saved answers, so the form can be reopened and completed."""
+    return SurveyResponse(answers=load_survey(db, current_user.id))
+
+
+@router.put("/users/me/survey", status_code=200)
+@limiter.limit("30/hour")
+def put_my_survey(
+    request: Request,
+    payload: SurveyAnswers,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Save the tester questionnaire (replaces the previous answers)."""
+    save_survey(db, current_user.id, payload)
+    return {"status": "saved"}
 
 
 @router.post("/ws-ticket")
