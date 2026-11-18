@@ -90,6 +90,8 @@ const LANDING_CSS = `
 
   .lp .pricing { background: var(--cream-2); }
   .lp .plans { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; max-width: 760px; margin: 0 auto; }
+  .lp .plans.single { grid-template-columns: 1fr; max-width: 400px; }
+  .lp .plans.single .plan.feat { transform: none; }
   .lp .plan { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 36px 30px; display: flex; flex-direction: column; }
   .lp .plan.feat { background: var(--clay); color: var(--cream); border-color: var(--clay); transform: scale(1.04); box-shadow: 0 30px 60px -24px color-mix(in oklch, var(--clay) 70%, transparent); }
   .lp .plan .badge { align-self: flex-start; font-family: var(--disp); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; background: var(--terra); color: #fff; padding: 5px 12px; border-radius: 100px; margin-bottom: 16px; }
@@ -202,7 +204,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Arabe littéraire ou dialecte ?",
-    a: "Les deux. Choisissez l'arabe littéraire (fusha) ou un dialecte — maghrébin, égyptien, levantin — selon votre objectif.",
+    a: "Pour l'instant, Takalam fonctionne en arabe littéraire (fusha). Les dialectes ne sont pas encore disponibles.",
   },
   {
     q: "Mes conversations sont-elles privées ?",
@@ -332,7 +334,7 @@ export default function LandingPage() {
               <div className="scard">
                 <div className="num">01 — PARLEZ</div>
                 <h3>Vous parlez</h3>
-                <p>Lancez une conversation à voix haute, sur n&apos;importe quel sujet. En arabe littéraire ou en dialecte — maghrébin, égyptien, levantin.</p>
+                <p>Lancez une conversation à voix haute, sur n&apos;importe quel sujet, en arabe littéraire.</p>
               </div>
               <div className="scard">
                 <div className="num">02 — ÉCOUTEZ</div>
@@ -354,33 +356,20 @@ export default function LandingPage() {
               <span className="eyebrow t">Tarifs</span>
               <h2>Commencez gratuitement. Restez si ça vous parle.</h2>
             </div>
-            <div className="plans">
-              <div className="plan">
+            <div className="plans single">
+              <div className="plan feat">
                 <div className="pname">Gratuit</div>
                 <div className="price">0€</div>
                 <div className="ptag">Pour goûter à la conversation, tous les jours.</div>
                 <ul>
                   <li>10 minutes de conversation par jour</li>
-                  <li>Un dialecte au choix</li>
+                  <li>Arabe littéraire (fusha)</li>
                   <li>Suivi de progression de base</li>
                 </ul>
                 <Link href="/login?mode=register" className="pbtn" data-umami-event="landing-plan-free">Commencer gratuitement</Link>
               </div>
-              <div className="plan feat">
-                <span className="badge">Le plus choisi</span>
-                <div className="pname">Pro</div>
-                <div className="price">9€ <small>/ mois</small></div>
-                <div className="ptag">Pour parler tous les jours, sans limite.</div>
-                <ul>
-                  <li>Conversations illimitées</li>
-                  <li>Tous les dialectes + arabe littéraire</li>
-                  <li>Retours détaillés après chaque échange</li>
-                  <li>Mode hors-ligne</li>
-                </ul>
-                <Link href="/login?mode=register" className="pbtn" data-umami-event="landing-plan-pro">Choisir Pro</Link>
-              </div>
             </div>
-            <p className="footnote">Tarifs indicatifs pendant la bêta — rien n&apos;est facturé pour l&apos;instant.</p>
+            <p className="footnote">Takalam est en bêta : l&apos;offre gratuite est la seule proposée pour le moment.</p>
           </div>
         </section>
 

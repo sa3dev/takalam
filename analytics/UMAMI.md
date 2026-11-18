@@ -11,7 +11,7 @@ Aucun identifiant d'utilisateur n'est envoyé à Umami (la politique de confiden
 | Événement | Quand | Propriétés |
 |---|---|---|
 | `landing-hero-signup`, `landing-hero-login`, `landing-end-signup`, `landing-end-login` | clic sur un bouton de la landing (haut / bas de page) | |
-| `landing-plan-free`, `landing-plan-pro` | clic sur un plan de la landing | |
+| `landing-plan-free` | clic sur l'offre gratuite de la landing (`landing-plan-pro` n'existe plus : la carte Pro a été retirée) | |
 | `landing-nav-*`, `landing-footer-*`, `landing-faq-open` | menu, pied de page, ouverture d'une question | `question` pour la FAQ |
 | `signup-success`, `login-success` | formulaire de `/login` réussi | |
 | `scenario-start` | clic sur une situation ou « Parler librement » | `scenario` (`free` si conversation libre) |
